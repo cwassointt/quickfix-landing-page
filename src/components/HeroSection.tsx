@@ -15,6 +15,10 @@ const HeroSection = () => {
           alt="Componente de PC de alta gama"
           className="w-full h-full object-cover object-center"
           loading="eager"
+          onLoad={(e) => {
+            const img = e.currentTarget;
+            console.log(`metal2.jpg → ${img.naturalWidth} x ${img.naturalHeight}px`);
+          }}
         />
       </div>
 
