@@ -1,4 +1,4 @@
-import heroBg from "@/assets/hero-bg.jpg";
+import heroBg from "@/images/metal2.jpg";
 import { ArrowRight, MessageCircle, Star, Trophy } from "lucide-react";
 
 const WHATSAPP_URL = "https://wa.me/51940755119?text=Hola%2C%20quiero%20agendar%20un%20mantenimiento";
@@ -19,11 +19,24 @@ const HeroSection = () => {
       </div>
 
       {/* ── LAYERS ── */}
-      <div className="absolute inset-0 bg-black/45" />
-      <div className="absolute inset-0" style={{ background: "linear-gradient(100deg, rgba(0,0,0,0.93) 0%, rgba(0,0,0,0.88) 30%, rgba(0,0,0,0.65) 50%, rgba(0,0,0,0.15) 65%, transparent 75%)" }} />
-      <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 40%)" }} />
-      <div className="absolute inset-0 pointer-events-none" style={{ clipPath: "polygon(59.5% 0%, 61% 0%, 47.5% 100%, 46% 100%)", background: "linear-gradient(180deg, transparent 0%, rgba(249,115,22,0.08) 15%, rgba(255,255,255,0.12) 40%, rgba(249,115,22,0.18) 60%, rgba(249,115,22,0.05) 85%, transparent 100%)" }} />
-      <div className="absolute inset-0 pointer-events-none" style={{ clipPath: "polygon(60.2% 0%, 60.6% 0%, 47.1% 100%, 46.7% 100%)", background: "linear-gradient(180deg, transparent 0%, rgba(249,115,22,0.35) 20%, rgba(255,255,255,0.5) 50%, rgba(249,115,22,0.35) 80%, transparent 100%)" }} />
+      <div className="absolute inset-0 bg-black/40" />
+
+      {/* Degradado horizontal — negro denso a izquierda, desvanece hacia la derecha */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            "linear-gradient(to right, rgba(0,0,0,0.97) 0%, rgba(0,0,0,0.90) 25%, rgba(0,0,0,0.70) 45%, rgba(0,0,0,0.25) 65%, transparent 80%)",
+        }}
+      />
+
+      {/* Vignette inferior para anclar el badge */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background: "linear-gradient(to top, rgba(0,0,0,0.80) 0%, transparent 35%)",
+        }}
+      />
 
       {/* ── MAIN CONTENT — flex-1 so it fills all space above the badge ── */}
       <div className="relative z-10 flex-1 flex items-center px-8 md:px-16 lg:px-24 xl:px-32 pt-20">
