@@ -63,7 +63,7 @@ const ServicesSection = () => {
   const ref = useScrollReveal();
 
   return (
-    <section id="servicios" className="py-24 bg-background">
+    <section id="servicios" className="py-20 bg-background">
       <div className="container mx-auto px-6">
         <div ref={ref} className="text-center mb-16">
           <span className="text-primary font-heading font-semibold text-sm tracking-widest uppercase">

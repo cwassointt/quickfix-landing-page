@@ -13,6 +13,26 @@
     <meta property="og:type" content="website" />
 
     <meta name="twitter:card" content="summary_large_image" />
+    <!-- Inter font as WF Visual Sans substitute -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <style>
+      html {
+        scroll-behavior: smooth;
+        font-size: clamp(14px, 1.2vw, 16px); /* fluid base font size */
+      }
+      *, *::before, *::after {
+        box-sizing: border-box;
+      }
+      body {
+        overflow-x: hidden;
+        width: 100%;
+      }
+      img, video, iframe {
+        max-width: 100%;
+      }
+    </style>
   </head>
 
   <body>

@@ -19,36 +19,45 @@ const Navbar = () => {
 
   return (
     <nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
         scrolled
-          ? "bg-background/95 backdrop-blur-md shadow-sm border-b border-border"
+          ? "bg-black/90 backdrop-blur-md shadow-lg border-b border-white/10"
           : "bg-transparent"
       }`}
     >
-      <div className="container mx-auto px-6 flex items-center justify-between h-16">
-        <a href="#" className="font-heading font-bold text-xl tracking-tight">
-          <span className={scrolled ? "text-foreground" : "text-surface-dark-foreground"}>Quick</span>
-          <span className="text-primary">Fix</span>
+      <div className="container mx-auto px-8 flex items-center justify-between h-20">
+        {/* Logo */}
+        <a
+          href="#"
+          className="font-black text-3xl tracking-tight flex-shrink-0"
+          style={{ fontFamily: "'Inter', sans-serif" }}
+        >
+          <span className="text-white">Quick</span>
+          <span className="text-orange-500">Fix</span>
         </a>
 
-        {/* Desktop */}
-        <div className="hidden md:flex items-center gap-8">
+        {/* Desktop nav — centered absolutely */}
+        <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-10">
           {links.map((l) => (
             <a
               key={l.href}
               href={l.href}
-              className={`text-sm font-medium transition-colors hover:text-primary ${
-                scrolled ? "text-muted-foreground" : "text-surface-dark-foreground/70"
-              }`}
+              className="text-sm font-medium text-white/75 hover:text-orange-400 transition-colors duration-200 tracking-wide"
+              style={{ fontFamily: "'Inter', sans-serif" }}
             >
               {l.label}
             </a>
           ))}
+        </div>
+
+        {/* Desktop CTA pill */}
+        <div className="hidden md:block flex-shrink-0">
           <a
             href="https://wa.me/51940755119"
             target="_blank"
             rel="noopener noreferrer"
-            className="bg-primary text-primary-foreground px-5 py-2 rounded-lg text-sm font-heading font-semibold hover:brightness-110 transition"
+            className="bg-orange-500 hover:bg-orange-400 text-white px-6 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 shadow-lg shadow-orange-500/30 hover:shadow-orange-400/50 hover:scale-105"
+            style={{ fontFamily: "'Inter', sans-serif" }}
           >
             WhatsApp
           </a>
@@ -57,7 +66,7 @@ const Navbar = () => {
         {/* Mobile toggle */}
         <button
           onClick={() => setMenuOpen(!menuOpen)}
-          className={`md:hidden ${scrolled ? "text-foreground" : "text-surface-dark-foreground"}`}
+          className="md:hidden text-white"
           aria-label="Menu"
         >
           {menuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -66,13 +75,14 @@ const Navbar = () => {
 
       {/* Mobile menu */}
       {menuOpen && (
-        <div className="md:hidden bg-background border-b border-border px-6 py-4 space-y-3 animate-fade-in">
+        <div className="md:hidden bg-black/95 border-b border-white/10 px-8 py-5 space-y-3">
           {links.map((l) => (
             <a
               key={l.href}
               href={l.href}
               onClick={() => setMenuOpen(false)}
-              className="block text-foreground font-medium py-2 hover:text-primary transition-colors"
+              className="block text-white text-base font-medium py-2 hover:text-orange-400 transition-colors"
+              style={{ fontFamily: "'Inter', sans-serif" }}
             >
               {l.label}
             </a>
@@ -81,7 +91,7 @@ const Navbar = () => {
             href="https://wa.me/51940755119"
             target="_blank"
             rel="noopener noreferrer"
-            className="block bg-primary text-primary-foreground px-5 py-3 rounded-lg text-center font-heading font-semibold"
+            className="block bg-orange-500 text-white px-5 py-3 rounded-full text-center text-base font-semibold mt-2"
           >
             WhatsApp
           </a>
