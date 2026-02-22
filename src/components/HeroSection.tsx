@@ -1,4 +1,4 @@
-import heroBg from "@/images/metal2.jpg";
+import heroBg from "@/images/hero-background.jpg";
 import { ArrowRight, MessageCircle, Star, Trophy } from "lucide-react";
 
 const WHATSAPP_URL = "https://wa.me/51940755119?text=Hola%2C%20quiero%20agendar%20un%20mantenimiento";
@@ -146,6 +146,24 @@ const HeroSection = () => {
                  transform: scale(1.2);
                }
              `}</style>
+          </div>
+
+          <div className="hidden md:block w-px h-8 bg-white/10 group-hover:bg-white/20 transition-colors duration-300" />
+
+          {/* Review count */}
+          <div className="flex flex-col items-center md:items-start gap-1 text-center md:text-left">
+            <span
+              className="text-2xl md:text-3xl font-black text-white leading-none group-hover:text-orange-100 transition-colors duration-300"
+              style={{ fontFamily: "'Inter', sans-serif" }}
+            >
+              +130
+            </span>
+            <span
+              className="text-sm text-white/60 font-medium group-hover:text-white/80 transition-colors duration-300"
+              style={{ fontFamily: "'Inter', sans-serif" }}
+            >
+              reseñas verificadas en Google
+            </span>
           </div>
 
           <div className="hidden md:block w-px h-8 bg-white/10 group-hover:bg-white/20 transition-colors duration-300" />

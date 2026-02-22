@@ -3,12 +3,13 @@ import { useScrollReveal } from "@/hooks/useScrollReveal";
 import { useState } from "react";
 import ServiceDialog from "@/components/ServiceDialog";
 
-import gpuImg from "@/images/GPU.jpg";
-import pcImg from "@/images/PCGAMER.png";
-import laptopImg from "@/images/LAPTOPMETAL.jpg";
-import macImg from "@/images/MAC.jpg";
-import ps5Img from "@/images/2ps5.jpg";
-import hardwareImg from "@/images/hardware.jpg";
+// Updated image imports with new filenames
+import gpuImg from "@/images/gpu-maintenance.jpg";
+import pcImg from "@/images/pc-gamer-setup.png";
+import laptopImg from "@/images/laptop-maintenance.jpg";
+import macImg from "@/images/macbook-maintenance.jpg";
+import ps5Img from "@/images/console-ps5.jpg";
+import hardwareImg from "@/images/hardware-tools.jpg";
 import * as React from "react";
 
 interface ServiceCard {
@@ -17,6 +18,7 @@ interface ServiceCard {
   image?: string;
   items: { name: string; price: string }[];
   dialogKey: string;
+  tags?: string[];
 }
 
 const PADS_TIER = {
@@ -219,6 +221,7 @@ const services: ServiceCard[] = [
     title: "PC de Escritorio",
     image: pcImg,
     dialogKey: "pc",
+    tags: ["En taller"],
     items: [
       { name: "Básico – Preventivo", price: "S/. 65" },
       { name: "Profundo – Correctivo", price: "S/. 100 - 250" },
@@ -229,6 +232,7 @@ const services: ServiceCard[] = [
     title: "Tarjetas Gráficas",
     image: gpuImg,
     dialogKey: "gpu",
+    tags: ["A domicilio", "En taller"],
     items: [
       { name: "Básico – Preventivo", price: "S/. 25" },
       { name: "Profundo – Correctivo", price: "S/. 50 - 150" },
@@ -240,6 +244,7 @@ const services: ServiceCard[] = [
     title: "Laptops",
     image: laptopImg,
     dialogKey: "laptop",
+    tags: ["A domicilio", "En taller"],
     items: [
       { name: "Mantenimiento completo", price: "S/. 80 - 150" },
       { name: "Cambio Pads Térmicos", price: "Desde S/. 70" },
@@ -250,6 +255,7 @@ const services: ServiceCard[] = [
     title: "MacBooks",
     image: macImg,
     dialogKey: "mac",
+    tags: ["A domicilio", "En taller"],
     items: [
       { name: "Mantenimiento completo", price: "S/. 100 - 150" },
     ],
@@ -259,6 +265,7 @@ const services: ServiceCard[] = [
     title: "Consolas",
     image: ps5Img,
     dialogKey: "consola",
+    tags: ["En taller"],
     items: [
       { name: "PS4 / PS5 / Xbox", price: "S/. 70 - 150" },
       { name: "Cambio Pads Térmicos", price: "Desde S/. 70" },
@@ -269,6 +276,7 @@ const services: ServiceCard[] = [
     title: "Software y Hardware",
     image: hardwareImg,
     dialogKey: "hardware",
+    tags: ["En taller"],
     items: [
       { name: "Formateo & Optimización", price: "Desde S/. 30" },
       { name: "Diagnóstico & Reparación", price: "Desde S/. 50" },
@@ -286,7 +294,7 @@ const ServicesSection = () => {
       <div className="container mx-auto px-6">
         <div ref={ref} className="text-center mb-16">
           <span className="text-primary font-heading font-semibold text-sm tracking-widest uppercase">
-            Catálogo 2025
+            Catálogo 2026
           </span>
           <h2 className="text-3xl md:text-4xl font-heading font-bold mt-3 text-foreground">
             Nuestros Servicios
@@ -301,24 +309,48 @@ const ServicesSection = () => {
             <div
               key={s.title}
               onClick={() => setOpenDialog(s.dialogKey)}
-              className="group border border-white/10 rounded-2xl overflow-hidden hover:border-orange-500/50 hover:shadow-[0_0_30px_rgba(249,115,22,0.15)] hover:scale-[1.02] transition-all duration-300 bg-[#0a0a0a] cursor-pointer"
+              className="group relative border border-white/10 rounded-2xl overflow-hidden hover:border-orange-500/50 hover:shadow-[0_0_30px_rgba(249,115,22,0.15)] hover:scale-[1.02] transition-all duration-300 bg-[#0a0a0a] cursor-pointer transform-gpu"
               style={{ animationDelay: `${i * 0.1}s` }}
             >
+              {/* Fix for Safari/Chrome sub-pixel rendering line */}
+              <div className="absolute inset-0 rounded-2xl border border-transparent pointer-events-none z-20" />
+
               {/* Image banner */}
               {s.image ? (
-                <div className="relative h-56 w-full overflow-hidden">
-                  <img
-                    src={s.image}
-                    alt={s.title}
-                    className="w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-110"
-                  />
-                  <div className="absolute inset-0 bg-black/50 group-hover:bg-black/35 transition-all duration-300" />
-                  <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.7) 100%)" }} />
-                  <div className="absolute bottom-4 left-4 w-10 h-10 rounded-lg bg-primary/90 flex items-center justify-center text-white shadow-lg shadow-primary/30">
+                <div className="relative h-56 w-full overflow-hidden isolate bg-black">
+                  {/* Wrapper for scaling image + overlays together */}
+                  <div
+                    className="relative w-full h-full transition-transform duration-700 group-hover:scale-110 will-change-transform"
+                    style={{ backfaceVisibility: "hidden", transformStyle: "preserve-3d" }}
+                  >
+                    <img
+                      src={s.image}
+                      alt={s.title}
+                      className="absolute inset-0 w-full h-full object-cover object-center scale-[1.01]" // Slight initial scale to prevent gaps
+                      style={{ backfaceVisibility: "hidden" }}
+                    />
+
+                    {/* Overlay layers - made 1% larger to cover sub-pixel gaps during transform */}
+                    <div
+                      className="absolute -inset-[1px] bg-black/50 group-hover:bg-black/35 transition-all duration-300 z-10"
+                      style={{ backfaceVisibility: "hidden", transform: "translateZ(0)" }}
+                    />
+                    <div
+                      className="absolute -inset-[1px] z-10"
+                      style={{
+                        background: "linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.7) 100%)",
+                        backfaceVisibility: "hidden",
+                         transform: "translateZ(0)"
+                      }}
+                    />
+                  </div>
+
+                  {/* Content that shouldn't scale (Icons & Text) */}
+                  <div className="absolute bottom-4 left-4 w-10 h-10 rounded-lg bg-primary/90 flex items-center justify-center text-white shadow-lg shadow-primary/30 z-20 pointer-events-none">
                     {s.icon}
                   </div>
                   {/* "Ver detalle" hint */}
-                  <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20 pointer-events-none">
                     <span className="text-xs text-white/70 font-medium" style={{ fontFamily: "'Inter', sans-serif" }}>
                       Ver detalle →
                     </span>
@@ -337,6 +369,18 @@ const ServicesSection = () => {
 
               {/* Card body */}
               <div className="p-6">
+                {s.tags && (
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {s.tags.slice(0, 2).map((tag) => (
+                      <span
+                        key={tag}
+                        className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium tracking-wide text-orange-400 bg-orange-500/10 border border-orange-500/20"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
                 <h3 className="font-heading font-bold text-xl text-white mb-4 tracking-wide">
                   {s.title}
                 </h3>
