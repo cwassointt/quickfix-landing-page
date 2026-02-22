@@ -1,3 +1,4 @@
+// Updated image import
 import heroBg from "@/images/hero-background.jpg";
 import { ArrowRight, MessageCircle, Star, Trophy } from "lucide-react";
 
@@ -56,38 +57,37 @@ const HeroSection = () => {
             </span>
           </div>
 
-          {/* H1 */}
+          {/* Maximum performance H1 */}
           <h1 className="text-4xl md:text-5xl lg:text-[3.8rem] xl:text-[4.2rem] font-black text-white leading-[1.05] mb-6 tracking-tight" style={{ fontFamily: "'Inter', sans-serif" }}>
-            Experto en mantenimientos con{" "}
+            Mantenimiento de <br className="hidden md:block"/>Laptops y PCs con{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-orange-600">
               Metal Líquido
             </span>{" "}
-            para Laptops y PCs de Gama Alta
+            en Lima, Perú
           </h1>
 
           {/* Description */}
           <p className="text-white/70 text-base md:text-lg leading-relaxed mb-10 max-w-[520px] font-light" style={{ fontFamily: "'Inter', sans-serif" }}>
-            Especialista en ASUS ROG STRIX y estaciones de trabajo. Ofrecemos mantenimiento
-            profundo con lavado químico, descontaminado y acabado con encerado mate para
-            restaurar la ingeniería de tu equipo.
+            Especialista en equipos ASUS ROG con tecnología de Metal Líquido, Laptops High-End y Computadoras de Gama Alta. Recuperamos el rendimiento extremo de tu máquina con procesos de laboratorio.
           </p>
 
           {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex flex-col sm:flex-row gap-5">
             <a
               href={WHATSAPP_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-3 bg-orange-500 hover:bg-orange-400 text-white px-8 py-4 rounded-lg font-bold text-base transition-all duration-300 shadow-[0_0_20px_rgba(249,115,22,0.3)] hover:shadow-[0_0_30px_rgba(249,115,22,0.5)] hover:-translate-y-1 group"
+              className="relative overflow-hidden inline-flex items-center justify-center gap-3 bg-orange-500 text-white px-8 py-4 rounded-xl font-bold text-base transition-all duration-300 shadow-[0_10px_30px_-5px_rgba(249,115,22,0.4)] hover:shadow-[0_20px_40px_-10px_rgba(249,115,22,0.6)] hover:-translate-y-1 group"
               style={{ fontFamily: "'Inter', sans-serif" }}
             >
-              <MessageCircle className="w-5 h-5" />
-              Agenda tu mantenimiento
-              <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+              <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out" />
+              <MessageCircle className="w-5 h-5 relative z-10" />
+              <span className="relative z-10">Agenda tu mantenimiento</span>
+              <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1 relative z-10" />
             </a>
             <a
               href="#servicios"
-              className="inline-flex items-center justify-center px-8 py-4 rounded-lg border border-white/20 hover:border-white/80 text-white/80 hover:text-white font-semibold text-base transition-all duration-300 hover:bg-white/5 backdrop-blur-sm"
+              className="inline-flex items-center justify-center px-8 py-4 rounded-xl border border-white/20 hover:border-white/40 text-white/90 hover:text-white font-semibold text-base transition-all duration-300 hover:bg-white/5 backdrop-blur-sm hover:-translate-y-1"
               style={{ fontFamily: "'Inter', sans-serif" }}
             >
               Ver servicios y precios
@@ -95,15 +95,15 @@ const HeroSection = () => {
           </div>
 
           {/* Stats strip */}
-          <div className="flex gap-8 md:gap-12 mt-12 pt-8 border-t border-white/10">
+          <div className="flex gap-8 md:gap-14 mt-14 pt-8 border-t border-white/10 animate-fade-in delay-500">
             {[
               { value: "24h", label: "Disponibilidad" },
               { value: "+130", label: "Reseñas 5★" },
               { value: "Premium", label: "Insumos" },
             ].map((stat) => (
-              <div key={stat.label} className="group cursor-default">
-                <p className="text-2xl md:text-3xl font-black text-white group-hover:text-orange-500 transition-colors duration-300" style={{ fontFamily: "'Inter', sans-serif" }}>{stat.value}</p>
-                <p className="text-[10px] md:text-xs text-white/40 uppercase tracking-[0.2em] mt-1 font-bold" style={{ fontFamily: "'Inter', sans-serif" }}>{stat.label}</p>
+              <div key={stat.label} className="group cursor-default transition-all duration-300 hover:opacity-100 opacity-80">
+                <p className="text-3xl md:text-3xl font-black text-white group-hover:text-orange-500 transition-colors duration-300 transform group-hover:scale-105 origin-left" style={{ fontFamily: "'Inter', sans-serif" }}>{stat.value}</p>
+                <p className="text-[10px] md:text-xs text-white/40 uppercase tracking-[0.2em] mt-2 font-bold group-hover:text-white/60 transition-colors" style={{ fontFamily: "'Inter', sans-serif" }}>{stat.label}</p>
               </div>
             ))}
           </div>

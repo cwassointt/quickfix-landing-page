@@ -98,17 +98,17 @@ const ProcessSection = () => {
 
 				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
 					{steps.map((step, i) => (
-						<div key={step.title} className="text-center group">
-							<div className="relative mx-auto w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-6 group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
+						<div key={step.title} className="text-center group p-4 rounded-2xl hover:bg-white/5 transition-colors duration-500">
+							<div className="relative mx-auto w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-6 group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:scale-110 group-hover:rotate-6 shadow-lg shadow-orange-500/10">
 								{step.icon}
-								<span className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-heading font-bold flex items-center justify-center">
+								<span className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-surface-dark border-2 border-primary text-primary text-xs font-heading font-bold flex items-center justify-center shadow-md z-10 group-hover:bg-white group-hover:text-orange-600 transition-colors">
 									{i + 1}
 								</span>
 							</div>
-							<h3 className="font-heading font-semibold text-lg mb-2">
+							<h3 className="font-heading font-semibold text-xl mb-3 text-white">
 								{step.title}
 							</h3>
-							<p className="text-sm text-surface-dark-foreground/60 leading-relaxed">
+							<p className="text-sm text-surface-dark-foreground/60 leading-relaxed group-hover:text-surface-dark-foreground/80 transition-colors">
 								{step.desc}
 							</p>
 						</div>
@@ -133,20 +133,21 @@ const ProcessSection = () => {
 					</div>
 
 					{/* Materials grid */}
-					<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3">
-						{materials.map((mat) => (
+					<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4">
+						{materials.map((mat, i) => (
 							<div
 								key={mat.category}
-								className="group relative bg-white/3 hover:bg-white/6 border border-white/8 hover:border-primary/30 rounded-xl p-4 transition-all duration-300"
+								className="group relative bg-[#0F0F0E] hover:bg-[#161616] border border-white/5 hover:border-orange-500/30 rounded-2xl p-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-orange-500/5"
+                                style={{ transitionDelay: `${i * 50}ms` }}
 							>
 								{/* Icon */}
-								<div className="w-8 h-8 rounded-lg bg-primary/10 group-hover:bg-primary/20 flex items-center justify-center text-primary mb-3 transition-colors duration-300">
+								<div className="w-10 h-10 rounded-xl bg-orange-500/5 group-hover:bg-orange-500/10 flex items-center justify-center text-orange-500/70 group-hover:text-orange-500 mb-4 transition-all duration-300 group-hover:scale-110">
 									{mat.icon}
 								</div>
 
 								{/* Category */}
 								<p
-									className="text-[10px] font-bold text-primary/80 uppercase tracking-widest mb-2"
+									className="text-[10px] font-black text-gray-500 group-hover:text-orange-400 uppercase tracking-widest mb-3 transition-colors duration-300"
 									style={{ fontFamily: "'Inter', sans-serif" }}
 								>
 									{mat.category}
