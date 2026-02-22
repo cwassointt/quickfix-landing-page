@@ -181,14 +181,14 @@ const FAQDialog = ({ open, onClose }: FAQDialogProps) => {
 
   return (
     <div
-      className={`fixed inset-0 z-[60] flex items-center justify-center px-4 transition-all duration-500 ${
-        open ? "bg-black/90 backdrop-blur-md" : "bg-black/0 backdrop-blur-none pointer-events-none"
+      className={`fixed inset-0 z-[60] flex items-center justify-center px-4 transition-all duration-500 ease-out ${
+        open ? "bg-black/80 backdrop-blur-md opacity-100" : "bg-black/0 backdrop-blur-none opacity-0 pointer-events-none"
       }`}
       onClick={onClose}
     >
       <div
         className={`bg-[#0F0F0E] w-full max-w-2xl max-h-[85vh] rounded-3xl border border-white/10 shadow-[0_0_50px_-10px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] transform ${
-          open ? "scale-100 opacity-100 translate-y-0" : "scale-90 opacity-0 translate-y-20"
+          open ? "scale-100 opacity-100 translate-y-0" : "scale-90 opacity-0 translate-y-12"
         }`}
         onClick={(e) => e.stopPropagation()}
       >
