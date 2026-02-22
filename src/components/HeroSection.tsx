@@ -1,5 +1,5 @@
 // Updated image import
-import heroBg from "@/images/hero-background.jpg";
+import heroBg from "@/images/hero/hero-background.jpg";
 import { ArrowRight, MessageCircle, Star, Trophy } from "lucide-react";
 
 const WHATSAPP_URL = "https://wa.me/51940755119?text=Hola%2C%20quiero%20agendar%20un%20mantenimiento";
