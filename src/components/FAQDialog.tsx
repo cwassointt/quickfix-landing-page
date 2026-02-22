@@ -25,13 +25,13 @@ const FAQItem = ({ question, answer, icon, isOpen, onClick }: FAQItemProps) => {
             </span>
         </div>
         <ChevronDown
-          className={`w-5 h-5 text-gray-500 transition-transform duration-500 ease-[cubic-bezier(0.68,-0.55,0.27,1.55)] ${
+          className={`w-5 h-5 text-gray-500 transition-transform duration-500 [transition-timing-function:cubic-bezier(0.68,-0.55,0.27,1.55)] ${
             isOpen ? "rotate-180 text-orange-500" : ""
           }`}
         />
       </button>
       <div
-        className={`grid transition-[grid-template-rows] duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1)] ${
+        className={`grid transition-[grid-template-rows] duration-500 [transition-timing-function:cubic-bezier(0.25,0.1,0.25,1)] ${
           isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
         }`}
       >
@@ -185,9 +185,10 @@ const FAQDialog = ({ open, onClose }: FAQDialogProps) => {
         open ? "bg-black/80 backdrop-blur-md opacity-100" : "bg-black/0 backdrop-blur-none opacity-0 pointer-events-none"
       }`}
       onClick={onClose}
+      style={{ fontFamily: "var(--font-visual-sans, sans-serif)" }}
     >
       <div
-        className={`bg-[#0F0F0E] w-full max-w-2xl max-h-[85vh] rounded-3xl border border-white/10 shadow-[0_0_50px_-10px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] transform ${
+        className={`bg-[#0F0F0E] w-full max-w-2xl max-h-[85vh] rounded-3xl border border-white/10 shadow-[0_0_50px_-10px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col transition-all duration-500 [transition-timing-function:cubic-bezier(0.32,0.72,0,1)] transform ${
           open ? "scale-100 opacity-100 translate-y-0" : "scale-90 opacity-0 translate-y-12"
         }`}
         onClick={(e) => e.stopPropagation()}
@@ -196,7 +197,7 @@ const FAQDialog = ({ open, onClose }: FAQDialogProps) => {
         <div className="p-6 border-b border-white/10 flex justify-between items-center bg-[#141414]">
           <div>
             <span className="text-orange-500 font-bold uppercase tracking-widest text-xs">Knowledge Base</span>
-            <h2 className="text-2xl font-bold text-white mt-1">Preguntas Frecuentes</h2>
+            <h2 className="text-xl md:text-2xl font-bold text-white mt-1">Preguntas Frecuentes</h2>
           </div>
           <button
             onClick={onClose}

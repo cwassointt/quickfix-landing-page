@@ -114,7 +114,7 @@ const ContactSection = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-400 text-white px-4 py-2 rounded-full text-xs font-semibold transition-all duration-200 shadow-lg shadow-orange-500/40 hover:shadow-orange-400/50 hover:scale-105"
-                  style={{ fontFamily: "'Inter', sans-serif" }}
+                  style={{ fontFamily: "var(--font-visual-sans, sans-serif)" }}
                 >
                   <Navigation className="w-3.5 h-3.5" />
                   Cómo llegar

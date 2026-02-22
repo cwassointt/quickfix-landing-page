@@ -13,7 +13,7 @@ const Footer = () => {
 
             {/* Brand Column */}
             <div className="col-span-1 md:col-span-2">
-              <p className="font-black text-2xl tracking-tight text-white mb-4" style={{ fontFamily: "'Inter', sans-serif" }}>
+              <p className="font-black text-2xl tracking-tight text-white mb-4" style={{ fontFamily: "var(--font-visual-sans, sans-serif)" }}>
                 Quick<span className="text-orange-500">Fix</span>
               </p>
               <p className="text-sm text-gray-400 leading-relaxed max-w-sm mb-6">

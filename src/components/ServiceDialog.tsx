@@ -14,8 +14,8 @@ const PADS_TIER = {
     "Lavado químico",
     "Descontaminado",
     "Medición milimétrica del pad",
-    "Situar nuevos pads térmicos (Extreme Odyssey II)",
-    "Aplicar nueva Masilla térmica UTP-8 Upsiren (15 w/mK)",
+    "Situar nuevos pads térmicos (Extreme Odyssey II) (14.8 w/mK)",
+    "Aplicar nueva Masilla térmica UTP-8 Upsiren (14.8 w/mK)",
   ],
 };
 
@@ -27,7 +27,7 @@ const dialogData: Record<string, { title: string; tiers: { name: string; price: 
         name: "BÁSICO",
         price: "S/. 65",
         subtitle: "Mantenimiento Preventivo",
-        items: ["Limpieza de polvo", "Re-aplicación de pasta térmica", "Encerado mate"],
+        items: ["Limpieza de polvo", "Re-aplicación de pasta térmica (TF8 13.8 w/mK) / (MX4 8.5 w/mK)", "Encerado mate"],
       },
       {
         name: "PROFUNDO",
@@ -39,7 +39,7 @@ const dialogData: Record<string, { title: string; tiers: { name: string; price: 
           "Lavado químico",
           "Descontaminado",
           "Re-ensamble de PC",
-          "Re-aplicar pasta térmica (CPU)",
+          "Re-aplicar pasta térmica (TF8 13.8 w/mK) / (MX4 8.5 w/mK)",
           "Gestión de cables",
           "Encerado mate",
           "Lubricado",
@@ -66,7 +66,7 @@ const dialogData: Record<string, { title: string; tiers: { name: string; price: 
           "Limpieza profunda GPU",
           "Lavado químico",
           "Descontaminado",
-          "Re-aplicar pasta térmica (TF9)",
+          "Re-aplicar pasta térmica (TF8 13.8 w/mK) / (MX4 8.5 w/mK)",
           "Re-ensamble de GPU",
           "Lubricado de ventiladores",
           "Encerado mate",
@@ -88,7 +88,7 @@ const dialogData: Record<string, { title: string; tiers: { name: string; price: 
           "Limpieza profunda",
           "Lavado químico",
           "Descontaminado",
-          "Re-aplicar pasta térmica",
+          "Re-aplicar pasta térmica (TF8 13.8 w/mK) / (MX4 8.5 w/mK)",
           "Re-ensamble de laptop",
           "Calibración & lubricado de bisagras",
           "Limpieza de teclado & touchpad",
@@ -112,7 +112,7 @@ const dialogData: Record<string, { title: string; tiers: { name: string; price: 
           "Limpieza profunda",
           "Lavado químico",
           "Descontaminado",
-          "Re-aplicar pasta térmica",
+          "Re-aplicar pasta térmica (TF8 13.8 w/mK) / (MX4 8.5 w/mK)",
           "Re-ensamble de MacBook",
           "Limpieza de teclado & touchpad",
           "Encerado mate",
@@ -133,7 +133,7 @@ const dialogData: Record<string, { title: string; tiers: { name: string; price: 
           "Limpieza profunda",
           "Lavado químico",
           "Descontaminado",
-          "Re-aplicar pasta térmica",
+          "Re-aplicar pasta térmica (TF8 13.8 w/mK) / (MX4 8.5 w/mK)",
           "Re-ensamble de consola",
           "Encerado mate",
         ],
@@ -202,7 +202,9 @@ const highlightKeywords = (text: string | React.ReactNode): React.ReactNode => {
   if (typeof text !== 'string') return text;
 
   // Highlighting technical specs (e.g., 14.8 w/mK)
-  const specRegex = /(\d+(\.\d+)?\s?w\/mK)/i;
+  // Fix: Removed nested capturing group and ensured no leading space requirement in capture if unnecessary
+  // We look for optional space before the number, but capture strictly the number onwards
+  const specRegex = /((?:\d+(?:\.\d+)?)\s?w\/mK)/i;
   const parts = text.split(specRegex);
 
   if (parts.length > 1) {
@@ -211,7 +213,7 @@ const highlightKeywords = (text: string | React.ReactNode): React.ReactNode => {
               {parts.map((part, i) => {
                   if (!part) return null;
                   if (specRegex.test(part)) {
-                      return <span key={i} className="text-xs italic opacity-70 ml-1 font-mono">{part}</span>;
+                      return <span key={i} className="text-xs italic opacity-70 ml-1 font-mono">{part.trim()}</span>;
                   }
                   return <span key={i}>{part}</span>;
               })}
@@ -273,7 +275,7 @@ const ServiceDialog = ({ open, onClose, serviceId }: ServiceDialogProps) => {
           className={`
             relative w-full max-w-2xl max-h-[90vh] flex flex-col 
             bg-[#0f0f0f] border border-white/5 rounded-3xl shadow-2xl pointer-events-auto 
-            transition-all duration-500 [transition-timing-function:cubic-bezier(0.32,0.72,0,1)]
+            transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]
             ${open ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-8 scale-95"}
           `}
           style={{ fontFamily: "var(--font-visual-sans, sans-serif)" }}

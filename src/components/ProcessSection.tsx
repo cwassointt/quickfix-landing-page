@@ -156,7 +156,7 @@ const ProcessSection = () => {
                             {[...materials, ...materials].map((mat, index) => (
                                 <div
                                     key={`${mat.category}-${index}`}
-                                    className="relative group w-[300px] h-[480px] mx-5 bg-[#0A0A0A] rounded-3xl p-6 flex flex-col transition-all duration-300 hover:-translate-y-2 border border-transparent hover:border-[#FF6600]"
+                                    className="relative group w-[300px] h-[400px] mx-5 bg-[#0A0A0A] rounded-3xl p-6 flex flex-col transition-all duration-300 hover:-translate-y-2 border border-transparent hover:border-[#FF6600]"
                                 >
                                     {/* Glassmorphism Hover Effect Border (Redundant if main border is used, simplifying for cleaner implementation) */}
                                     {/* Subtle Layout Background Glow on Hover */}
@@ -175,7 +175,7 @@ const ProcessSection = () => {
 
                                     {/* 2. Product Visualization - Uniform Aspect Ratio Container */}
                                     {/* Added mb-5 for the requested 20px visual separation */}
-                                    <div className="relative aspect-video w-full flex items-center justify-center p-4 mb-5 bg-gradient-to-b from-[#111] to-[#0A0A0A] rounded-2xl border border-white/5 group-hover:border-white/10 transition-all duration-300 overflow-hidden">
+                                    <div className="relative aspect-video w-full flex items-center justify-center p-4 mb-4 bg-gradient-to-b from-[#111] to-[#0A0A0A] rounded-2xl border border-white/5 group-hover:border-white/10 transition-all duration-300 overflow-hidden">
                                         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                                         <img
                                             src={getMaterialImage(mat.img)}

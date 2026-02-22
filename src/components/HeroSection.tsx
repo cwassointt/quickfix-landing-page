@@ -45,7 +45,7 @@ const HeroSection = () => {
           {/* BRAND WATERMARK (New Addition for visual impact) */}
           <div
              className="absolute -top-10 -left-10 md:-left-20 text-[6rem] md:text-[10rem] font-black text-white/[0.03] select-none pointer-events-none z-0 tracking-tighter leading-none"
-             style={{ fontFamily: "'Inter', sans-serif" }}
+             style={{ fontFamily: "var(--font-visual-sans, sans-serif)" }}
           >
             QUICKFIX
           </div>
@@ -53,13 +53,13 @@ const HeroSection = () => {
           {/* Mini badge */}
           <div className="relative z-10 inline-flex items-center gap-2 mb-7 bg-white/5 border border-white/10 px-4 py-1.5 rounded-full backdrop-blur-sm">
             <span className="w-2 h-2 rounded-full bg-orange-500 animate-pulse shadow-[0_0_10px_rgba(249,115,22,0.8)]" />
-            <span className="text-orange-500 text-xs font-bold tracking-[0.1em] uppercase" style={{ fontFamily: "'Inter', sans-serif" }}>
+            <span className="text-orange-500 text-xs font-bold tracking-[0.1em] uppercase" style={{ fontFamily: "var(--font-visual-sans, sans-serif)" }}>
               Abierto 24h (Previa Cita) — San Miguel, Lima
             </span>
           </div>
 
           {/* Maximum performance H1 */}
-          <h1 className="text-4xl md:text-5xl lg:text-[3.8rem] xl:text-[4.2rem] font-black text-white leading-[1.05] mb-6 tracking-tight" style={{ fontFamily: "'Inter', sans-serif" }}>
+          <h1 className="text-4xl md:text-5xl lg:text-[3.8rem] xl:text-[4.2rem] font-black text-white leading-[1.05] mb-6 tracking-tight" style={{ fontFamily: "var(--font-visual-sans, sans-serif)" }}>
             Mantenimiento de <br className="hidden md:block"/>Laptops y PCs con{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-orange-600">
               Metal Líquido
@@ -68,7 +68,7 @@ const HeroSection = () => {
           </h1>
 
           {/* Description */}
-          <p className="text-white/70 text-base md:text-lg leading-relaxed mb-10 max-w-[520px] font-light" style={{ fontFamily: "'Inter', sans-serif" }}>
+          <p className="text-white/70 text-base md:text-lg leading-relaxed mb-10 max-w-[520px] font-light" style={{ fontFamily: "var(--font-visual-sans, sans-serif)" }}>
             Especialista en equipos ASUS ROG con tecnología de Metal Líquido, Laptops High-End y Computadoras de Gama Alta. Recuperamos el rendimiento extremo de tu máquina con procesos de laboratorio.
           </p>
 
@@ -79,7 +79,7 @@ const HeroSection = () => {
               target="_blank"
               rel="noopener noreferrer"
               className="relative overflow-hidden inline-flex items-center justify-center gap-3 bg-orange-500 text-white px-8 py-4 rounded-xl font-bold text-base transition-all duration-300 shadow-[0_10px_30px_-5px_rgba(249,115,22,0.4)] hover:shadow-[0_20px_40px_-10px_rgba(249,115,22,0.6)] hover:-translate-y-1 group"
-              style={{ fontFamily: "'Inter', sans-serif" }}
+              style={{ fontFamily: "var(--font-visual-sans, sans-serif)" }}
             >
               <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out" />
               <MessageCircle className="w-5 h-5 relative z-10" />
@@ -89,7 +89,7 @@ const HeroSection = () => {
             <a
               href="#servicios"
               className="inline-flex items-center justify-center px-8 py-4 rounded-xl border border-white/20 hover:border-white/40 text-white/90 hover:text-white font-semibold text-base transition-all duration-300 hover:bg-white/5 backdrop-blur-sm hover:-translate-y-1"
-              style={{ fontFamily: "'Inter', sans-serif" }}
+              style={{ fontFamily: "var(--font-visual-sans, sans-serif)" }}
             >
               Ver servicios y precios
             </a>
@@ -103,8 +103,8 @@ const HeroSection = () => {
               { value: "Premium", label: "Insumos" },
             ].map((stat) => (
               <div key={stat.label} className="group cursor-default transition-all duration-300 hover:opacity-100 opacity-80">
-                <p className="text-3xl md:text-3xl font-black text-white group-hover:text-orange-500 transition-colors duration-300 transform group-hover:scale-105 origin-left" style={{ fontFamily: "'Inter', sans-serif" }}>{stat.value}</p>
-                <p className="text-[10px] md:text-xs text-white/40 uppercase tracking-[0.2em] mt-2 font-bold group-hover:text-white/60 transition-colors" style={{ fontFamily: "'Inter', sans-serif" }}>{stat.label}</p>
+                <p className="text-3xl md:text-3xl font-black text-white group-hover:text-orange-500 transition-colors duration-300 transform group-hover:scale-105 origin-left" style={{ fontFamily: "var(--font-visual-sans, sans-serif)" }}>{stat.value}</p>
+                <p className="text-[10px] md:text-xs text-white/40 uppercase tracking-[0.2em] mt-2 font-bold group-hover:text-white/60 transition-colors" style={{ fontFamily: "var(--font-visual-sans, sans-serif)" }}>{stat.label}</p>
               </div>
             ))}
           </div>
@@ -131,7 +131,7 @@ const HeroSection = () => {
 
           {/* Stars + score - Hover: Stars pop one by one */}
           <div className="flex items-center gap-3">
-             <span className="text-3xl font-black text-white tracking-tighter group-hover:text-orange-400 transition-colors duration-300" style={{ fontFamily: "'Inter', sans-serif" }}>5.0</span>
+             <span className="text-3xl font-black text-white tracking-tighter group-hover:text-orange-400 transition-colors duration-300" style={{ fontFamily: "var(--font-visual-sans, sans-serif)" }}>5.0</span>
             <div className="flex gap-0.5">
               {Array.from({ length: 5 }).map((_, i) => (
                 <Star
@@ -141,7 +141,6 @@ const HeroSection = () => {
                 />
               ))}
             </div>
-            {/* CSS to trigger star animation on group hover */}
              <style>{`
                .group:hover .lucide-star {
                  transform: scale(1.2);
@@ -155,13 +154,13 @@ const HeroSection = () => {
           <div className="flex flex-col items-center md:items-start gap-1 text-center md:text-left">
             <span
               className="text-2xl md:text-3xl font-black text-white leading-none group-hover:text-orange-100 transition-colors duration-300"
-              style={{ fontFamily: "'Inter', sans-serif" }}
+              style={{ fontFamily: "var(--font-visual-sans, sans-serif)" }}
             >
               +130
             </span>
             <span
               className="text-sm text-white/60 font-medium group-hover:text-white/80 transition-colors duration-300"
-              style={{ fontFamily: "'Inter', sans-serif" }}
+              style={{ fontFamily: "var(--font-visual-sans, sans-serif)" }}
             >
               reseñas verificadas en Google
             </span>
@@ -173,11 +172,11 @@ const HeroSection = () => {
           <div className="flex flex-col items-center md:items-start text-center md:text-left">
              <div className="flex items-center gap-2 mb-0.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"/>
-                <span className="text-white/90 text-sm font-bold tracking-wide group-hover:text-white transition-colors duration-300" style={{ fontFamily: "'Inter', sans-serif" }}>
+                <span className="text-white/90 text-sm font-bold tracking-wide group-hover:text-white transition-colors duration-300" style={{ fontFamily: "var(--font-visual-sans, sans-serif)" }}>
                  Google Maps
                 </span>
              </div>
-            <span className="text-white/50 text-xs font-medium uppercase tracking-wider group-hover:text-white/70 transition-colors duration-300" style={{ fontFamily: "'Inter', sans-serif" }}>
+            <span className="text-white/50 text-xs font-medium uppercase tracking-wider group-hover:text-white/70 transition-colors duration-300" style={{ fontFamily: "var(--font-visual-sans, sans-serif)" }}>
               Servicio #1 en San Miguel
             </span>
           </div>

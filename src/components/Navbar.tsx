@@ -38,7 +38,7 @@ const Navbar = () => {
           <a
             href="#"
             className="group relative flex items-center gap-1 font-black text-5xl tracking-tighter flex-shrink-0 transition-transform duration-300 hover:scale-[1.02]"
-            style={{ fontFamily: "'Inter', sans-serif" }}
+            style={{ fontFamily: "var(--font-visual-sans, sans-serif)" }}
           >
             {/* Intense glow effect behind logo */}
             <div className="absolute -inset-6 bg-orange-500/25 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-full" />
@@ -58,7 +58,7 @@ const Navbar = () => {
                 key={l.href}
                 href={l.href}
                 className="relative group text-sm font-bold text-white/80 hover:text-white transition-colors duration-300 tracking-widest uppercase"
-                style={{ fontFamily: "'Inter', sans-serif" }}
+                style={{ fontFamily: "var(--font-visual-sans, sans-serif)" }}
               >
                 {l.label}
                 <span className="absolute -bottom-2 left-0 w-0 h-[2px] bg-orange-500 transition-all duration-300 group-hover:w-full opacity-0 group-hover:opacity-100 ease-out" />
@@ -68,7 +68,7 @@ const Navbar = () => {
             <button
                 onClick={() => setFaqOpen(true)}
                 className="relative group text-sm font-bold text-white/80 hover:text-white transition-colors duration-300 tracking-widest uppercase flex items-center gap-2"
-                style={{ fontFamily: "'Inter', sans-serif" }}
+                style={{ fontFamily: "var(--font-visual-sans, sans-serif)" }}
             >
                 FAQ
                 <span className="absolute -bottom-2 left-0 w-0 h-[2px] bg-orange-500 transition-all duration-300 group-hover:w-full opacity-0 group-hover:opacity-100 ease-out" />
@@ -82,7 +82,7 @@ const Navbar = () => {
               target="_blank"
               rel="noopener noreferrer"
               className="group relative overflow-hidden bg-white text-black px-7 py-3 rounded-full text-sm font-bold transition-all duration-300 hover:shadow-[0_0_20px_rgba(255,255,255,0.3)] hover:scale-105"
-              style={{ fontFamily: "'Inter', sans-serif" }}
+              style={{ fontFamily: "var(--font-visual-sans, sans-serif)" }}
             >
               <span className="relative z-10 group-hover:text-orange-600 transition-colors duration-300">WhatsApp</span>
             </a>
@@ -107,7 +107,7 @@ const Navbar = () => {
                 href={l.href}
                 onClick={() => setMenuOpen(false)}
                 className="block text-white text-base font-medium py-2 hover:text-orange-400 transition-colors"
-                style={{ fontFamily: "'Inter', sans-serif" }}
+                style={{ fontFamily: "var(--font-visual-sans, sans-serif)" }}
               >
                 {l.label}
               </a>
@@ -118,7 +118,7 @@ const Navbar = () => {
                     setFaqOpen(true);
                 }}
                 className="block w-full text-left text-white text-base font-medium py-2 hover:text-orange-400 transition-colors"
-                style={{ fontFamily: "'Inter', sans-serif" }}
+                style={{ fontFamily: "var(--font-visual-sans, sans-serif)" }}
             >
                 PREGUNTAS FRECUENTES
             </button>
