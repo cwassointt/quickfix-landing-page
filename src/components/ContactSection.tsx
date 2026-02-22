@@ -36,6 +36,7 @@ const ContactSection = () => {
               <div>
                 <h3 className="font-heading font-semibold text-foreground">Horario</h3>
                 <p className="text-muted-foreground">Abierto las 24 horas</p>
+                <p className="text-xs text-orange-500 font-bold uppercase tracking-wider mt-1">Atención solo con previa cita</p>
               </div>
             </div>
 

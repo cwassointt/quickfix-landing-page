@@ -216,7 +216,7 @@ const dialogData: Record<string, { title: string; tiers: { name: string; price: 
 const services: ServiceCard[] = [
   {
     icon: <Monitor className="w-6 h-6" />,
-    title: "PC Desktop",
+    title: "PC de Escritorio",
     image: pcImg,
     dialogKey: "pc",
     items: [
@@ -226,7 +226,7 @@ const services: ServiceCard[] = [
   },
   {
     icon: <Cpu className="w-6 h-6" />,
-    title: "GPU",
+    title: "Tarjetas Gráficas",
     image: gpuImg,
     dialogKey: "gpu",
     items: [
@@ -266,7 +266,7 @@ const services: ServiceCard[] = [
   },
   {
     icon: <Wrench className="w-6 h-6" />,
-    title: "Software & Hardware",
+    title: "Software y Hardware",
     image: hardwareImg,
     dialogKey: "hardware",
     items: [
@@ -301,7 +301,7 @@ const ServicesSection = () => {
             <div
               key={s.title}
               onClick={() => setOpenDialog(s.dialogKey)}
-              className="group border border-border rounded-xl overflow-hidden hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 bg-card cursor-pointer"
+              className="group border border-white/10 rounded-2xl overflow-hidden hover:border-orange-500/50 hover:shadow-[0_0_30px_rgba(249,115,22,0.15)] hover:scale-[1.02] transition-all duration-300 bg-[#0a0a0a] cursor-pointer"
               style={{ animationDelay: `${i * 0.1}s` }}
             >
               {/* Image banner */}
@@ -310,7 +310,7 @@ const ServicesSection = () => {
                   <img
                     src={s.image}
                     alt={s.title}
-                    className="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
+                    className="w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-110"
                   />
                   <div className="absolute inset-0 bg-black/50 group-hover:bg-black/35 transition-all duration-300" />
                   <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.7) 100%)" }} />
@@ -337,14 +337,14 @@ const ServicesSection = () => {
 
               {/* Card body */}
               <div className="p-6">
-                <h3 className="font-heading font-semibold text-lg text-card-foreground mb-4">
+                <h3 className="font-heading font-bold text-xl text-white mb-4 tracking-wide">
                   {s.title}
                 </h3>
                 <div className="space-y-3">
                   {s.items.map((item) => (
                     <div key={item.name} className="flex justify-between items-start gap-3">
-                      <span className="text-sm text-muted-foreground">{item.name}</span>
-                      <span className="text-sm font-semibold text-primary whitespace-nowrap">{item.price}</span>
+                      <span className="text-sm text-gray-300 font-medium">{item.name}</span>
+                      <span className="text-sm font-semibold text-orange-400 whitespace-nowrap">{item.price}</span>
                     </div>
                   ))}
                 </div>

@@ -29,11 +29,18 @@ const Navbar = () => {
         {/* Logo */}
         <a
           href="#"
-          className="font-black text-3xl tracking-tight flex-shrink-0"
+          className="group relative flex items-center gap-1 font-black text-5xl tracking-tighter flex-shrink-0 transition-transform duration-300 hover:scale-[1.02]"
           style={{ fontFamily: "'Inter', sans-serif" }}
         >
-          <span className="text-white">Quick</span>
-          <span className="text-orange-500">Fix</span>
+          {/* Intense glow effect behind logo */}
+          <div className="absolute -inset-6 bg-orange-500/25 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-full" />
+
+          <span className="relative z-10 text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
+            Quick
+          </span>
+          <span className="relative z-10 text-transparent bg-clip-text bg-gradient-to-br from-orange-400 to-orange-600 drop-shadow-[0_0_20px_rgba(249,115,22,0.8)]">
+            Fix
+          </span>
         </a>
 
         {/* Desktop nav — centered absolutely */}
