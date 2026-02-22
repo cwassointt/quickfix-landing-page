@@ -102,7 +102,7 @@ const FAQDialog = ({ open, onClose }: FAQDialogProps) => {
             Pastas térmicas estándar como la <em>Arctic MX-4 (8.5 W/mK)</em> son adecuadas para equipos de oficina o de baja exigencia térmica, pero resultan insuficientes para disipar el calor extremo generado por equipos gamer o workstations de gama alta.
           </p>
           <p className="border border-orange-500/30 bg-orange-500/5 p-3 rounded text-orange-200">
-            En QuickFix utilizamos <strong>Thermalright TF9 (14 W/mK)</strong> para pastas, y <strong>Metal Líquido (73 W/mK)</strong> para casos extremos. Esta diferencia de números se traduce en 5°C a 15°C menos de temperatura, evitando el estrangulamiento térmico (Thermal Throttling) y alargando la vida útil de tu GPU/CPU.
+            En QuickFix utilizamos <strong>Thermalright TF8 (13.8 W/mK)</strong> para pastas, y <strong>Metal Líquido (79 W/mK)</strong> para casos extremos. Esta diferencia de números se traduce en 5°C a 15°C menos de temperatura, evitando el estrangulamiento térmico (Thermal Throttling) y alargando la vida útil de tu GPU/CPU.
           </p>
         </div>
       ),

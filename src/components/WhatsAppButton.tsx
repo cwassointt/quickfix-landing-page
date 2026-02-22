@@ -1,26 +1,33 @@
 import { MessageCircle, Zap } from "lucide-react";
+import { useEffect, useState } from "react";
 
-const WHATSAPP_URL = "https://wa.me/51940755119?text=Hola%2C%20quiero%20una%20cotización";
+// Updated with a more professional starting message
+const WHATSAPP_URL = "https://wa.me/51940755119?text=Hola%20QuickFix%2C%20deseo%20mayor%20informaci%C3%B3n%20sobre%20sus%20servicios%20de%20mantenimiento.";
 
 const WhatsAppButton = () => {
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setVisible(true), 2000);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
-    <div className="fixed bottom-6 right-6 md:bottom-10 md:right-10 z-[60] flex flex-col items-end gap-3 group">
-      {/* Label/Tooltip - Animated and always visible on mobile now for better conversion */}
+    <div
+        className={`fixed bottom-6 right-6 md:bottom-12 md:right-12 z-[60] flex items-center justify-end gap-5 group transition-all duration-700 [transition-timing-function:cubic-bezier(0.34,1.56,0.64,1)] ${visible ? "translate-y-0 opacity-100" : "translate-y-20 opacity-0"}`}
+        style={{ fontFamily: "var(--font-visual-sans, sans-serif)" }}
+    >
+      {/* Label/Tooltip - Pill Style (Slightly larger text) */}
       <div
         className="
-            relative translate-y-2 opacity-0 animate-fade-in-up
-            lg:opacity-0 lg:translate-x-4 lg:translate-y-0
-            lg:group-hover:opacity-100 lg:group-hover:translate-x-0
-            transition-all duration-300 pointer-events-none
+            hidden md:flex items-center gap-2.5 bg-black/90 backdrop-blur-md text-white text-sm font-medium px-5 py-3 rounded-full
+            border border-orange-500/30 shadow-[0_4px_20px_rgba(0,0,0,0.4)]
+            transform translate-x-4 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-500 ease-out
+            bg-gradient-to-r from-zinc-900 via-zinc-900 to-orange-950/40
         "
-        style={{ animationDelay: '2s', animationFillMode: 'forwards' }} // Show after load
       >
-        <span className="bg-[#050505] text-white text-xs md:text-sm font-bold px-4 py-2 rounded-xl shadow-xl border border-orange-500/30 flex items-center gap-2">
-            <Zap className="w-3 h-3 text-orange-500 fill-orange-500" />
-            ¡Respuesta Inmediata!
-        </span>
-        {/* Little arrow pointing down */}
-        <div className="absolute -bottom-1 right-8 w-2 h-2 bg-[#050505] transform rotate-45 border-r border-b border-orange-500/30 lg:hidden"></div>
+        <Zap className="w-4 h-4 text-orange-500 fill-orange-500 animate-pulse" />
+        <span className="tracking-wide">¡Respuesta Inmediata!</span>
       </div>
 
       <a
@@ -28,39 +35,35 @@ const WhatsAppButton = () => {
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Contactar por WhatsApp"
-        className="relative flex items-center justify-center transition-transform duration-300 hover:scale-110 active:scale-95 group/btn"
+        className="relative flex items-center justify-center group/btn"
       >
-        {/* Outer Glow / Pulse */}
-        <span className="absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-20 animate-ping duration-1000"></span>
-
-        {/* Second ripple */}
-        <span className="absolute inline-flex h-[120%] w-[120%] rounded-full bg-green-500 opacity-10 animate-pulse"></span>
-
-        {/* Main Button */}
-        <div className="relative w-16 h-16 md:w-20 md:h-20 rounded-full bg-gradient-to-br from-[#25D366] via-[#128C7E] to-[#075E54] flex items-center justify-center shadow-[0_8px_30px_rgba(37,211,102,0.4)] border-[3px] border-white/10 overflow-hidden">
-
-            {/* Shine effect */}
-            <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent translate-x-[-100%] animate-[shimmer_3s_infinite]" />
-
-            <MessageCircle className="w-8 h-8 md:w-10 md:h-10 text-white drop-shadow-md transform group-hover/btn:rotate-12 transition-transform duration-300" fill="white" strokeWidth={1.5} />
+        {/* Main Button - Larger Size & Stronger Glow */}
+        <div className="
+            relative w-16 h-16 md:w-[72px] md:h-[72px] rounded-full
+            bg-[#050505]
+            border-[1.5px] border-orange-500
+            flex items-center justify-center
+            shadow-[0_4px_20px_rgba(255,102,0,0.15)]
+            group-hover/btn:shadow-[0_0_30px_rgba(255,102,0,0.6)]
+            group-hover/btn:border-orange-400
+            group-hover/btn:-translate-y-1
+            transition-all duration-300 [transition-timing-function:cubic-bezier(0.34,1.56,0.64,1)]
+        ">
+            {/* Minimalist Icon - Scaled Up */}
+            <MessageCircle
+                className="w-7 h-7 md:w-9 md:h-9 text-white transition-transform duration-300 group-hover/btn:scale-110 group-hover/btn:rotate-[-5deg]"
+                strokeWidth={1.5}
+            />
         </div>
 
-        {/* Notification Warning Badge */}
-        <div className="absolute top-0 right-0 md:top-1 md:right-1 w-5 h-5 bg-red-500 rounded-full border-2 border-[#111] flex items-center justify-center animate-bounce">
-            <span className="text-[10px] font-bold text-white">1</span>
+        {/* Status Badge - Pinging Red Dot (Adjusted position for larger button) */}
+        <div className="absolute top-0 right-0 md:top-0.5 md:right-0.5 pointer-events-none">
+            <span className="flex h-4 w-4">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-4 w-4 bg-red-600 border-[2.5px] border-[#050505]"></span>
+            </span>
         </div>
       </a>
-
-      <style>{`
-        @keyframes shimmer {
-            0% { transform: translateX(-150%) skewX(-15deg); }
-            20% { transform: translateX(150%) skewX(-15deg); }
-            100% { transform: translateX(150%) skewX(-15deg); }
-        }
-        @keyframes fade-in-up {
-            to { opacity: 1; transform: translateY(0); }
-        }
-      `}</style>
     </div>
   );
 };

@@ -2,7 +2,8 @@
 import heroBg from "@/images/hero/hero-background.jpg";
 import { ArrowRight, MessageCircle, Star, Trophy } from "lucide-react";
 
-const WHATSAPP_URL = "https://wa.me/51940755119?text=Hola%2C%20quiero%20agendar%20un%20mantenimiento";
+// Updated WhatsApp message to be more professional and specific for the main CTA
+const WHATSAPP_URL = "https://wa.me/51940755119?text=Hola%20QuickFix%2C%20deseo%20agendar%20una%20cita%20para%20el%20mantenimiento%20de%20mi%20equipo.";
 const MAPS_REVIEWS_URL = "https://www.google.com/maps/place/QuickFix.pe/@-12.078675,-77.1128235,17z/data=!3m1!4b1!4m6!3m5!1s0x9105cba106bb0ffd:0x56720d8b1b55c23e!8m2!3d-12.0786803!4d-77.1102486!16s%2Fg%2F11xyxywtk7!5m1!1e1?entry=ttu&g_ep=EgoyMDI2MDIxOC4wIKXMDSoASAFQAw%3D%3D";
 
 const HeroSection = () => {

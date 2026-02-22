@@ -8,13 +8,13 @@ const WHATSAPP_URL = "https://wa.me/51940755119";
 
 const ContactSection = () => {
   return (
-    <section id="contacto" className="py-20 bg-white relative overflow-hidden">
+    <section id="contacto" className="py-20 bg-white relative overflow-hidden" style={{ fontFamily: "var(--font-visual-sans, sans-serif)" }}>
       <div className="container mx-auto px-6 relative z-10">
-        <div className="text-center mb-16">
-          <span className="text-orange-600 font-heading font-bold text-sm tracking-widest uppercase">
+        <div className="flex flex-col items-center mb-16 text-center">
+          <span className="text-orange-600 font-medium text-sm tracking-widest uppercase inline-block mb-3">
             Encuéntranos
           </span>
-          <h2 className="text-3xl md:text-4xl font-heading font-black mt-3 text-black tracking-tight">
+          <h2 className="text-4xl md:text-5xl font-bold text-black tracking-tight">
             Contacto y Ubicación
           </h2>
         </div>
@@ -96,9 +96,11 @@ const ContactSection = () => {
               title="Ubicación QuickFix"
               src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3901.488479110966!2d-77.11282352517016!3d-12.078675042495265!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x9105cba106bb0ffd%3A0x56720d8b1b55c23e!2sQuickFix.pe!5e0!3m2!1ses-419!2spe!4v1771690757299!5m2!1ses-419!2spe"
               className="absolute inset-0 w-full h-full border-0 transition-all duration-700"
-              loading="lazy"
+              loading="lazy" // Asegurado
               referrerPolicy="no-referrer-when-downgrade"
               allowFullScreen
+              // Agregado: Sandbox para limitar scripts innecesarios si no necesitas interacción compleja fuera del link
+              sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
             />
 
             {/* Interaction hint on hover */}

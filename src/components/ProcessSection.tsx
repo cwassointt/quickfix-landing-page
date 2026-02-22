@@ -49,7 +49,7 @@ const materials = [
 		category: "Pasta Térmica",
         img: "TF8.png",
 		items: [
-			{ name: "Thermalright TF8", spec: "14 w/mK" },
+			{ name: "Thermalright TF8", spec: "13.8 w/mK" },
 			{ name: "Arctic MX4", spec: "8 w/mK" },
 		],
 	},
@@ -58,7 +58,7 @@ const materials = [
 		category: "Pads Térmicos",
         img: "ODDYSEY.png",
 		items: [
-			{ name: "Thermalright Extreme Odyssey II", spec: "15 w/mK" },
+			{ name: "Thermalright Extreme Odyssey II", spec: "14.8 w/mK" },
 		],
 	},
 	{
@@ -97,14 +97,15 @@ const ProcessSection = () => {
 			<div className="container mx-auto px-6 relative z-10">
 
 				{/* ── Steps ── */}
-				<div className="text-center mb-16">
-					<span className="text-primary font-heading font-semibold text-sm tracking-widest uppercase">
+				<div className="flex flex-col items-center mb-16 text-center">
+                    {/* Updated to match simple text style found in Services & Materials sections */}
+					<span className="text-orange-500 font-medium text-sm tracking-widest uppercase inline-block mb-3">
 						Nuestro Proceso
 					</span>
-					<h2 className="text-3xl md:text-4xl font-heading font-bold mt-3">
+					<h2 className="text-4xl md:text-5xl font-bold text-white tracking-tight">
 						Diferenciadores Técnicos
 					</h2>
-					<p className="mt-4 text-surface-dark-foreground/60 max-w-lg mx-auto">
+					<p className="mt-4 text-white/40 max-w-2xl font-light">
 						Cada equipo pasa por nuestro proceso completo de 4 pasos para un resultado impecable.
 					</p>
 				</div>
@@ -112,7 +113,7 @@ const ProcessSection = () => {
 				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
 					{steps.map((step, i) => (
 						<div key={step.title} className="text-center group p-4 rounded-2xl hover:bg-white/5 transition-colors duration-500">
-							<div className="relative mx-auto w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-6 group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:scale-110 group-hover:rotate-6 shadow-lg shadow-orange-500/10">
+							<div className="relative mx-auto w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-6 group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-500 [transition-timing-function:cubic-bezier(0.34,1.56,0.64,1)] group-hover:scale-110 group-hover:rotate-6 shadow-lg shadow-orange-500/10">
 								{step.icon}
 								<span className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-surface-dark border-2 border-primary text-primary text-xs font-heading font-bold flex items-center justify-center shadow-md z-10 group-hover:bg-white group-hover:text-orange-600 transition-colors">
 									{i + 1}
@@ -133,7 +134,7 @@ const ProcessSection = () => {
 
 					{/* Section header */}
 					<div className="flex flex-col items-center mb-16 text-center">
-						<span className="text-orange-500 font-bold text-xs tracking-[0.2em] uppercase mb-4 px-4 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/20 backdrop-blur-sm">
+						<span className="text-orange-500 font-medium text-sm tracking-widest uppercase inline-block mb-3">
 							Materiales Premium
 						</span>
 						<h3 className="text-4xl md:text-5xl font-bold text-white tracking-tight">
@@ -150,7 +151,7 @@ const ProcessSection = () => {
                         <div className="absolute left-0 top-0 bottom-0 w-24 md:w-40 bg-gradient-to-r from-[#050505] via-[#050505]/80 to-transparent z-20 pointer-events-none" />
                         <div className="absolute right-0 top-0 bottom-0 w-24 md:w-40 bg-gradient-to-l from-[#050505] via-[#050505]/80 to-transparent z-20 pointer-events-none" />
 
-                        <div className="flex w-max animate-scroll hover:pause-scroll">
+                        <div className="flex w-max animate-scroll hover:pause-scroll will-change-transform">
                             {/* Duplicate list for infinite effect */}
                             {[...materials, ...materials].map((mat, index) => (
                                 <div
@@ -216,7 +217,7 @@ const ProcessSection = () => {
 
 					{/* Bottom note */}
 					<p
-						className="text-center text-sm text-surface-dark-foreground/60 mt-6 tracking-[0.05em] uppercase font-medium max-w-lg mx-auto"
+						className="text-center text-sm text-surface-dark-foreground/60 mt-6 tracking-[0.05em] font-medium max-w-lg mx-auto"
 						style={{ fontFamily: "var(--font-visual-sans, sans-serif)" }}
 					>
 						Todos los materiales son de grado profesional y seleccionados por su rendimiento térmico superior.
