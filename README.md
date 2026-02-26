@@ -1,73 +1,54 @@
-# Welcome to your Lovable project
+# 🛠️ QuickFix | Mantenimiento Premium de Hardware
 
-## Project info
+**URL del Proyecto en Producción**: [https://quickfix.pe/](https://quickfix.pe/) 
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+Bienvenidos al repositorio oficial de la plataforma web de **QuickFix**, el centro especializado en mantenimiento de hardware de alta gama, estaciones de trabajo y equipos Master Race en San Miguel, Lima.
 
-## How can I edit this code?
+Este proyecto web está diseñado bajo una arquitectura minimalista y un enfoque "Dark Mode" para reflejar la precisión, exclusividad y el rigor técnico de nuestros procesos de laboratorio (Lavado Químico, Descontaminado y aplicación de Metal Líquido).
 
-There are several ways of editing your application.
+## ✨ Características Principales de la Web
 
-**Use Lovable**
+* **UI/UX de Alta Gama:** Interfaz oscura (Dark Mode) con acentos en Naranja Vivo (#FF6600), tipografía WF Visual Sans y diseño 100% responsivo.
+* **Catálogo de Servicios Interactivo:** Tarjetas de servicio con micro-interacciones, efectos de *hover* de iluminación y modales (Dialogs) dinámicos que detallan el valor técnico.
+* **Vitrina de Insumos Industriales:** Sección dedicada a la transparencia de materiales, mostrando capacidades de conductividad térmica precisas (ej. UTP-8 Upsiren de 14.8 w/mK, Thermalright Silver King).
+* **CRO y Conversión:** Integración directa mediante un botón flotante animado para agendamiento ultra-rápido vía WhatsApp (Atención 24/7).
+* **Animaciones Autónomas:** Efectos sutiles construidos para dar una sensación de "ecosistema vivo" y de alta tecnología.
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+---
 
-Changes made via Lovable will be committed automatically to this repo.
+## 💻 Tecnologías Utilizadas
 
-**Use your preferred IDE**
+Este proyecto está construido para garantizar velocidad, escalabilidad y un rendimiento óptimo en SEO:
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+* **Vite** - Herramienta de construcción rápida para el frontend.
+* **TypeScript** - Tipado estricto para un código robusto.
+* **React** - Librería principal para la construcción de interfaces de usuario.
+* **shadcn-ui** - Componentes de UI accesibles y personalizables.
+* **Tailwind CSS** - Framework de utilidades para un diseño ágil y milimétrico.
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+---
 
-Follow these steps:
+## 🚀 ¿Cómo editar y correr este código localmente?
+
+Existen varias formas de continuar el desarrollo de esta aplicación:
+
+### 1. Usando Lovable (Recomendado)
+Simplemente visita tu [Proyecto en Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) y utiliza prompts para realizar cambios. Los cambios realizados se subirán automáticamente a este repositorio.
+
+### 2. Usando tu IDE preferido (VS Code, Cursor, etc.)
+Si deseas trabajar localmente, puedes clonar este repositorio. El único requisito es tener **Node.js y npm** instalados.
+
+Sigue estos pasos en tu terminal:
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+# Paso 1: Clona el repositorio
+git clone <URL_DE_TU_REPOSITORIO>
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+# Paso 2: Entra al directorio del proyecto
+cd <NOMBRE_DEL_PROYECTO>
 
-# Step 3: Install the necessary dependencies.
+# Paso 3: Instala las dependencias necesarias
 npm i
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Paso 4: Inicia el servidor de desarrollo (con recarga automática)
 npm run dev
-```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
