@@ -1,6 +1,7 @@
-import { MapPin, Clock } from "lucide-react";
+import { MapPin, Clock, Phone, Mail } from "lucide-react";
 import { useState, memo } from "react";
 import WarrantyDialog from "@/components/WarrantyDialog";
+import TermsDialog from "@/components/TermsDialog";
 
 // Static data outside component
 const SERVICE_LINKS = [
@@ -10,6 +11,7 @@ const SERVICE_LINKS = [
 
 const Footer = memo(() => {
   const [warrantyOpen, setWarrantyOpen] = useState(false);
+  const [termsOpen, setTermsOpen]       = useState(false);
 
   return (
     <>
@@ -46,8 +48,28 @@ const Footer = memo(() => {
 
             {/* Location */}
             <div>
-              <h4 className="text-white font-bold mb-4 uppercase text-xs tracking-wider">Ubicación</h4>
+              <h4 className="text-white font-bold mb-4 uppercase text-xs tracking-wider">Contacto y Ubicación</h4>
               <ul className="space-y-3 text-sm text-gray-500">
+                <li className="flex items-start gap-2">
+                  <Phone className="w-4 h-4 mt-0.5 text-orange-500 shrink-0" />
+                  <a
+                    href="https://wa.me/51940755119"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-white transition-colors"
+                  >
+                    +51 940 755 119
+                  </a>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Mail className="w-4 h-4 mt-0.5 text-orange-500 shrink-0" />
+                  <a
+                    href="mailto:quickfix.pe24@gmail.com"
+                    className="hover:text-white transition-colors"
+                  >
+                    quickfix.pe24@gmail.com
+                  </a>
+                </li>
                 <li className="flex items-start gap-2">
                   <MapPin className="w-4 h-4 mt-0.5 text-orange-500 shrink-0" />
                   <span>Talambo 135, San Miguel,<br />Lima, Perú</span>
@@ -63,7 +85,12 @@ const Footer = memo(() => {
           <div className="pt-8 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-xs text-gray-600">© {new Date().getFullYear()} QuickFix. Todos los derechos reservados.</p>
             <div className="flex gap-4">
-              <span className="text-xs text-gray-600 hover:text-gray-400 cursor-pointer">Términos</span>
+              <button
+                onClick={() => setTermsOpen(true)}
+                className="text-xs text-gray-600 hover:text-orange-500 cursor-pointer transition-colors"
+              >
+                Términos
+              </button>
               <button
                 onClick={() => setWarrantyOpen(true)}
                 className="text-xs text-gray-600 hover:text-orange-500 cursor-pointer transition-colors"
@@ -76,6 +103,7 @@ const Footer = memo(() => {
       </footer>
 
       <WarrantyDialog open={warrantyOpen} onClose={() => setWarrantyOpen(false)} />
+      <TermsDialog    open={termsOpen}    onClose={() => setTermsOpen(false)} />
     </>
   );
 });

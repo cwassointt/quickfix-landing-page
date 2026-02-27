@@ -235,7 +235,13 @@ const MaterialCarousel = memo(({ items }: { items: typeof materials }) => {
   const controls = useAnimationControls();
 
   const singleSetWidth = items.length * CARD_WIDTH;
-  const initialOffset = -(singleSetWidth) + (containerWidth / 2 - CARD_WIDTH / 2);
+
+  // ── Centra la primera tarjeta del set MEDIO en el viewport ────
+  // Set medio empieza en index = items.length
+  // Centro de la primera tarjeta del set medio = singleSetWidth + CARD_WIDTH/2
+  // Queremos que ese punto quede en containerWidth/2
+  // x = containerWidth/2 - (singleSetWidth + CARD_WIDTH/2)
+  const initialOffset = containerWidth / 2 - singleSetWidth - CARD_WIDTH / 2;
 
   // Medir contenedor
   useEffect(() => {
@@ -259,60 +265,45 @@ const MaterialCarousel = memo(({ items }: { items: typeof materials }) => {
 
   // ── Teletransporte silencioso ─────────────────────────────────
   useMotionValueEvent(x, "change", (latest) => {
-    if (latest > -singleSetWidth * 0.5 + containerWidth / 2) {
+    // Si nos fuimos demasiado a la derecha (hacia el set 1), saltar al set 2
+    if (latest > initialOffset + singleSetWidth) {
       x.set(latest - singleSetWidth);
     }
-    if (latest < -singleSetWidth * 1.5 + containerWidth / 2 - CARD_WIDTH) {
+    // Si nos fuimos demasiado a la izquierda (hacia el set 3), saltar al set 2
+    if (latest < initialOffset - singleSetWidth) {
       x.set(latest + singleSetWidth);
     }
   });
 
   // ── Auto-Play ─────────────────────────────────────────────────
   const scrollToNext = useCallback(() => {
-    const currentX = x.get();
-    const targetX = currentX - CARD_WIDTH;
-    // Actualizar x silenciosamente primero para activar teletransporte si aplica
     controls.start({
-      x: targetX,
-      transition: {
-        ease: "easeInOut",
-        duration: 0.8,
-      },
+      x: x.get() - CARD_WIDTH,
+      transition: { ease: "easeInOut", duration: 0.8 },
     });
   }, [x, controls]);
 
   useEffect(() => {
     if (isInteracting || containerWidth === 0) return;
-
-    const intervalId = setInterval(() => {
-      scrollToNext();
-    }, 2500);
-
+    const intervalId = setInterval(scrollToNext, 2500);
     return () => clearInterval(intervalId);
   }, [isInteracting, containerWidth, scrollToNext]);
 
   // ── Snapping magnético en onDragEnd ──────────────────────────
   const handleDragEnd = useCallback((_: unknown, info: { velocity: { x: number }; offset: { x: number } }) => {
-    const currentX = x.get();
     const velocity = info.velocity.x;
-    const projected = currentX + velocity * 0.12;
-    const offsetFromCenter = projected - containerWidth / 2 + CARD_WIDTH / 2;
+    const projected = x.get() + velocity * 0.12;
+    // Offset desde el centro del set medio
+    const offsetFromCenter = projected - initialOffset;
     const closestIndex = Math.round(-offsetFromCenter / CARD_WIDTH);
-    const snappedX = -(closestIndex * CARD_WIDTH) + containerWidth / 2 - CARD_WIDTH / 2;
+    const snappedX = initialOffset - closestIndex * CARD_WIDTH;
 
     controls.start({
       x: snappedX,
-      transition: {
-        type: "spring",
-        stiffness: 280,
-        damping: 32,
-        mass: 0.9,
-        velocity: velocity,
-      },
+      transition: { type: "spring", stiffness: 280, damping: 32, mass: 0.9, velocity },
     });
-  }, [x, containerWidth, controls]);
+  }, [x, initialOffset, controls]);
 
-  // ── Handlers de pausa / reanudación ──────────────────────────
   const handleInteractionStart = useCallback(() => setIsInteracting(true), []);
   const handleInteractionEnd   = useCallback(() => setIsInteracting(false), []);
 
@@ -333,6 +324,7 @@ const MaterialCarousel = memo(({ items }: { items: typeof materials }) => {
       <div className="absolute left-0 top-0 bottom-0 w-28 md:w-48 bg-gradient-to-r from-[#050505] via-[#050505]/90 to-transparent z-20 pointer-events-none" />
       <div className="absolute right-0 top-0 bottom-0 w-28 md:w-48 bg-gradient-to-l from-[#050505] via-[#050505]/90 to-transparent z-20 pointer-events-none" />
 
+      {/* Track: empieza en x=0 del contenedor, el offset lo maneja `x` ── */}
       <motion.div
         className="flex w-max"
         style={{ x }}
