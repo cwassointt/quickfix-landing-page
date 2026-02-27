@@ -1,54 +1,85 @@
-# 🛠️ QuickFix | Mantenimiento Premium de Hardware
+# QuickFix — Premium Hardware Maintenance
 
-**URL del Proyecto en Producción**: [https://quickfix.pe/](https://quickfix.pe/) 
-
-Bienvenidos al repositorio oficial de la plataforma web de **QuickFix**, el centro especializado en mantenimiento de hardware de alta gama, estaciones de trabajo y equipos Master Race en San Miguel, Lima.
-
-Este proyecto web está diseñado bajo una arquitectura minimalista y un enfoque "Dark Mode" para reflejar la precisión, exclusividad y el rigor técnico de nuestros procesos de laboratorio (Lavado Químico, Descontaminado y aplicación de Metal Líquido).
-
-## ✨ Características Principales de la Web
-
-* **UI/UX de Alta Gama:** Interfaz oscura (Dark Mode) con acentos en Naranja Vivo (#FF6600), tipografía WF Visual Sans y diseño 100% responsivo.
-* **Catálogo de Servicios Interactivo:** Tarjetas de servicio con micro-interacciones, efectos de *hover* de iluminación y modales (Dialogs) dinámicos que detallan el valor técnico.
-* **Vitrina de Insumos Industriales:** Sección dedicada a la transparencia de materiales, mostrando capacidades de conductividad térmica precisas (ej. UTP-8 Upsiren de 14.8 w/mK, Thermalright Silver King).
-* **CRO y Conversión:** Integración directa mediante un botón flotante animado para agendamiento ultra-rápido vía WhatsApp (Atención 24/7).
-* **Animaciones Autónomas:** Efectos sutiles construidos para dar una sensación de "ecosistema vivo" y de alta tecnología.
+**Live:** [https://quickfix.pe/](https://quickfix.pe/)  
+**Repository:** [https://github.com/cwassointt/quickfix-landing/tree/develop](https://github.com/cwassointt/quickfix-landing/tree/develop)
 
 ---
 
-## 💻 Tecnologías Utilizadas
+## Overview
 
-Este proyecto está construido para garantizar velocidad, escalabilidad y un rendimiento óptimo en SEO:
-
-* **Vite** - Herramienta de construcción rápida para el frontend.
-* **TypeScript** - Tipado estricto para un código robusto.
-* **React** - Librería principal para la construcción de interfaces de usuario.
-* **shadcn-ui** - Componentes de UI accesibles y personalizables.
-* **Tailwind CSS** - Framework de utilidades para un diseño ágil y milimétrico.
+QuickFix is the official web platform for a specialized high-end hardware maintenance center located in San Miguel, Lima. The platform is designed with a minimalist dark-mode aesthetic, reflecting the precision and technical rigor behind our core laboratory processes: Chemical Cleaning, Decontamination, and Liquid Metal application.
 
 ---
 
-## 🚀 ¿Cómo editar y correr este código localmente?
+## Features
 
-Existen varias formas de continuar el desarrollo de esta aplicación:
+- **High-End UI/UX** — Dark Mode interface with Vivid Orange (`#FF6600`) accents, WF Visual Sans typography, and fully responsive layout.
+- **Interactive Service Catalog** — Service cards with micro-interactions, hover glow effects, and detail modals for each service.
+- **Industrial Supplies Showcase** — Transparent materials section with precise thermal conductivity specs (e.g. UTP-8 Upsiren at 14.8 W/mK, Thermalright Silver King).
+- **Conversion-Focused Design** — Floating WhatsApp button for instant appointment scheduling with 24/7 availability.
+- **Ambient Animations** — Subtle motion effects that reinforce the high-tech identity of the brand.
+- **FAQ Dialog** — Accessible frequently asked questions dialog reachable from the navigation bar.
 
-### 1. Usando Lovable (Recomendado)
-Simplemente visita tu [Proyecto en Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) y utiliza prompts para realizar cambios. Los cambios realizados se subirán automáticamente a este repositorio.
+---
 
-### 2. Usando tu IDE preferido (VS Code, Cursor, etc.)
-Si deseas trabajar localmente, puedes clonar este repositorio. El único requisito es tener **Node.js y npm** instalados.
+## Tech Stack
 
-Sigue estos pasos en tu terminal:
+| Technology     | Purpose                                          |
+|----------------|--------------------------------------------------|
+| Vite           | Fast frontend build tool                         |
+| TypeScript     | Static typing for maintainable, robust code      |
+| React          | Core UI library                                  |
+| shadcn/ui      | Accessible and composable UI components          |
+| Tailwind CSS   | Utility-first CSS framework for precise styling  |
+| Vitest         | Unit testing framework                           |
+
+---
+
+## Getting Started
+
+**Prerequisites:** Node.js and npm must be installed.
 
 ```sh
-# Paso 1: Clona el repositorio
-git clone <URL_DE_TU_REPOSITORIO>
+# Clone the repository
+git clone https://github.com/cwassointt/quickfix-landing.git
 
-# Paso 2: Entra al directorio del proyecto
-cd <NOMBRE_DEL_PROYECTO>
+# Navigate into the project
+cd quickfix-landing
 
-# Paso 3: Instala las dependencias necesarias
-npm i
+# Install dependencies
+npm install
 
-# Paso 4: Inicia el servidor de desarrollo (con recarga automática)
+# Start the development server
 npm run dev
+```
+
+The application will be available at `http://localhost:8080`.
+
+---
+
+## Scripts
+
+| Command           | Description                        |
+|-------------------|------------------------------------|
+| `npm run dev`     | Start local development server     |
+| `npm run build`   | Build for production               |
+| `npm run test`    | Run unit tests                     |
+
+---
+
+## Project Structure
+
+```
+src/
+├── components/       # Reusable UI components (Navbar, FAQDialog, etc.)
+├── pages/            # Page-level components
+├── hooks/            # Custom React hooks
+├── lib/              # Utility functions
+└── test/             # Test setup and specs
+```
+
+---
+
+## Contact
+
+For service inquiries or appointment scheduling, contact us via WhatsApp: [+51 940 755 119](https://wa.me/51940755119)
