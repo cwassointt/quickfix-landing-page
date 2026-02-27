@@ -1,5 +1,5 @@
 import { X, Zap, MessageCircle } from "lucide-react";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback, memo } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence, useAnimationControls } from "framer-motion";
 
@@ -67,45 +67,42 @@ const dialogData: Record<string, { title: string; tiers: { name: string; price: 
   },
 };
 
-// ── HIGHLIGHT KEYWORDS — animated glow on thermal specs ──────────
+// ── Regex compiled once — not inside render ───────────────────────
+const SPEC_REGEX = /(\d+(?:\.\d+)?\s?w\/mK)/gi;
+
 const highlightKeywords = (text: string | React.ReactNode): React.ReactNode => {
   if (typeof text !== "string") return text;
-  // Corrected regex — matches e.g. "14.8 w/mK", "13.8 w/mK", "79 w/mK"
-  const specRegex = /(\d+(?:\.\d+)?\s?w\/mK)/gi;
-  const parts = text.split(specRegex);
-  if (parts.length > 1) {
-    return (
-      <span>
-        {parts.map((part, i) => {
-          if (!part) return null;
-          if (specRegex.test(part)) {
-            // Reset lastIndex after test()
-            specRegex.lastIndex = 0;
-            return (
-              <motion.span
-                key={i}
-                className="text-xs italic font-mono ml-1 text-orange-400/90"
-                animate={{
-                  textShadow: [
-                    "0 0 0px rgba(249,115,22,0)",
-                    "0 0 8px rgba(249,115,22,0.75)",
-                    "0 0 0px rgba(249,115,22,0)",
-                  ],
-                }}
-                transition={{ duration: 3, ease: "easeInOut", repeat: Infinity, delay: i * 0.4 }}
-              >
-                {part.trim()}
-              </motion.span>
-            );
-          }
-          specRegex.lastIndex = 0;
-          return <span key={i}>{part}</span>;
-        })}
-      </span>
-    );
-  }
-  return text;
+  const parts = text.split(SPEC_REGEX);
+  if (parts.length <= 1) return text;
+  return (
+    <span>
+      {parts.map((part, i) => {
+        if (!part) return null;
+        // Even indices are plain text, odd indices are spec matches (split on capture group)
+        if (i % 2 === 1) {
+          return (
+            <span key={i} className="text-xs italic font-mono ml-1 text-orange-400/90 spec-glow">
+              {part.trim()}
+            </span>
+          );
+        }
+        return <span key={i}>{part}</span>;
+      })}
+    </span>
+  );
 };
+
+// ── CSS-based glow for spec text — no per-item motion animation ───
+const _specStyle = `
+  @keyframes specGlow {
+    0%,100% { text-shadow: none; }
+    50%      { text-shadow: 0 0 8px rgba(249,115,22,0.75); }
+  }
+  .spec-glow { animation: specGlow 3s ease-in-out infinite; }
+`;
+if (typeof document !== "undefined" && !document.getElementById("spec-glow-style")) {
+  const el = document.createElement("style"); el.id = "spec-glow-style"; el.textContent = _specStyle; document.head.appendChild(el);
+}
 
 // ── VARIANTS ──────────────────────────────────────────────────────
 
@@ -178,90 +175,60 @@ const descVariants = {
   }),
 };
 
-// ── ANIMATED CHECK ICON (draw-on effect) ─────────────────────────
-const AnimatedCheck = ({ orange }: { orange?: boolean }) => (
-  <motion.svg
-    width="14" height="14" viewBox="0 0 14 14" fill="none"
-    className="shrink-0 mt-[3px]"
-    initial="hidden"
-    animate="visible"
-  >
-    <motion.circle
-      cx="7" cy="7" r="6"
-      stroke={orange ? "rgba(249,115,22,0.5)" : "rgba(255,255,255,0.12)"}
-      strokeWidth="1"
-      variants={{
-        hidden: { pathLength: 0, opacity: 0 },
-        visible: { pathLength: 1, opacity: 1, transition: { duration: 0.4, ease: "easeOut" as const } },
-      }}
-    />
-    <motion.path
-      d="M4 7l2 2 4-4"
-      stroke={orange ? "rgb(249,115,22)" : "rgba(255,255,255,0.45)"}
-      strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
-      variants={{
-        hidden: { pathLength: 0, opacity: 0 },
-        visible: { pathLength: 1, opacity: 1, transition: { duration: 0.35, ease: "easeOut" as const, delay: 0.2 } },
-      }}
-    />
-  </motion.svg>
-);
+// ── AnimatedCheck — simplified, no per-instance motion overhead ───
+const AnimatedCheck = memo(({ orange }: { orange?: boolean }) => (
+  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="shrink-0 mt-[3px]">
+    <circle cx="7" cy="7" r="6" stroke={orange ? "rgba(249,115,22,0.5)" : "rgba(255,255,255,0.12)"} strokeWidth="1" />
+    <path d="M4 7l2 2 4-4" stroke={orange ? "rgb(249,115,22)" : "rgba(255,255,255,0.45)"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+));
 
-// ── PADS BREATH BORDER ────────────────────────────────────────────
+// ── PadsBreathBorder — CSS animation instead of framer-motion loop ─
+const _padsStyle = `
+  @keyframes padsBreath {
+    0%,100% { box-shadow: 0 0 0px 0px rgba(249,115,22,0); border-color: rgba(249,115,22,0.1); }
+    50%      { box-shadow: 0 0 12px 2px rgba(249,115,22,0.3); border-color: rgba(249,115,22,0.5); }
+  }
+  .pads-breath { animation: padsBreath 3.5s ease-in-out infinite; }
+`;
+if (typeof document !== "undefined" && !document.getElementById("pads-breath-style")) {
+  const el = document.createElement("style"); el.id = "pads-breath-style"; el.textContent = _padsStyle; document.head.appendChild(el);
+}
+
 const PadsBreathBorder = () => (
-  <motion.div
-    className="absolute inset-0 rounded-2xl pointer-events-none"
-    animate={{
-      boxShadow: [
-        "0 0 0px 0px rgba(249,115,22,0)",
-        "0 0 12px 2px rgba(249,115,22,0.3)",
-        "0 0 0px 0px rgba(249,115,22,0)",
-      ],
-      borderColor: [
-        "rgba(249,115,22,0.1)",
-        "rgba(249,115,22,0.5)",
-        "rgba(249,115,22,0.1)",
-      ],
-    }}
-    transition={{ duration: 3.5, ease: "easeInOut", repeat: Infinity }}
-    style={{ border: "1px solid rgba(249,115,22,0.1)", borderRadius: "1rem" }}
-  />
+  <div className="absolute inset-0 rounded-2xl pointer-events-none pads-breath" style={{ border: "1px solid rgba(249,115,22,0.1)", borderRadius: "1rem" }} />
 );
 
-// ── CTA BUTTON WITH SHINE + ENTRY PULSE ──────────────────────────
-const CTAButton = ({ href, title }: { href: string; title: string }) => {
-  const shineControls = useAnimationControls();
-  const buttonControls = useAnimationControls();
-  const hasPulsed = useRef(false);
+// ── CTAButton — fixed setInterval shine leak ──────────────────────
+const CTAButton = memo(({ href }: { href: string }) => {
+  const shineControls   = useAnimationControls();
+  const buttonControls  = useAnimationControls();
+  const hasPulsed       = useRef(false);
 
-  // Entry pulse on mount
+  // Entry pulse — runs once
   useEffect(() => {
     if (hasPulsed.current) return;
     hasPulsed.current = true;
-    const timer = setTimeout(async () => {
-      await buttonControls.start({
-        scale: 1.02,
-        transition: { duration: 0.18, ease: "easeOut" },
-      });
-      await buttonControls.start({
-        scale: 1,
-        transition: { duration: 0.22, ease: "easeIn" },
-      });
-    }, 600); // slight delay after modal opens
-    return () => clearTimeout(timer);
+    const id = setTimeout(async () => {
+      await buttonControls.start({ scale: 1.02, transition: { duration: 0.18, ease: "easeOut" } });
+      await buttonControls.start({ scale: 1,    transition: { duration: 0.22, ease: "easeIn"  } });
+    }, 600);
+    return () => clearTimeout(id);
   }, [buttonControls]);
 
-  // Shine sweep every 4s
+  // Shine sweep — properly cleaned up
   useEffect(() => {
+    let cancelled = false;
+    let timeoutId: ReturnType<typeof setTimeout>;
+
     const runShine = async () => {
-      await shineControls.start({
-        x: ["−100%", "220%"],
-        transition: { duration: 0.75, ease: "easeInOut" },
-      });
+      if (cancelled) return;
+      await shineControls.start({ x: ["-100%", "220%"], transition: { duration: 0.75, ease: "easeInOut" } });
+      if (!cancelled) timeoutId = setTimeout(runShine, 4000);
     };
+
     runShine();
-    const id = setInterval(runShine, 4000);
-    return () => clearInterval(id);
+    return () => { cancelled = true; clearTimeout(timeoutId); };
   }, [shineControls]);
 
   return (
@@ -272,29 +239,20 @@ const CTAButton = ({ href, title }: { href: string; title: string }) => {
       animate={buttonControls}
       className="group relative flex items-center justify-center gap-3 w-full bg-orange-500 text-white py-3.5 rounded-2xl font-bold text-sm shadow-[0_4px_20px_rgba(249,115,22,0.2)] overflow-hidden"
       style={{ fontFamily: "var(--font-visual-sans, sans-serif)" }}
-      whileHover={{
-        backgroundColor: "#ff6600",
-        y: -2,
-        boxShadow: "0 10px 35px rgba(249,115,22,0.4)",
-      }}
+      whileHover={{ backgroundColor: "#ff6600", y: -2, boxShadow: "0 10px 35px rgba(249,115,22,0.4)" }}
       whileTap={{ scale: 0.98 }}
       transition={{ duration: 0.2 }}
     >
-      {/* Shine overlay */}
       <motion.span
         animate={shineControls}
         className="absolute inset-y-0 w-16 pointer-events-none"
-        style={{
-          background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.28) 50%, transparent 100%)",
-          left: "-4rem",
-          skewX: "-12deg",
-        }}
+        style={{ background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.28) 50%, transparent 100%)", left: "-4rem", skewX: "-12deg" }}
       />
       <MessageCircle className="w-5 h-5 fill-white text-white relative z-10" />
       <span className="uppercase tracking-widest text-xs relative z-10">Agendar por WhatsApp</span>
     </motion.a>
   );
-};
+});
 
 // ── COMPONENT ─────────────────────────────────────────────────────
 interface ServiceDialogProps {
@@ -309,11 +267,12 @@ const ServiceDialog = ({ open, onClose, serviceId }: ServiceDialogProps) => {
 
   useEffect(() => { setMounted(true); return () => setMounted(false); }, []);
 
+  const handleKey = useCallback((e: KeyboardEvent) => { if (e.key === "Escape") onClose(); }, [onClose]);
+
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
-    if (open) document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
+    if (open) document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [open, handleKey]);
 
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
@@ -466,9 +425,8 @@ const ServiceDialog = ({ open, onClose, serviceId }: ServiceDialogProps) => {
 
                 {/* Footer CTA */}
                 <div className="sticky bottom-0 px-6 py-6 bg-[#0f0f0f] border-t border-white/5 shrink-0 z-20 mt-auto">
-                  <CTAButton href={whatsappHref} title={data.title} />
+                  <CTAButton href={whatsappHref} />
                 </div>
-
               </div>
             </motion.div>
           </div>

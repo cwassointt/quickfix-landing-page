@@ -31,10 +31,18 @@ const Index = () => {
 
       <Navbar />
       <HeroSection />
-      <ServicesSection />
-      <ProcessSection />
-      <ContactSection />
-      <Footer />
+      <div style={{ contentVisibility: "auto", containIntrinsicSize: "0 800px" }}>
+        <ServicesSection />
+      </div>
+      <div style={{ contentVisibility: "auto", containIntrinsicSize: "0 1200px" }}>
+        <ProcessSection />
+      </div>
+      <div style={{ contentVisibility: "auto", containIntrinsicSize: "0 600px" }}>
+        <ContactSection />
+      </div>
+      <div style={{ contentVisibility: "auto", containIntrinsicSize: "0 400px" }}>
+        <Footer />
+      </div>
       <WhatsAppButton />
     </div>
   );

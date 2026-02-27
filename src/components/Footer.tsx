@@ -1,8 +1,14 @@
 import { MapPin, Clock } from "lucide-react";
-import { useState } from "react";
+import { useState, memo } from "react";
 import WarrantyDialog from "@/components/WarrantyDialog";
 
-const Footer = () => {
+// Static data outside component
+const SERVICE_LINKS = [
+  "PC de Escritorio", "Tarjetas Gráficas", "Laptops",
+  "MacBooks", "Consolas", "Software y Hardware",
+];
+
+const Footer = memo(() => {
   const [warrantyOpen, setWarrantyOpen] = useState(false);
 
   return (
@@ -11,7 +17,7 @@ const Footer = () => {
         <div className="container mx-auto px-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
 
-            {/* Brand Column */}
+            {/* Brand */}
             <div className="col-span-1 md:col-span-2">
               <p className="font-black text-2xl tracking-tight text-white mb-4" style={{ fontFamily: "var(--font-visual-sans, sans-serif)" }}>
                 Quick<span className="text-orange-500">Fix</span>
@@ -21,60 +27,57 @@ const Footer = () => {
                 Devolvemos la ingeniería original a su equipo con procesos de laboratorio.
               </p>
               <div className="inline-flex items-center gap-2 bg-orange-500/10 border border-orange-500/20 px-3 py-1.5 rounded-md">
-                <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse"></span>
+                <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
                 <span className="text-orange-500 text-xs font-bold uppercase tracking-wider">Atención Previa Cita</span>
               </div>
             </div>
 
-            {/* Quick Links */}
+            {/* Services */}
             <div>
               <h4 className="text-white font-bold mb-4 uppercase text-xs tracking-wider">Servicios</h4>
               <ul className="space-y-2 text-sm text-gray-500">
-                <li><a href="#servicios" className="hover:text-white transition-colors">PC de Escritorio</a></li>
-                <li><a href="#servicios" className="hover:text-white transition-colors">Tarjetas Gráficas</a></li>
-                <li><a href="#servicios" className="hover:text-white transition-colors">Laptops</a></li>
-                <li><a href="#servicios" className="hover:text-white transition-colors">MacBooks</a></li>
-                <li><a href="#servicios" className="hover:text-white transition-colors">Consolas</a></li>
-                <li><a href="#servicios" className="hover:text-white transition-colors">Software y Hardware</a></li>
+                {SERVICE_LINKS.map((label) => (
+                  <li key={label}>
+                    <a href="#servicios" className="hover:text-white transition-colors">{label}</a>
+                  </li>
+                ))}
               </ul>
             </div>
 
-            {/* Contact Mini */}
+            {/* Location */}
             <div>
-             <h4 className="text-white font-bold mb-4 uppercase text-xs tracking-wider">Ubicación</h4>
-             <ul className="space-y-3 text-sm text-gray-500">
-               <li className="flex items-start gap-2">
-                 <MapPin className="w-4 h-4 mt-0.5 text-orange-500 shrink-0" />
-                 <span>Talambo 135, San Miguel,<br/>Lima, Perú</span>
-               </li>
-               <li className="flex items-start gap-2">
-                 <Clock className="w-4 h-4 mt-0.5 text-orange-500 shrink-0" />
-                 <span>24 Horas / 7 Días<br/><span className="text-xs opacity-60">(Previa coordinación)</span></span>
-               </li>
-             </ul>
+              <h4 className="text-white font-bold mb-4 uppercase text-xs tracking-wider">Ubicación</h4>
+              <ul className="space-y-3 text-sm text-gray-500">
+                <li className="flex items-start gap-2">
+                  <MapPin className="w-4 h-4 mt-0.5 text-orange-500 shrink-0" />
+                  <span>Talambo 135, San Miguel,<br />Lima, Perú</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Clock className="w-4 h-4 mt-0.5 text-orange-500 shrink-0" />
+                  <span>24 Horas / 7 Días<br /><span className="text-xs opacity-60">(Previa coordinación)</span></span>
+                </li>
+              </ul>
             </div>
           </div>
 
           <div className="pt-8 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-gray-600">
-            © {new Date().getFullYear()} QuickFix. Todos los derechos reservados.
-          </p>
-          <div className="flex gap-4">
-             <span className="text-xs text-gray-600 hover:text-gray-400 cursor-pointer">Términos</span>
-             <button
+            <p className="text-xs text-gray-600">© {new Date().getFullYear()} QuickFix. Todos los derechos reservados.</p>
+            <div className="flex gap-4">
+              <span className="text-xs text-gray-600 hover:text-gray-400 cursor-pointer">Términos</span>
+              <button
                 onClick={() => setWarrantyOpen(true)}
                 className="text-xs text-gray-600 hover:text-orange-500 cursor-pointer transition-colors"
-             >
+              >
                 Garantía
-             </button>
+              </button>
+            </div>
           </div>
         </div>
-      </div>
-    </footer>
+      </footer>
 
-    <WarrantyDialog open={warrantyOpen} onClose={() => setWarrantyOpen(false)} />
+      <WarrantyDialog open={warrantyOpen} onClose={() => setWarrantyOpen(false)} />
     </>
   );
-};
+});
 
 export default Footer;
