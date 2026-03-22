@@ -1,4 +1,4 @@
-import { X, ChevronDown, HelpCircle, Thermometer, MapPin, CreditCard, Calendar } from "lucide-react";
+import { X, ChevronDown, HelpCircle, Thermometer, MapPin, CreditCard, Calendar, Microscope, Clock, AlertTriangle } from "lucide-react";
 import { useState, useEffect } from "react";
 
 interface FAQItemProps {
@@ -176,6 +176,58 @@ const FAQDialog = ({ open, onClose }: FAQDialogProps) => {
         question: "¿Pierdo mis archivos con el mantenimiento?",
         icon: <HelpCircle className="w-5 h-5" />,
         answer: "No. El mantenimiento de hardware (limpieza y pasta térmica) no afecta en absoluto tu información. El disco duro/SSD no se toca ni se formatea, a menos que solicites explícitamente un servicio de 'Formateo y Optimización' de software.",
+      },
+      {
+          question: "¿Por qué el diagnóstico electrónico tiene un costo (S/. 99)?",
+          icon: <Microscope className="w-5 h-5" />,
+          answer: (
+              <div className="space-y-3">
+                  <p>
+                      A diferencia de una revisión básica, un diagnóstico de microsoldadura requiere horas de trabajo de ingeniería.
+                  </p>
+                  <p>
+                      Nuestros especialistas deben desensamblar el equipo por completo, estudiar los <strong>esquemáticos (planos eléctricos)</strong> de la placa base, y utilizar multímetros, osciloscopios y cámaras térmicas para encontrar el micro-componente exacto (Mosfet, IC, Resistencia) que está en cortocircuito.
+                  </p>
+                  <p className="text-orange-300 text-sm">
+                      * Este monto cubre el tiempo de laboratorio y el uso de instrumentación de alta precisión, por lo cual no es reembolsable.
+                  </p>
+              </div>
+          ),
+      },
+      {
+          question: "¿Cuánto tiempo tarda una reparación de placa madre?",
+          icon: <Clock className="w-5 h-5" />,
+          answer: (
+              <div className="space-y-4">
+                  <p>
+                      La reparación a nivel de componente se realiza en tres fases estrictas para garantizar la estabilidad del equipo:
+                  </p>
+                  <div className="bg-white/5 p-4 rounded-lg border-l-2 border-orange-500">
+                      <ul className="space-y-2 text-sm">
+                          <li><span className="text-orange-400 font-bold">1. Fase de Diagnóstico:</span> 48 a 72 horas laborables para aislar el cortocircuito o la falla.</li>
+                          <li><span className="text-orange-400 font-bold">2. Fase de Reparación:</span> 2 a 4 días laborables para realizar la microsoldadura y reemplazar los chips dañados en placa.</li>
+                          <li><span className="text-orange-400 font-bold">3. Fase de Estrés (QC):</span> 24 horas obligatorias de pruebas sintéticas para certificar que el equipo soporta carga térmica y eléctrica sin reiniciarse.</li>
+                      </ul>
+                  </div>
+              </div>
+          ),
+      },
+      {
+          question: "Derramé líquido en mi laptop, ¿qué debo hacer?",
+          icon: <AlertTriangle className="w-5 h-5 text-red-400" />,
+          answer: (
+              <div className="space-y-3">
+                  <p className="text-red-300 font-bold">
+                      ¡No intentes encenderla ni la conectes al cargador!
+                  </p>
+                  <p>
+                      Si la enciendes, la electricidad mezclada con el líquido causará un cortocircuito letal. Tampoco uses una secadora de cabello, ya que esto solo empuja el líquido más adentro de los componentes SMD.
+                  </p>
+                  <p>
+                      Tráela al laboratorio lo antes posible. Nuestro primer paso será un <strong>Lavado Químico Profundo</strong> para detener la corrosión (sulfatación) en la placa base, seguido de un diagnóstico para evaluar qué micro-componentes lograron salvarse.
+                  </p>
+              </div>
+          ),
       },
   ];
 

@@ -1,5 +1,5 @@
 import { MapPin, Clock, Phone, Mail } from "lucide-react";
-import { useState, memo } from "react";
+import React, { useState, memo } from "react";
 import WarrantyDialog from "@/components/WarrantyDialog";
 import TermsDialog from "@/components/TermsDialog";
 
@@ -13,9 +13,19 @@ const Footer = memo(() => {
   const [warrantyOpen, setWarrantyOpen] = useState(false);
   const [termsOpen, setTermsOpen]       = useState(false);
 
+  const handleScroll = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    e.preventDefault();
+    const targetId = href.replace(/.*#/, "");
+    const elem = document.getElementById(targetId);
+
+    if (elem) {
+      elem.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+
   return (
     <>
-      <footer className="bg-[#050505] border-t border-white/10 pt-16 pb-8">
+      <footer id="contacto" className="bg-[#050505] border-t border-white/10 pt-16 pb-8">
         <div className="container mx-auto px-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
 
@@ -40,7 +50,7 @@ const Footer = memo(() => {
               <ul className="space-y-2 text-sm text-gray-500">
                 {SERVICE_LINKS.map((label) => (
                   <li key={label}>
-                    <a href="#servicios" className="hover:text-white transition-colors">{label}</a>
+                    <a href="#servicios" onClick={(e) => handleScroll(e, '#servicios')} className="hover:text-white transition-colors">{label}</a>
                   </li>
                 ))}
               </ul>

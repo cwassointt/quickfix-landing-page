@@ -7,7 +7,8 @@ const DIRS = [
     "src/images/hero",
     "src/images/services",
     "src/images/materials",
-    "src/images/logo"
+    "src/images/logo",
+    "src/images/repair"
 ];
 
 const WEBP_OPTIONS = {

@@ -8,7 +8,9 @@ import {
   useAnimationControls,
   MotionValue,
 } from "framer-motion";
-import { Droplets, SprayCan, Shield, Sparkles, Flame, Thermometer, Wind, Layers, FlaskConical } from "lucide-react";
+import { 
+  Droplets, SprayCan, Shield, Sparkles, Flame, Thermometer, Wind, Layers, FlaskConical,
+} from "lucide-react";
 
 import grizllyImg   from "../images/materials/GRIZZLY.webp";
 import utp8Img      from "../images/materials/UTP8.webp";
@@ -414,7 +416,7 @@ const ProcessSection = () => {
         </div>
 
         {/* Materials */}
-        <div className="mt-32">
+        <div className="mt-40">
           <div className="flex flex-col items-center mb-16 text-center">
             <motion.span custom={0} variants={headerVariants} initial="hidden" animate={isInView ? "visible" : "hidden"} className="text-orange-500 font-medium text-sm tracking-widest uppercase inline-block mb-3">
               Materiales Premium

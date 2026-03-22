@@ -1,4 +1,4 @@
-import { X, ShieldCheck, Thermometer, Wrench, CheckCircle2 } from "lucide-react";
+import { X, ShieldCheck, Thermometer, Wrench, CheckCircle2, Cpu } from "lucide-react";
 import { useState, useEffect, memo } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -80,6 +80,38 @@ const WarrantyDialog = memo(({ open, onClose }: WarrantyDialogProps) =>
                               <li className="flex items-center gap-2 text-sm text-gray-400">
                                   <CheckCircle2 className="w-4 h-4 text-orange-500" />
                                   <span>Re-aplicación de insumos si fuera necesario.</span>
+                              </li>
+                          </ul>
+                      </div>
+                  </div>
+
+                  {/* Electronic Repair Warranty Section */}
+                  <div className="group bg-white/5 rounded-2xl p-6 border border-white/5 hover:border-orange-500/20 hover:bg-white/[0.07] transition-all duration-300">
+                      <div className="flex items-start gap-4 mb-4">
+                          <div className="p-2 bg-purple-500/10 rounded-xl shrink-0 group-hover:scale-110 transition-transform duration-300">
+                              <Cpu className="w-6 h-6 text-purple-400" />
+                          </div>
+                          <div>
+                              <h3 className="text-xl font-bold text-white mb-2">Garantía de Microsoldadura (3 Meses)</h3>
+                              <p className="text-gray-400 text-sm leading-relaxed">
+                                  Nuestras reparaciones a nivel de componente electrónico cuentan con una garantía técnica de 90 días.
+                              </p>
+                          </div>
+                      </div>
+                      <div className="pl-14 space-y-3">
+                          <div className="bg-purple-500/10 border-l-4 border-purple-500 p-4 rounded-r-lg">
+                              <p className="text-purple-200 text-sm font-medium">
+                                  La cobertura aplica <span className="text-white font-bold">exclusivamente a la zona o componente electrónico reparado</span> (ej. circuito de carga, mosfets, VRAM).
+                              </p>
+                          </div>
+                          <ul className="space-y-2 mt-3">
+                              <li className="flex items-start gap-2 text-sm text-gray-400">
+                                  <X className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+                                  <span>No cubre fallas futuras en circuitos distintos al intervenido originalmente.</span>
+                              </li>
+                              <li className="flex items-start gap-2 text-sm text-gray-400">
+                                  <X className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+                                  <span>Se invalida automáticamente si el equipo sufre variaciones de voltaje (uso de cargadores genéricos) o nuevos derrames de líquidos.</span>
                               </li>
                           </ul>
                       </div>

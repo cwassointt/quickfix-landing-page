@@ -1,7 +1,7 @@
 import { memo } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, FileText, HardDrive, AlertTriangle, Clock, ShieldAlert } from "lucide-react";
+import { X, FileText, HardDrive, AlertTriangle, Clock, ShieldAlert, Microscope } from "lucide-react";
 
 interface TermsDialogProps {
   open: boolean;
@@ -28,6 +28,11 @@ const clauses = [
     icon: <Clock className="w-5 h-5 text-orange-500 shrink-0 mt-0.5" />,
     title: "Cláusula 4 — Abandono de Equipos",
     body: "Todo equipo que no sea recogido dentro de los 30 días calendario posteriores a la notificación de finalización del servicio generará un costo de almacenaje. Pasados los 60 días, QuickFix dispondrá del equipo para cubrir los costos operativos, según las leyes vigentes.",
+  },
+  {
+    icon: <Microscope className="w-5 h-5 text-orange-500 shrink-0 mt-0.5" />,
+    title: "Cláusula 5 — Diagnóstico y Reparación Electrónica",
+    body: "El costo del diagnóstico electrónico (S/. 99) cubre las horas de ingeniería y uso de instrumentación de laboratorio, por lo cual NO es reembolsable, independientemente de si el equipo resulta reparable o no. Asimismo, en equipos con cortocircuitos severos o daños por líquidos, el cliente acepta el riesgo inherente de que, al intentar aislar el daño, la placa base pueda perder funciones residuales o deje de encender por completo. QuickFix no asume responsabilidad por daños colaterales propios de la degradación electrónica.",
   },
 ];
 

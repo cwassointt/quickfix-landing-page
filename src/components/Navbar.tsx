@@ -1,6 +1,41 @@
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Menu, X } from "lucide-react";
 import FAQDialog from "@/components/FAQDialog";
+import WarrantyDialog from "@/components/WarrantyDialog";
+import TermsDialog from "@/components/TermsDialog";
+
+// ── GLOBAL STYLES: CONTAINER SCROLLING FIX (FINAL BOSS SOLUTION) ──
+const _globalCss = `
+  html {
+    scroll-behavior: smooth !important;
+    scroll-padding-top: 90px;
+  }
+
+  /* Reset total para evitar el "Scroll Falso" */
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    overflow-x: hidden !important;
+  }
+
+  /* FORZAR al contenedor principal a ceder el control al Window */
+  body, #root, #__next, main, .App {
+    height: auto !important;
+    min-height: 100vh !important;
+    overflow-y: visible !important; /* Clave: el body NO debe tener scroll interno */
+    overflow-x: hidden !important;
+    position: relative !important;
+    display: block !important;
+  }
+`;
+
+if (typeof document !== "undefined" && !document.getElementById("global-scroll-css")) {
+  const el = document.createElement("style");
+  el.id = "global-scroll-css";
+  el.textContent = _globalCss;
+  document.head.appendChild(el);
+}
 
 // Static data outside component — never re-created
 const links = [
@@ -19,6 +54,8 @@ const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [faqOpen, setFaqOpen]   = useState(false);
+  const [warrantyOpen, setWarrantyOpen] = useState(false);
+  const [termsOpen, setTermsOpen]       = useState(false);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 50);
@@ -36,9 +73,21 @@ const Navbar = () => {
     openFaq();
   }, [closeMenu, openFaq]);
 
+  const handleScroll = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    e.preventDefault();
+    const targetId = href.replace(/.*#/, "");
+    const elem = document.getElementById(targetId);
+
+    if (elem) {
+      // El CSS 'scroll-padding-top: 90px' en el html se encarga del offset automáticamente
+      elem.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    setMenuOpen(false);
+  };
+
   return (
     <>
-      <style>{`html { scroll-behavior: smooth; }`}</style>
       <nav
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-in-out ${
           scrolled ? "bg-[#050505]/90 backdrop-blur-xl shadow-2xl border-b border-white/5 py-0" : "bg-transparent py-4"
@@ -63,12 +112,13 @@ const Navbar = () => {
           </a>
 
           {/* Desktop nav — centered absolutely */}
-          <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-12">
+          <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-8">
             {links.map((l) => (
               <a
                 key={l.href}
                 href={l.href}
-                className="relative group text-sm font-bold text-white/80 hover:text-white transition-colors duration-300 tracking-widest uppercase"
+                onClick={(e) => handleScroll(e, l.href)}
+                className="relative group text-sm font-bold text-white/80 hover:text-white transition-colors duration-300 tracking-widest uppercase cursor-pointer"
                 style={{ fontFamily: "var(--font-visual-sans, sans-serif)" }}
               >
                 {l.label}
@@ -84,6 +134,23 @@ const Navbar = () => {
               FAQ
               <span className="absolute -bottom-2 left-0 w-0 h-[2px] bg-orange-500 transition-all duration-300 group-hover:w-full opacity-0 group-hover:opacity-100 ease-out" />
             </button>
+
+            {/* Secondary Links: Terms & Warranty */}
+            <div className="h-4 w-px bg-white/10" />
+            <div className="flex items-center gap-6">
+                <button
+                    onClick={() => setTermsOpen(true)}
+                    className="text-sm font-medium text-gray-400 hover:text-white transition-colors"
+                >
+                    Términos
+                </button>
+                <button
+                    onClick={() => setWarrantyOpen(true)}
+                    className="text-sm font-medium text-gray-400 hover:text-white transition-colors"
+                >
+                    Garantía
+                </button>
+            </div>
           </div>
 
           {/* Desktop CTA pill */}
@@ -113,8 +180,8 @@ const Navbar = () => {
               <a
                 key={l.href}
                 href={l.href}
-                onClick={closeMenu}
-                className="block text-white text-base font-medium py-2 hover:text-orange-400 transition-colors"
+                onClick={(e) => handleScroll(e, l.href)}
+                className="block w-full text-left text-white text-base font-medium py-2 hover:text-orange-400 transition-colors"
                 style={{ fontFamily: "var(--font-visual-sans, sans-serif)" }}
               >
                 {l.label}
@@ -127,6 +194,22 @@ const Navbar = () => {
             >
               Preguntas Frecuentes
             </button>
+
+            <div className="flex gap-6 py-2 border-t border-white/10 mt-2">
+                <button
+                    onClick={() => { closeMenu(); setTermsOpen(true); }}
+                    className="text-sm text-gray-400 hover:text-white"
+                >
+                    Términos
+                </button>
+                <button
+                    onClick={() => { closeMenu(); setWarrantyOpen(true); }}
+                    className="text-sm text-gray-400 hover:text-white"
+                >
+                    Garantía
+                </button>
+            </div>
+
             <a
               href="https://wa.me/51940755119"
               target="_blank"
@@ -142,6 +225,8 @@ const Navbar = () => {
       </nav>
 
       <FAQDialog open={faqOpen} onClose={closeFaq} />
+      <WarrantyDialog open={warrantyOpen} onClose={() => setWarrantyOpen(false)} />
+      <TermsDialog open={termsOpen} onClose={() => setTermsOpen(false)} />
     </>
   );
 };
