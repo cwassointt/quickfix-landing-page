@@ -1,73 +1,85 @@
-# Welcome to your Lovable project
+# QuickFix — Premium Hardware Maintenance
 
-## Project info
+**Live:** [https://quickfix.pe/](https://quickfix.pe/)  
+**Repository:** [https://github.com/cwassointt/quickfix-landing/tree/develop](https://github.com/cwassointt/quickfix-landing/tree/develop)
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+---
 
-## How can I edit this code?
+## Overview
 
-There are several ways of editing your application.
+QuickFix is the official web platform for a specialized high-end hardware maintenance center located in San Miguel, Lima. The platform is designed with a minimalist dark-mode aesthetic, reflecting the precision and technical rigor behind our core laboratory processes: Chemical Cleaning, Decontamination, and Liquid Metal application.
 
-**Use Lovable**
+---
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+## Features
 
-Changes made via Lovable will be committed automatically to this repo.
+- **High-End UI/UX** — Dark Mode interface with Vivid Orange (`#FF6600`) accents, WF Visual Sans typography, and fully responsive layout.
+- **Interactive Service Catalog** — Service cards with micro-interactions, hover glow effects, and detail modals for each service.
+- **Industrial Supplies Showcase** — Transparent materials section with precise thermal conductivity specs (e.g. UTP-8 Upsiren at 14.8 W/mK, Thermalright Silver King).
+- **Conversion-Focused Design** — Floating WhatsApp button for instant appointment scheduling with 24/7 availability.
+- **Ambient Animations** — Subtle motion effects that reinforce the high-tech identity of the brand.
+- **FAQ Dialog** — Accessible frequently asked questions dialog reachable from the navigation bar.
 
-**Use your preferred IDE**
+---
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## Tech Stack
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+| Technology     | Purpose                                          |
+|----------------|--------------------------------------------------|
+| Vite           | Fast frontend build tool                         |
+| TypeScript     | Static typing for maintainable, robust code      |
+| React          | Core UI library                                  |
+| shadcn/ui      | Accessible and composable UI components          |
+| Tailwind CSS   | Utility-first CSS framework for precise styling  |
+| Vitest         | Unit testing framework                           |
 
-Follow these steps:
+---
+
+## Getting Started
+
+**Prerequisites:** Node.js and npm must be installed.
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+# Clone the repository
+git clone https://github.com/cwassointt/quickfix-landing.git
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+# Navigate into the project
+cd quickfix-landing
 
-# Step 3: Install the necessary dependencies.
-npm i
+# Install dependencies
+npm install
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Start the development server
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+The application will be available at `http://localhost:8080`.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+---
 
-**Use GitHub Codespaces**
+## Scripts
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+| Command           | Description                        |
+|-------------------|------------------------------------|
+| `npm run dev`     | Start local development server     |
+| `npm run build`   | Build for production               |
+| `npm run test`    | Run unit tests                     |
 
-## What technologies are used for this project?
+---
 
-This project is built with:
+## Project Structure
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+```
+src/
+├── components/       # Reusable UI components (Navbar, FAQDialog, etc.)
+├── pages/            # Page-level components
+├── hooks/            # Custom React hooks
+├── lib/              # Utility functions
+└── test/             # Test setup and specs
+```
 
-## How can I deploy this project?
+---
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+## Contact
 
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+For service inquiries or appointment scheduling, contact us via WhatsApp: [+51 940 755 119](https://wa.me/51940755119)
