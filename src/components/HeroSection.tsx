@@ -114,7 +114,7 @@ const FloatingStat = memo(({ value, label, delay }: { value: string; label: stri
 // ── Static stats config ───────────────────────────────────────────
 const STATS = [
   { value: "24h",     label: "Disponibilidad", delay: 0   },
-  { value: "+130",    label: "Reseñas 5★",     delay: 1.5 },
+  { value: "+140",    label: "Reseñas 5★",     delay: 1.5 },
   { value: "Premium", label: "Insumos",         delay: 3   },
 ] as const;
 
@@ -258,7 +258,7 @@ const HeroSection = () => {
             </div>
             <div className="hidden md:block w-px h-8 bg-white/10 group-hover:bg-white/20 transition-colors duration-300" />
             <div className="flex flex-col items-center md:items-start gap-1 text-center md:text-left">
-              <span className="text-2xl md:text-3xl font-black text-white leading-none group-hover:text-orange-100 transition-colors duration-300" style={{ fontFamily: "var(--font-visual-sans, sans-serif)" }}>+130</span>
+              <span className="text-2xl md:text-3xl font-black text-white leading-none group-hover:text-orange-100 transition-colors duration-300" style={{ fontFamily: "var(--font-visual-sans, sans-serif)" }}>+140</span>
               <span className="text-sm text-white/60 font-medium group-hover:text-white/80 transition-colors duration-300" style={{ fontFamily: "var(--font-visual-sans, sans-serif)" }}>reseñas verificadas en Google</span>
             </div>
             <div className="hidden md:block w-px h-8 bg-white/10 group-hover:bg-white/20 transition-colors duration-300" />

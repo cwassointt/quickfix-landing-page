@@ -276,12 +276,12 @@ const ServicesSection = () => {
                 <div className="absolute inset-0 bg-gradient-to-b from-orange-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
 
                 {/* Expanded Image Area (Vertical increase) */}
-                <div className="relative aspect-[4/3] w-full overflow-hidden border-b border-white/5">
+                <div className="relative w-full h-64 overflow-hidden border-b border-white/5">
                   <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-transparent to-transparent z-10 opacity-80" />
                   <img
                     src={service.img}
                     alt={service.title}
-                    className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700 ease-out"
+                    className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
                     loading="lazy"
                   />
                   <div className="absolute top-4 right-4 z-20 bg-black/80 backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-full shadow-lg">

@@ -54,7 +54,7 @@ const ReviewsBadge = () => {
             className="text-2xl md:text-3xl font-black text-white leading-none group-hover:text-orange-100 transition-colors duration-300"
             style={{ fontFamily: "'Inter', sans-serif" }}
           >
-            +130
+            +140
           </span>
           <span
             className="text-sm text-white/60 font-medium group-hover:text-white/80 transition-colors duration-300"
