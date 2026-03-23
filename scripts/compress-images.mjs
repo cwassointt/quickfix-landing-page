@@ -1,3 +1,4 @@
+/*
 // scripts/compress-images.mjs
 import sharp from "sharp";
 import { readdirSync, statSync, writeFileSync, readFileSync } from "fs";
@@ -64,3 +65,4 @@ for (const dir of DIRS) {
     await compressDir(dir);
 }
 console.log("\n✅ Compresión completada.");
+*/
