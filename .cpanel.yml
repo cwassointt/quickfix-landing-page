@@ -1,7 +1,4 @@
 ---
 deployment:
   tasks:
-    - export PATH=/opt/cpanel/ea-nodejs22/bin:/opt/cpanel/ea-nodejs20/bin:/opt/cpanel/ea-nodejs18/bin:$PATH
-    - npm install
-    - npm run build
     - /bin/cp -R dist/* /home/quickfix/public_html/
