@@ -1,3 +1,4 @@
+---
 deployment:
   tasks:
     - export PATH=/opt/cpanel/ea-nodejs22/bin:/opt/cpanel/ea-nodejs20/bin:/opt/cpanel/ea-nodejs18/bin:$PATH
