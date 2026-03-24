@@ -144,6 +144,7 @@ const ServiceCard = memo(({ service, index, onClick }: CardProps) => (
         width={800}
         className="card-img w-full h-full object-cover"
         height={400}
+        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
       />
       <div className="absolute top-4 right-4 z-20 flex flex-wrap gap-2 justify-end">
         {service.tags.map((tag) => (
@@ -282,6 +283,7 @@ const ServicesSection = () => {
                     alt={service.title}
                     width={800}
                     className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                   />
                   <div className="absolute top-4 right-4 z-20 bg-black/80 backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-full shadow-lg">
                     <span className="text-[10px] font-bold text-white/90 uppercase tracking-widest" style={{ fontFamily: "var(--font-visual-sans, sans-serif)" }}>

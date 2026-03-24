@@ -44,36 +44,34 @@ const itemVariants = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.75, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] } },
 };
 
-// ── ShimmerText — Optimized to avoid non-composited animations (Lighthouse fix) ────────────
+// ── ShimmerText — Restored original gradient movement ────────────
 const _shimmerStyle = `
-  @keyframes shimmerPulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.7; }
+  @keyframes shimmerMove {
+    0% { background-position: 200% center; }
+    100% { background-position: -200% center; }
   }
   .shimmer-text {
-    background-image: linear-gradient(90deg, #fb923c 0%, #fed7aa 50%, #fb923c 100%);
-    background-size: 100% auto;
+    background-image: linear-gradient(90deg, #fb923c 0%, #fed7aa 25%, #fb923c 50%, #fb923c 100%);
+    background-size: 200% auto;
     background-clip: text;
     -webkit-background-clip: text;
     color: transparent;
-    animation: shimmerPulse 3s ease-in-out infinite;
-    will-change: opacity;
+    animation: shimmerMove 3s linear infinite;
   }
 `;
 
 const _goldShimmerStyle = `
-  @keyframes goldPulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.7; }
+  @keyframes goldShimmerMove {
+    0% { background-position: 200% center; }
+    100% { background-position: -200% center; }
   }
   .shimmer-gold {
-    background-image: linear-gradient(90deg, #FBBF24 0%, #FFFFFF 50%, #FBBF24 100%);
-    background-size: 100% auto;
+    background-image: linear-gradient(90deg, #FBBF24 0%, #FFFFFF 25%, #FBBF24 50%, #FBBF24 100%);
+    background-size: 200% auto;
     background-clip: text;
     -webkit-background-clip: text;
     color: transparent;
-    animation: goldPulse 3.5s ease-in-out infinite;
-    will-change: opacity;
+    animation: goldShimmerMove 3.5s linear infinite;
   }
 `;
 
@@ -162,6 +160,7 @@ const HeroSection = () => {
                 priority={true}
                 className="hero-scale w-full h-full object-cover object-center opacity-80"
                 height={1080}
+                sizes="100vw"
               />
               <div className="absolute inset-0 bg-gradient-to-r from-black via-transparent to-transparent opacity-90" />
             </div>
