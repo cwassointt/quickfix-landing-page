@@ -155,10 +155,11 @@ const HeroSection = () => {
             <div className="absolute inset-0">
               <img
                 src={heroBg}
-                alt="Componente de PC de alta gama"
+                alt="Mantenimiento de PC Gamer y Laptops High-End en Lima - QuickFix"
                 className="hero-scale w-full h-full object-cover object-center opacity-80"
                 loading="eager"
                 decoding="sync"
+                fetchPriority="high"
                 width={1920}
                 height={1080}
               />

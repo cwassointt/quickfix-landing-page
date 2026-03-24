@@ -198,7 +198,7 @@ const MaterialCard = memo(({
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
           <img
             src={mat.img}
-            alt={mat.category}
+            alt={`Material Premium: ${mat.category} para Mantenimiento de Hardware`}
             loading="lazy"
             decoding="async"
             width={240}
