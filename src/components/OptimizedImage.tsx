@@ -8,11 +8,16 @@ interface OptimizedImageProps extends React.ImgHTMLAttributes<HTMLImageElement> 
 }
 
 const OptimizedImage: React.FC<OptimizedImageProps> = ({ src, alt, width, priority = false, className, title, style, sizes, ...props }) => {
-  const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost';
+  // Detección robusta de entorno local para evitar errores de Cloudinary Fetch con localhost
+  const isLocalhost = typeof window !== 'undefined' && (
+      window.location.hostname === 'localhost' || 
+      window.location.hostname === '127.0.0.1' ||
+      window.location.hostname.includes('192.168')
+  );
   
-  // Genera URL base de Cloudinary
+  // Genera URL base de Cloudinary con compresión mejorada (q_auto:good)
   const getCloudinaryUrl = (w: number) => 
-    `https://res.cloudinary.com/demo/image/fetch/f_auto,q_auto,w_${w}/https://quickfix.pe${src}`;
+    `https://res.cloudinary.com/demo/image/fetch/f_auto,q_auto:good,w_${w}/https://quickfix.pe${src}`;
 
   const finalSrc = isLocalhost 
     ? src 
@@ -21,10 +26,10 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({ src, alt, width, priori
   // Genera srcSet para resoluciones responsivas solo en producción
   const generateSrcSet = () => {
     if (isLocalhost) return undefined;
-    // Breakpoints estándar
-    const widths = [400, 640, 800, 1080, 1200, 1920]; 
+    // Breakpoints más granulares para ajustarse mejor a las cajas detectadas por Lighthouse
+    const widths = [360, 480, 640, 800, 1080, 1200, 1920]; 
     return widths
-      .filter(w => w <= width) // Solo generar versiones hasta el ancho máximo original/solicitado
+      .filter(w => w <= width) // Solo hasta el ancho máximo
       .map(w => `${getCloudinaryUrl(w)} ${w}w`)
       .join(', ');
   };
@@ -33,9 +38,10 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({ src, alt, width, priori
     <img
       src={finalSrc}
       srcSet={generateSrcSet()}
-      sizes={sizes} // Permite pasar el atributo sizes desde el padre
+      sizes={sizes}
       alt={alt}
       width={width}
+      height={props.height}
       className={className}
       loading={priority ? "eager" : "lazy"}
       decoding={priority ? "sync" : "async"}

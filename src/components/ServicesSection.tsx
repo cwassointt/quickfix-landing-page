@@ -141,7 +141,7 @@ const ServiceCard = memo(({ service, index, onClick }: CardProps) => (
       <OptimizedImage
         src={service.image}
         alt={service.title}
-        width={800}
+        width={640} // REDUCIDO DE 800 A 640 PARA MEJORAR LCP/BYTE SAVINGS
         className="card-img w-full h-full object-cover"
         height={400}
         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -281,7 +281,7 @@ const ServicesSection = () => {
                   <OptimizedImage
                     src={service.img}
                     alt={service.title}
-                    width={800}
+                    width={640} // REDUCIDO DE 800 A 640
                     className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                   />
