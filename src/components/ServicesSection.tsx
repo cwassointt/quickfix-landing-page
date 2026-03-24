@@ -2,6 +2,7 @@ import { useScrollReveal } from "@/hooks/useScrollReveal";
 import { useState, lazy, Suspense, useRef, useCallback, memo } from "react";
 import { motion, useInView } from "framer-motion";
 import { Activity, Cpu } from "lucide-react"; // Removed Microscope import
+import OptimizedImage from "@/components/OptimizedImage";
 
 const ServiceDialog = lazy(() => import("./ServiceDialog"));
 
@@ -137,13 +138,11 @@ const ServiceCard = memo(({ service, index, onClick }: CardProps) => (
     {/* Image — CSS scale, no JS hover handler */}
     <div className="relative h-52 shrink-0 overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-t from-[#111] via-transparent to-transparent z-10 opacity-60" />
-      <img
+      <OptimizedImage
         src={service.image}
-        alt={`Servicio Profesional: ${service.title} en Lima`}
+        alt={service.title}
+        width={800}
         className="card-img w-full h-full object-cover"
-        loading="lazy"
-        decoding="async"
-        width={600}
         height={400}
       />
       <div className="absolute top-4 right-4 z-20 flex flex-wrap gap-2 justify-end">
@@ -278,12 +277,11 @@ const ServicesSection = () => {
                 {/* Expanded Image Area (Vertical increase) */}
                 <div className="relative w-full h-64 overflow-hidden border-b border-white/5">
                   <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-transparent to-transparent z-10 opacity-80" />
-                  <img
+                  <OptimizedImage
                     src={service.img}
-                    alt={`Reparación Especializada: ${service.title} - ${service.detail} - QuickFix`}
+                    alt={service.title}
+                    width={800}
                     className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-                    loading="lazy"
-                    decoding="async"
                   />
                   <div className="absolute top-4 right-4 z-20 bg-black/80 backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-full shadow-lg">
                     <span className="text-[10px] font-bold text-white/90 uppercase tracking-widest" style={{ fontFamily: "var(--font-visual-sans, sans-serif)" }}>

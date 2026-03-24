@@ -2,6 +2,7 @@ import React, { memo } from "react";
 import { ArrowRight, MessageCircle, Star, Trophy } from "lucide-react";
 import { motion } from "framer-motion";
 import heroBg from "@/images/hero/hero-background.webp";
+import OptimizedImage from "@/components/OptimizedImage";
 
 const WHATSAPP_URL = "https://wa.me/51940755119?text=Hola%20QuickFix%2C%20deseo%20agendar%20una%20cita%20para%20el%20mantenimiento%20de%20mi%20equipo.";
 const MAPS_REVIEWS_URL = "https://www.google.com/maps/place/QuickFix.pe/@-12.078675,-77.1128235,17z/data=!3m1!4b1!4m6!3m5!1s0x9105cba106bb0ffd:0x56720d8b1b55c23e!8m2!3d-12.0786803!4d-77.1102486!16s%2Fg%2F11xyxywtk7!5m1!1e1?entry=ttu&g_ep=EgoyMDI2MDIxOC4wIKXMDSoASAFQAw%3D%3D";
@@ -43,35 +44,36 @@ const itemVariants = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.75, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] } },
 };
 
-// ── ShimmerText — pure CSS, zero JS animation overhead ────────────
+// ── ShimmerText — Optimized to avoid non-composited animations (Lighthouse fix) ────────────
 const _shimmerStyle = `
-  @keyframes shimmerSlide {
-    0%   { background-position: -200% center; }
-    30%  { background-position: 200% center; }
-    100% { background-position: 200% center; }
+  @keyframes shimmerPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
   }
   .shimmer-text {
-    background-image: linear-gradient(90deg, #fb923c 0%, #fed7aa 40%, #f97316 55%, #fb923c 100%);
-    background-size: 200% auto;
+    background-image: linear-gradient(90deg, #fb923c 0%, #fed7aa 50%, #fb923c 100%);
+    background-size: 100% auto;
     background-clip: text;
     -webkit-background-clip: text;
     color: transparent;
-    animation: shimmerSlide 4.4s ease-in-out infinite;
+    animation: shimmerPulse 3s ease-in-out infinite;
+    will-change: opacity;
   }
 `;
 
 const _goldShimmerStyle = `
-  @keyframes shimmerGold {
-    0%   { background-position: -200% center; }
-    100% { background-position: 200% center; }
+  @keyframes goldPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
   }
   .shimmer-gold {
     background-image: linear-gradient(90deg, #FBBF24 0%, #FFFFFF 50%, #FBBF24 100%);
-    background-size: 200% auto;
+    background-size: 100% auto;
     background-clip: text;
     -webkit-background-clip: text;
     color: transparent;
-    animation: shimmerGold 4s linear infinite;
+    animation: goldPulse 3.5s ease-in-out infinite;
+    will-change: opacity;
   }
 `;
 
@@ -153,14 +155,12 @@ const HeroSection = () => {
         <div className="absolute inset-0 z-0 bg-black">
           <div className="absolute inset-x-0 bottom-0 top-0 md:left-[35%] md:right-0 bg-black overflow-hidden" style={{ clipPath: "polygon(20% 0, 100% 0, 100% 100%, 0% 100%)" }}>
             <div className="absolute inset-0">
-              <img
+              <OptimizedImage
                 src={heroBg}
                 alt="Mantenimiento de PC Gamer y Laptops High-End en Lima - QuickFix"
-                className="hero-scale w-full h-full object-cover object-center opacity-80"
-                loading="eager"
-                decoding="sync"
-                fetchPriority="high"
                 width={1920}
+                priority={true}
+                className="hero-scale w-full h-full object-cover object-center opacity-80"
                 height={1080}
               />
               <div className="absolute inset-0 bg-gradient-to-r from-black via-transparent to-transparent opacity-90" />
@@ -212,7 +212,7 @@ const HeroSection = () => {
                 >
                   <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out" />
                   <MessageCircle className="w-5 h-5 relative z-10" />
-                  <span className="relative z-10">Agenda tu mantenimiento</span>
+                  <span className="relative z-10 text-white font-black drop-shadow-md">Agenda tu mantenimiento</span>
                   <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1 relative z-10" />
                 </a>
                 <a
