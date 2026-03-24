@@ -114,9 +114,9 @@ const FAQDialog = ({ open, onClose }: FAQDialogProps) => {
         <div className="space-y-4">
           <p>Llegamos a gran parte de Lima Metropolitana. Nuestra cobertura actual incluye:</p>
 
-          {/* Map Embed */}
           <div className="w-full h-48 rounded-lg overflow-hidden border border-white/10 relative grayscale hover:grayscale-0 transition-all duration-500">
              <iframe
+               title="Mapa de cobertura"
                src="https://www.google.com/maps/embed?pb=!1m10!1m8!1m3!1d15607.399676672535!2d-77.042793!3d-12.053120!3m2!1i1024!2i768!4f13.1!5e0!3m2!1ses-419!2spe!4v1708456123456!5m2!1ses-419!2spe"
                width="100%"
                height="100%"
@@ -245,7 +245,6 @@ const FAQDialog = ({ open, onClose }: FAQDialogProps) => {
         }`}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
         <div className="p-6 border-b border-white/10 flex justify-between items-center bg-[#141414]">
           <div>
             <span className="text-orange-500 font-bold uppercase tracking-widest text-xs">Knowledge Base</span>
@@ -259,7 +258,6 @@ const FAQDialog = ({ open, onClose }: FAQDialogProps) => {
           </button>
         </div>
 
-        {/* Content Content */}
         <div className="overflow-y-auto p-6 custom-scrollbar">
             <div className="space-y-2">
                 {faqs.map((faq, index) => (
@@ -275,7 +273,6 @@ const FAQDialog = ({ open, onClose }: FAQDialogProps) => {
             </div>
         </div>
 
-        {/* Footer */}
         <div className="p-4 bg-[#141414] border-t border-white/10 text-center">
             <p className="text-xs text-gray-500">
                 ¿Tienes otra duda? Escríbenos al <a href="https://wa.me/51940755119" target="_blank" className="text-orange-400 hover:underline">WhatsApp</a>

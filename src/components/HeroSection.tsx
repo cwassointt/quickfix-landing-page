@@ -9,7 +9,6 @@ const MAPS_REVIEWS_URL = "https://www.google.com/maps/place/QuickFix.pe/@-12.078
 
 const NUM_PARTICLES = 18;
 
-// ── Static particle config — computed once, never re-randomised ───
 const PARTICLE_CONFIG = Array.from({ length: NUM_PARTICLES }, (_, i) => ({
   id: i,
   x: Math.random() * 45,
@@ -34,7 +33,6 @@ const EnergyParticles = memo(() => (
   </div>
 ));
 
-// ── Static variants outside component ────────────────────────────
 const containerVariants = {
   hidden: {},
   visible: { transition: { staggerChildren: 0.22, delayChildren: 0.15 } },
@@ -44,7 +42,6 @@ const itemVariants = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.75, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] } },
 };
 
-// ── ShimmerText — Restored original gradient movement ────────────
 const _shimmerStyle = `
   @keyframes shimmerMove {
     0% { background-position: 200% center; }
@@ -94,7 +91,6 @@ const ShimmerText = memo(({ children }: { children: React.ReactNode }) => (
   <span className="shimmer-text">{children}</span>
 ));
 
-// ── FloatingStat — memoized ───────────────────────────────────────
 const FloatingStat = memo(({ value, label, delay }: { value: string; label: string; delay: number }) => (
   <motion.div
     className="group cursor-default opacity-80 hover:opacity-100 transition-opacity duration-300"
@@ -111,17 +107,14 @@ const FloatingStat = memo(({ value, label, delay }: { value: string; label: stri
   </motion.div>
 ));
 
-// ── Static stats config ───────────────────────────────────────────
 const STATS = [
   { value: "24h",     label: "Disponibilidad", delay: 0   },
   { value: "+140",    label: "Reseñas 5★",     delay: 1.5 },
   { value: "Premium", label: "Insumos",         delay: 3   },
 ] as const;
 
-// ── Stars array computed once ─────────────────────────────────────
 const STARS = Array.from({ length: 5 }, (_, i) => i);
 
-// ── Hero image scale — pure CSS to avoid framer-motion blocking LCP ──
 const _heroStyle = `
   @keyframes heroScale {
     0%, 100% { transform: scale(1);    }
@@ -161,6 +154,7 @@ const HeroSection = () => {
                 className="hero-scale w-full h-full object-cover object-center opacity-80"
                 height={1080}
                 sizes="100vw"
+                breakpoints={[640, 768, 1024, 1280, 1536, 1920]}
               />
               <div className="absolute inset-0 bg-gradient-to-r from-black via-transparent to-transparent opacity-90" />
             </div>

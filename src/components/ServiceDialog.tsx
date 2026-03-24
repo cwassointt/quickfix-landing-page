@@ -3,8 +3,6 @@ import { useEffect, useState, useRef, useCallback, memo } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence, useAnimationControls } from "framer-motion";
 
-// --- Data Constants ---
-
 const PADS_TIER = {
   name: "PADS TÉRMICOS & MASILLA TÉRMICA",
   price: "S/. 70",
@@ -67,7 +65,6 @@ const dialogData: Record<string, { title: string; tiers: { name: string; price: 
   },
 };
 
-// ── Regex compiled once — not inside render ───────────────────────
 const SPEC_REGEX = /(\d+(?:\.\d+)?\s?w\/mK)/gi;
 
 const highlightKeywords = (text: string | React.ReactNode): React.ReactNode => {
@@ -78,7 +75,6 @@ const highlightKeywords = (text: string | React.ReactNode): React.ReactNode => {
     <span>
       {parts.map((part, i) => {
         if (!part) return null;
-        // Even indices are plain text, odd indices are spec matches (split on capture group)
         if (i % 2 === 1) {
           return (
             <span key={i} className="text-xs italic font-mono ml-1 text-orange-400/90 spec-glow">
@@ -92,7 +88,6 @@ const highlightKeywords = (text: string | React.ReactNode): React.ReactNode => {
   );
 };
 
-// ── CSS-based glow for spec text — no per-item motion animation ───
 const _specStyle = `
   @keyframes specGlow {
     0%,100% { text-shadow: none; }
@@ -104,9 +99,6 @@ if (typeof document !== "undefined" && !document.getElementById("spec-glow-style
   const el = document.createElement("style"); el.id = "spec-glow-style"; el.textContent = _specStyle; document.head.appendChild(el);
 }
 
-// ── VARIANTS ──────────────────────────────────────────────────────
-
-// 1. Progressive backdrop blur (0px → 12px)
 const backdropVariants = {
   hidden: { opacity: 0, backdropFilter: "blur(0px)" },
   visible: {
@@ -121,7 +113,6 @@ const backdropVariants = {
   },
 };
 
-// 2. Elastic out — bouncy spring entrance from bottom
 const panelVariants = {
   hidden: { opacity: 0, y: 90, scale: 0.96 },
   visible: {
@@ -152,7 +143,6 @@ const tierVariants = {
   },
 };
 
-// 3. Stagger 0.1s between list items
 const listContainerVariants = {
   hidden: {},
   visible: { transition: { staggerChildren: 0.1, delayChildren: 0.08 } },
@@ -166,7 +156,6 @@ const listItemVariants = {
   },
 };
 
-// ── TIER DESCRIPTION FADE-IN VARIANT ─────────────────────────────
 const descVariants = {
   hidden: { opacity: 0, y: 6 },
   visible: (i: number) => ({
@@ -175,7 +164,6 @@ const descVariants = {
   }),
 };
 
-// ── AnimatedCheck — simplified, no per-instance motion overhead ───
 const AnimatedCheck = memo(({ orange }: { orange?: boolean }) => (
   <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="shrink-0 mt-[3px]">
     <circle cx="7" cy="7" r="6" stroke={orange ? "rgba(249,115,22,0.5)" : "rgba(255,255,255,0.12)"} strokeWidth="1" />
@@ -183,7 +171,6 @@ const AnimatedCheck = memo(({ orange }: { orange?: boolean }) => (
   </svg>
 ));
 
-// ── PadsBreathBorder — CSS animation instead of framer-motion loop ─
 const _padsStyle = `
   @keyframes padsBreath {
     0%,100% { box-shadow: 0 0 0px 0px rgba(249,115,22,0); border-color: rgba(249,115,22,0.1); }
@@ -199,13 +186,11 @@ const PadsBreathBorder = () => (
   <div className="absolute inset-0 rounded-2xl pointer-events-none pads-breath" style={{ border: "1px solid rgba(249,115,22,0.1)", borderRadius: "1rem" }} />
 );
 
-// ── CTAButton — fixed setInterval shine leak ──────────────────────
 const CTAButton = memo(({ href }: { href: string }) => {
   const shineControls   = useAnimationControls();
   const buttonControls  = useAnimationControls();
   const hasPulsed       = useRef(false);
 
-  // Entry pulse — runs once
   useEffect(() => {
     if (hasPulsed.current) return;
     hasPulsed.current = true;
@@ -216,7 +201,6 @@ const CTAButton = memo(({ href }: { href: string }) => {
     return () => clearTimeout(id);
   }, [buttonControls]);
 
-  // Shine sweep — properly cleaned up
   useEffect(() => {
     let cancelled = false;
     let timeoutId: ReturnType<typeof setTimeout>;
@@ -254,7 +238,6 @@ const CTAButton = memo(({ href }: { href: string }) => {
   );
 });
 
-// ── COMPONENT ─────────────────────────────────────────────────────
 interface ServiceDialogProps {
   open: boolean;
   onClose: () => void;
@@ -287,7 +270,6 @@ const ServiceDialog = ({ open, onClose, serviceId }: ServiceDialogProps) => {
     <AnimatePresence mode="wait">
       {open && (
         <>
-          {/* Backdrop — progressive blur */}
           <motion.div
             key="backdrop"
             variants={backdropVariants}
@@ -298,7 +280,6 @@ const ServiceDialog = ({ open, onClose, serviceId }: ServiceDialogProps) => {
             className="fixed inset-0 z-[100] bg-black/50"
           />
 
-          {/* Panel wrapper */}
           <div className="fixed inset-0 z-[101] flex items-center justify-center p-4 pointer-events-none">
             <motion.div
               key="panel"
@@ -309,12 +290,10 @@ const ServiceDialog = ({ open, onClose, serviceId }: ServiceDialogProps) => {
               className="relative w-full max-w-2xl max-h-[90vh] flex flex-col bg-[#0f0f0f] border border-white/5 rounded-3xl shadow-2xl pointer-events-auto overflow-hidden"
               style={{ fontFamily: "var(--font-visual-sans, sans-serif)" }}
             >
-              {/* Top orange accent line */}
               <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-orange-500/50 to-transparent z-30" />
 
               <div className="overflow-y-auto custom-scrollbar flex flex-col h-full">
 
-                {/* Header */}
                 <div className="sticky top-0 z-20 flex items-center justify-between px-6 py-6 bg-[#0f0f0f]/95 backdrop-blur-xl border-b border-white/5 shrink-0">
                   <div className="flex flex-col gap-1">
                     <span className="text-[10px] uppercase tracking-widest text-white/30 font-bold">Detalle del Servicio</span>
@@ -330,7 +309,6 @@ const ServiceDialog = ({ open, onClose, serviceId }: ServiceDialogProps) => {
                   </motion.button>
                 </div>
 
-                {/* Tier cards */}
                 <motion.div
                   className="p-6 space-y-4"
                   variants={tierContainerVariants}
@@ -340,7 +318,6 @@ const ServiceDialog = ({ open, onClose, serviceId }: ServiceDialogProps) => {
                   {data.tiers.map((tier) => {
                     const isPads = tier.isPads;
                     return (
-                      // 3. PADS tier — breath border wrapper
                       <motion.div
                         key={tier.name}
                         variants={tierVariants}
@@ -352,7 +329,6 @@ const ServiceDialog = ({ open, onClose, serviceId }: ServiceDialogProps) => {
                       >
                         {isPads && <PadsBreathBorder />}
 
-                        {/* Tier header */}
                         <div className={`flex items-start md:items-center justify-between px-5 py-4 ${
                           isPads ? "bg-gradient-to-r from-orange-500/10 to-transparent" : "bg-gradient-to-b from-white/5 to-transparent"
                         } flex-col md:flex-row gap-4`}>
@@ -374,7 +350,6 @@ const ServiceDialog = ({ open, onClose, serviceId }: ServiceDialogProps) => {
                             </div>
                           </div>
 
-                          {/* Price pill */}
                           <motion.span
                             className={`text-sm font-bold tracking-wide px-3 py-1 rounded-full whitespace-nowrap ${
                               isPads
@@ -390,7 +365,6 @@ const ServiceDialog = ({ open, onClose, serviceId }: ServiceDialogProps) => {
                           </motion.span>
                         </div>
 
-                        {/* Items list — staggered draw-on checks */}
                         <div className="px-5 py-5">
                           <motion.ul
                             className="space-y-3"
@@ -423,7 +397,6 @@ const ServiceDialog = ({ open, onClose, serviceId }: ServiceDialogProps) => {
                   })}
                 </motion.div>
 
-                {/* Footer CTA */}
                 <div className="sticky bottom-0 px-6 py-6 bg-[#0f0f0f] border-t border-white/5 shrink-0 z-20 mt-auto">
                   <CTAButton href={whatsappHref} />
                 </div>
@@ -439,7 +412,6 @@ const ServiceDialog = ({ open, onClose, serviceId }: ServiceDialogProps) => {
 
 export default ServiceDialog;
 
-// ── SCROLLBAR STYLE ───────────────────────────────────────────────
 const _style = `
   .custom-scrollbar::-webkit-scrollbar { width: 6px; }
   .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }

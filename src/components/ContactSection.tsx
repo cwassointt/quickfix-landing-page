@@ -8,7 +8,6 @@ const TIKTOK_URL    = "https://www.tiktok.com/@quickfixpe";
 const WHATSAPP_URL  = "https://wa.me/51940755119";
 const MAPS_EMBED    = "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3901.488479110966!2d-77.11282352517016!3d-12.078675042495265!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x9105cba106bb0ffd%3A0x56720d8b1b55c23e!2sQuickFix.pe!5e0!3m2!1ses-419!2spe!4v1771690757299!5m2!1ses-419!2spe";
 
-// Shared card class to avoid duplication
 const CARD_CLS = "flex items-center gap-6 group p-5 rounded-3xl transition-all duration-300 hover:bg-gray-50 border border-transparent hover:border-gray-200 shadow-sm hover:shadow-md";
 const ICON_CLS = "w-16 h-16 rounded-2xl bg-orange-100 flex items-center justify-center text-orange-600 shrink-0 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 group-hover:bg-orange-600 group-hover:text-white group-hover:shadow-[0_0_25px_rgba(249,115,22,0.4)]";
 const TITLE_CLS = "font-heading font-black text-xl text-gray-900 mb-1 group-hover:text-orange-600 transition-colors";
@@ -23,7 +22,6 @@ const ContactSection = memo(() => (
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
         <div className="space-y-6">
-          {/* Dirección */}
           <a href={MAPS_URL} target="_blank" rel="noopener noreferrer" className={CARD_CLS}>
             <div className={ICON_CLS}><MapPin className="w-7 h-7" /></div>
             <div>
@@ -32,7 +30,6 @@ const ContactSection = memo(() => (
             </div>
           </a>
 
-          {/* Horario */}
           <div className={CARD_CLS}>
             <div className={ICON_CLS}><Clock className="w-7 h-7" /></div>
             <div>
@@ -44,7 +41,6 @@ const ContactSection = memo(() => (
             </div>
           </div>
 
-          {/* WhatsApp */}
           <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className={CARD_CLS}>
             <div className={ICON_CLS}><Phone className="w-7 h-7" /></div>
             <div>
@@ -53,7 +49,6 @@ const ContactSection = memo(() => (
             </div>
           </a>
 
-          {/* Instagram */}
           <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer" className={CARD_CLS}>
             <div className={ICON_CLS}><Instagram className="w-7 h-7" /></div>
             <div>
@@ -62,10 +57,8 @@ const ContactSection = memo(() => (
             </div>
           </a>
 
-          {/* TikTok */}
           <a href={TIKTOK_URL} target="_blank" rel="noopener noreferrer" className={CARD_CLS}>
             <div className={ICON_CLS}>
-              {/* Simple TikTok Icon SVG */}
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7">
                 <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" />
               </svg>
@@ -77,7 +70,6 @@ const ContactSection = memo(() => (
           </a>
         </div>
 
-        {/* Map */}
         <div className="rounded-3xl overflow-hidden border border-gray-200 h-full min-h-[500px] bg-gray-50 relative group hover:border-orange-500/30 transition-all duration-500 hover:shadow-lg">
           <iframe
             title="Ubicación QuickFix"

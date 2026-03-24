@@ -10,20 +10,16 @@ const _globalCss = `
     scroll-behavior: smooth !important;
     scroll-padding-top: 90px;
   }
-
-  /* Reset total para evitar el "Scroll Falso" */
   html, body {
     margin: 0;
     padding: 0;
     width: 100%;
     overflow-x: hidden !important;
   }
-
-  /* FORZAR al contenedor principal a ceder el control al Window */
   body, #root, #__next, main, .App {
     height: auto !important;
     min-height: 100vh !important;
-    overflow-y: visible !important; /* Clave: el body NO debe tener scroll interno */
+    overflow-y: visible !important;
     overflow-x: hidden !important;
     position: relative !important;
     display: block !important;
@@ -37,7 +33,6 @@ if (typeof document !== "undefined" && !document.getElementById("global-scroll-c
   document.head.appendChild(el);
 }
 
-// Static data outside component — never re-created
 const links = [
   { label: "Servicios", href: "#servicios" },
   { label: "Proceso",   href: "#proceso"   },
@@ -79,7 +74,6 @@ const Navbar = () => {
     const elem = document.getElementById(targetId);
 
     if (elem) {
-      // El CSS 'scroll-padding-top: 90px' en el html se encarga del offset automáticamente
       elem.scrollIntoView({ behavior: "smooth", block: "start" });
     }
 
@@ -94,13 +88,11 @@ const Navbar = () => {
         }`}
       >
         <div className="container mx-auto px-8 flex items-center justify-between h-20">
-          {/* Logo */}
           <a
             href="#"
             className="group relative flex items-center gap-1 font-black text-5xl tracking-tighter flex-shrink-0 transition-transform duration-300 hover:scale-[1.02]"
             style={{ fontFamily: "var(--font-visual-sans, sans-serif)" }}
           >
-            {/* Intense glow effect behind logo */}
             <div className="absolute -inset-6 bg-orange-500/25 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-full" />
 
             <span className="relative z-10 text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
@@ -111,7 +103,6 @@ const Navbar = () => {
             </span>
           </a>
 
-          {/* Desktop nav — centered absolutely */}
           <div className="hidden lg:flex absolute left-1/2 -translate-x-1/2 items-center gap-8">
             {links.map((l) => (
               <a

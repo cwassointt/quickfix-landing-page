@@ -1,7 +1,6 @@
 import { MessageCircle, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
 
-// Updated with a more professional starting message
 const WHATSAPP_URL = "https://wa.me/51940755119?text=Hola%20QuickFix%2C%20deseo%20mayor%20informaci%C3%B3n%20sobre%20sus%20servicios%20de%20mantenimiento.";
 
 const WhatsAppButton = () => {

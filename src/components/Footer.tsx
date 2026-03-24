@@ -3,7 +3,6 @@ import React, { useState, memo } from "react";
 import WarrantyDialog from "@/components/WarrantyDialog";
 import TermsDialog from "@/components/TermsDialog";
 
-// Static data outside component
 const SERVICE_LINKS = [
   "PC de Escritorio", "Tarjetas Gráficas", "Laptops",
   "MacBooks", "Consolas", "Software y Hardware",

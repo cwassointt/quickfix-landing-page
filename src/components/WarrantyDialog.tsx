@@ -1,5 +1,5 @@
 import { X, ShieldCheck, Thermometer, Wrench, CheckCircle2, Cpu } from "lucide-react";
-import { useState, useEffect, memo } from "react";
+import { memo } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 
