@@ -112,7 +112,7 @@ const Navbar = () => {
           </a>
 
           {/* Desktop nav — centered absolutely */}
-          <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-8">
+          <div className="hidden lg:flex absolute left-1/2 -translate-x-1/2 items-center gap-8">
             {links.map((l) => (
               <a
                 key={l.href}
@@ -154,7 +154,7 @@ const Navbar = () => {
           </div>
 
           {/* Desktop CTA pill */}
-          <div className="hidden md:block flex-shrink-0">
+          <div className="hidden lg:block flex-shrink-0">
             <a
               href="https://wa.me/51940755119"
               target="_blank"
@@ -168,14 +168,14 @@ const Navbar = () => {
           </div>
 
           {/* Mobile toggle */}
-          <button onClick={toggleMenu} className="md:hidden text-white" aria-label="Menu">
+          <button onClick={toggleMenu} className="lg:hidden text-white" aria-label="Menu">
             {menuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
         </div>
 
         {/* Mobile menu */}
         {menuOpen && (
-          <div className="md:hidden bg-black/95 border-b border-white/10 px-8 py-5 space-y-3">
+          <div className="lg:hidden bg-black/95 border-b border-white/10 px-8 py-5 space-y-3">
             {links.map((l) => (
               <a
                 key={l.href}

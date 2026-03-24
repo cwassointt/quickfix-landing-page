@@ -177,24 +177,24 @@ const MaterialCard = memo(({
         }}
       />
 
-      <div className="relative z-10 w-full h-full bg-[#0A0A0A] rounded-3xl p-6 flex flex-col border border-white/5 group-hover:border-[#FF6600]/60 transition-colors duration-300">
+      <div className="relative z-10 w-full h-full bg-[#0A0A0A] rounded-3xl p-5 md:p-6 flex flex-col border border-white/5 group-hover:border-[#FF6600]/60 transition-colors duration-300">
         <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-3xl pointer-events-none" />
 
-        <div className="flex justify-between items-start mb-6 relative z-10">
+        <div className="flex justify-between items-start mb-4 md:mb-6 relative z-10">
           <div className="flex flex-col">
             <span className="text-[10px] font-medium text-white/60 uppercase tracking-widest mb-1" style={{ fontFamily: "var(--font-visual-sans, sans-serif)" }}>
               Categoría
             </span>
-            <h4 className="text-white font-bold text-lg tracking-wide" style={{ fontFamily: "var(--font-visual-sans, sans-serif)" }}>
+            <h4 className="text-white font-bold text-base md:text-lg tracking-wide break-words pr-2" style={{ fontFamily: "var(--font-visual-sans, sans-serif)" }}>
               {mat.category}
             </h4>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-[#111] flex items-center justify-center text-orange-500 shadow-md border border-white/5 transition-all duration-300 group-hover:bg-[#FF6600] group-hover:text-white group-hover:shadow-[0_0_15px_rgba(255,102,0,0.4)]">
+          <div className="w-10 h-10 rounded-xl bg-[#111] flex items-center justify-center text-orange-500 shadow-md border border-white/5 transition-all duration-300 group-hover:bg-[#FF6600] group-hover:text-white group-hover:shadow-[0_0_15px_rgba(255,102,0,0.4)] flex-shrink-0">
             {mat.icon}
           </div>
         </div>
 
-        <div className="relative aspect-video w-full flex items-center justify-center p-4 mb-4 bg-gradient-to-b from-[#111] to-[#0A0A0A] rounded-2xl border border-white/5 group-hover:border-white/10 transition-all duration-300 overflow-hidden">
+        <div className="relative aspect-video w-full flex items-center justify-center p-2 mb-4 bg-gradient-to-b from-[#111] to-[#0A0A0A] rounded-2xl border border-white/5 group-hover:border-white/10 transition-all duration-300 overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
           <img
             src={mat.img}
@@ -205,14 +205,14 @@ const MaterialCard = memo(({
             height={135}
             draggable="false"
             onDragStart={(e) => e.preventDefault()}
-            className="relative z-10 max-w-[85%] max-h-[85%] w-auto h-auto object-contain filter drop-shadow-2xl opacity-90 group-hover:opacity-100 group-hover:scale-110 transition-transform duration-500 ease-out select-none"
+            className="relative z-10 w-full h-full object-contain filter drop-shadow-2xl opacity-90 group-hover:opacity-100 group-hover:scale-110 transition-transform duration-500 ease-out select-none"
           />
         </div>
 
-        <div className="flex flex-col gap-3 relative z-10 flex-1 overflow-y-auto no-scrollbar">
+        <div className="flex flex-col gap-2 md:gap-3 relative z-10 flex-1 overflow-y-auto no-scrollbar">
           {mat.items.map((item, idx) => (
-            <div key={idx} className="flex flex-col pb-3 border-b border-dashed border-white/5 last:border-0">
-              <span className="text-sm font-medium text-white/80 leading-snug group-hover:text-white transition-colors" style={{ fontFamily: "var(--font-visual-sans, sans-serif)" }}>
+            <div key={idx} className="flex flex-col pb-2 md:pb-3 border-b border-dashed border-white/5 last:border-0">
+              <span className="text-xs md:text-sm font-medium text-white/80 leading-snug group-hover:text-white transition-colors" style={{ fontFamily: "var(--font-visual-sans, sans-serif)" }}>
                 {item.name}
               </span>
               {item.spec && <LEDSpec spec={item.spec} />}
