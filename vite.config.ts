@@ -40,10 +40,12 @@ export default defineConfig(({ mode }) => ({
           vendor: ["react", "react-dom"],
           router: ["react-router-dom"],
         },
+        inlineManifest: true,
       },
     },
     chunkSizeWarningLimit: 500,
   },
+
 
   optimizeDeps: {
     include: ["react", "react-dom", "react-router-dom"],
