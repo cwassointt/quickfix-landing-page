@@ -1,0 +1,24 @@
+{
+  "name": "QuickFix - Laboratorio Técnico",
+  "short_name": "QuickFix",
+  "description": "Laboratorio especializado en reparación electrónica a nivel de componente y mantenimiento térmico de hardware de alta gama.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#050505",
+  "theme_color": "#f97316",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ]
+}
