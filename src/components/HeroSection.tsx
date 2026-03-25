@@ -9,7 +9,7 @@ const MAPS_REVIEWS_URL = "https://www.google.com/maps/place/QuickFix.pe/@-12.078
 
 const NUM_PARTICLES = 18;
 
-const PARTICLE_CONFIG = Array.from({ length: NUM_PARTICLES }, (_, i) => ({
+  const PARTICLE_CONFIG = Array.from({ length: NUM_PARTICLES }, (_, i) => ({
   id: i,
   x: Math.random() * 45,
   size: Math.random() * 3 + 1.5,

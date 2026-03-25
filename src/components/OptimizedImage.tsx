@@ -26,18 +26,19 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
       window.location.hostname.includes('192.168')
   );
   
+  // Actualizado a q_auto:eco para mayor compresión (Lighthouse savings)
   const CLOUDINARY_BY_KEY: Record<string, string> = {
-    "console-ps5": "https://res.cloudinary.com/dmegp6gmd/image/upload/f_webp/q_auto/console-ps5_ctyf97.webp",
-    "laptopgamer-repair": "https://res.cloudinary.com/dmegp6gmd/image/upload/f_webp/q_auto/laptopgamer-repair_jdsfo1.webp",
-    "laptopoffice-repair": "https://res.cloudinary.com/dmegp6gmd/image/upload/f_webp/q_auto/laptopoffice-repair_hjj0ln.webp",
-    "laptop-maintenance": "https://res.cloudinary.com/dmegp6gmd/image/upload/f_webp/q_auto/laptop-maintenance_oi0tk0.webp",
-    "hero-background": "https://res.cloudinary.com/dmegp6gmd/image/upload/f_webp/q_auto/hero-background_ynkel5.webp",
-    "logo": "https://res.cloudinary.com/dmegp6gmd/image/upload/f_webp/q_auto/logo_md70dc.webp",
-    "gpu-repair": "https://res.cloudinary.com/dmegp6gmd/image/upload/f_webp/q_auto/gpu-repair_yyggjp.webp",
-    "macbook-maintenance": "https://res.cloudinary.com/dmegp6gmd/image/upload/f_webp/q_auto/macbook-maintenance_h2qwjz.webp",
-    "pc-gamer-setup": "https://res.cloudinary.com/dmegp6gmd/image/upload/f_webp/q_auto/pc-gamer-setup_vxoowh.webp",
-    "gpu-maintenance": "https://res.cloudinary.com/dmegp6gmd/image/upload/f_webp/q_auto/gpu-maintenance_tuaud6.webp",
-    "hardware-tools": "https://res.cloudinary.com/dmegp6gmd/image/upload/f_webp/q_auto/hardware-tools_bxonku.webp",
+    "console-ps5": "https://res.cloudinary.com/dmegp6gmd/image/upload/f_webp/q_auto:eco/console-ps5_ctyf97.webp",
+    "laptopgamer-repair": "https://res.cloudinary.com/dmegp6gmd/image/upload/f_webp/q_auto:eco/laptopgamer-repair_jdsfo1.webp",
+    "laptopoffice-repair": "https://res.cloudinary.com/dmegp6gmd/image/upload/f_webp/q_auto:eco/laptopoffice-repair_hjj0ln.webp",
+    "laptop-maintenance": "https://res.cloudinary.com/dmegp6gmd/image/upload/f_webp/q_auto:eco/laptop-maintenance_oi0tk0.webp",
+    "hero-background": "https://res.cloudinary.com/dmegp6gmd/image/upload/f_webp/q_auto:eco/hero-background_ynkel5.webp",
+    "logo": "https://res.cloudinary.com/dmegp6gmd/image/upload/f_webp/q_auto:eco/logo_md70dc.webp",
+    "gpu-repair": "https://res.cloudinary.com/dmegp6gmd/image/upload/f_webp/q_auto:eco/gpu-repair_yyggjp.webp",
+    "macbook-maintenance": "https://res.cloudinary.com/dmegp6gmd/image/upload/f_webp/q_auto:eco/macbook-maintenance_h2qwjz.webp",
+    "pc-gamer-setup": "https://res.cloudinary.com/dmegp6gmd/image/upload/f_webp/q_auto:eco/pc-gamer-setup_vxoowh.webp",
+    "gpu-maintenance": "https://res.cloudinary.com/dmegp6gmd/image/upload/f_webp/q_auto:eco/gpu-maintenance_tuaud6.webp",
+    "hardware-tools": "https://res.cloudinary.com/dmegp6gmd/image/upload/f_webp/q_auto:eco/hardware-tools_bxonku.webp",
   };
 
   const resolveCloudinarySrc = (inputSrc: string): string => {
@@ -50,8 +51,17 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
 
   const finalSrc = isLocalhost ? src : resolveCloudinarySrc(src);
 
-  // Con URLs fijas de Cloudinary no armamos srcSet dinámico aquí.
-  const generateSrcSet = () => undefined;
+  // Generación dinámica de srcSet inyectando parámetros de ancho y límite en la URL de Cloudinary
+  const generateSrcSet = () => {
+    if (isLocalhost || !finalSrc.includes('res.cloudinary.com')) return undefined;
+    
+    const widths = breakpoints || [320, 480, 640, 768, 1024, 1280, 1600];
+    
+    return widths.map(w => {
+        // Reemplaza /q_auto:eco/ con /q_auto:eco,w_{w},c_limit/ para redimensionar en el servidor
+        return `${finalSrc.replace('/q_auto:eco/', `/q_auto:eco,w_${w},c_limit/`)} ${w}w`;
+    }).join(', ');
+  };
 
   return (
     <img
