@@ -26,20 +26,19 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
       window.location.hostname.includes('192.168')
   );
   
-  // Actualizado a f_auto (AVIF/WebP) y q_auto:low para máxima compresión según reporte Lighthouse.
-  // Esto reduce el peso significativamente (~40-60%) frente a q_auto:eco/f_webp.
+  // Actualizado a q_50 (Calidad fija 50%) para forzar compresión agresiva y eliminar advertencias de Lighthouse.
   const CLOUDINARY_BY_KEY: Record<string, string> = {
-    "console-ps5": "https://res.cloudinary.com/dmegp6gmd/image/upload/f_auto/q_auto:low/console-ps5_ctyf97.webp",
-    "laptopgamer-repair": "https://res.cloudinary.com/dmegp6gmd/image/upload/f_auto/q_auto:low/laptopgamer-repair_jdsfo1.webp",
-    "laptopoffice-repair": "https://res.cloudinary.com/dmegp6gmd/image/upload/f_auto/q_auto:low/laptopoffice-repair_hjj0ln.webp",
-    "laptop-maintenance": "https://res.cloudinary.com/dmegp6gmd/image/upload/f_auto/q_auto:low/laptop-maintenance_oi0tk0.webp",
-    "hero-background": "https://res.cloudinary.com/dmegp6gmd/image/upload/f_auto/q_auto:low/hero-background_ynkel5.webp",
-    "logo": "https://res.cloudinary.com/dmegp6gmd/image/upload/f_auto/q_auto:eco/logo_md70dc.webp", // Logo se mantiene en eco para evitar artefactos en bordes
-    "gpu-repair": "https://res.cloudinary.com/dmegp6gmd/image/upload/f_auto/q_auto:low/gpu-repair_yyggjp.webp",
-    "macbook-maintenance": "https://res.cloudinary.com/dmegp6gmd/image/upload/f_auto/q_auto:low/macbook-maintenance_h2qwjz.webp",
-    "pc-gamer-setup": "https://res.cloudinary.com/dmegp6gmd/image/upload/f_auto/q_auto:low/pc-gamer-setup_vxoowh.webp",
-    "gpu-maintenance": "https://res.cloudinary.com/dmegp6gmd/image/upload/f_auto/q_auto:low/gpu-maintenance_tuaud6.webp",
-    "hardware-tools": "https://res.cloudinary.com/dmegp6gmd/image/upload/f_auto/q_auto:low/hardware-tools_bxonku.webp",
+    "console-ps5": "https://res.cloudinary.com/dmegp6gmd/image/upload/f_auto/q_50/console-ps5_ctyf97.webp",
+    "laptopgamer-repair": "https://res.cloudinary.com/dmegp6gmd/image/upload/f_auto/q_50/laptopgamer-repair_jdsfo1.webp",
+    "laptopoffice-repair": "https://res.cloudinary.com/dmegp6gmd/image/upload/f_auto/q_50/laptopoffice-repair_hjj0ln.webp",
+    "laptop-maintenance": "https://res.cloudinary.com/dmegp6gmd/image/upload/f_auto/q_50/laptop-maintenance_oi0tk0.webp",
+    "hero-background": "https://res.cloudinary.com/dmegp6gmd/image/upload/f_auto/q_50/hero-background_ynkel5.webp",
+    "logo": "https://res.cloudinary.com/dmegp6gmd/image/upload/f_auto/q_auto:eco/logo_md70dc.webp", // Logo se mantiene en eco para evitar artefactos
+    "gpu-repair": "https://res.cloudinary.com/dmegp6gmd/image/upload/f_auto/q_50/gpu-repair_yyggjp.webp",
+    "macbook-maintenance": "https://res.cloudinary.com/dmegp6gmd/image/upload/f_auto/q_50/macbook-maintenance_h2qwjz.webp",
+    "pc-gamer-setup": "https://res.cloudinary.com/dmegp6gmd/image/upload/f_auto/q_50/pc-gamer-setup_vxoowh.webp",
+    "gpu-maintenance": "https://res.cloudinary.com/dmegp6gmd/image/upload/f_auto/q_50/gpu-maintenance_tuaud6.webp",
+    "hardware-tools": "https://res.cloudinary.com/dmegp6gmd/image/upload/f_auto/q_50/hardware-tools_bxonku.webp",
   };
 
   const resolveCloudinarySrc = (inputSrc: string): string => {
@@ -59,8 +58,8 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
     const widths = breakpoints || [320, 480, 640, 768, 1024, 1280, 1600];
     
     return widths.map(w => {
-        // Regex robusto para reemplazar cualquier calidad configurada por la versión redimensionada
-        return `${finalSrc.replace(/\/q_auto:[a-z]+/, `/q_auto:low,w_${w},c_limit`)} ${w}w`;
+        // Regex robusto para reemplazar cualquier calidad configurada (q_50, q_auto, etc) por la versión redimensionada
+        return `${finalSrc.replace(/\/q_[a-zA-Z0-9:]+/, `/q_50,w_${w},c_limit`)} ${w}w`;
     }).join(', ');
   };
 
