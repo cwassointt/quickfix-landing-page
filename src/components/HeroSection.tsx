@@ -2,7 +2,6 @@ import React, { memo } from "react";
 import { ArrowRight, MessageCircle, Star, Trophy } from "lucide-react";
 import { motion } from "framer-motion";
 import heroBg from "@/images/hero/hero-background.webp";
-import OptimizedImage from "@/components/OptimizedImage";
 
 const WHATSAPP_URL = "https://wa.me/51940755119?text=Hola%20QuickFix%2C%20deseo%20agendar%20una%20cita%20para%20el%20mantenimiento%20de%20mi%20equipo.";
 const MAPS_REVIEWS_URL = "https://www.google.com/maps/place/QuickFix.pe/@-12.078675,-77.1128235,17z/data=!3m1!4b1!4m6!3m5!1s0x9105cba106bb0ffd:0x56720d8b1b55c23e!8m2!3d-12.0786803!4d-77.1102486!16s%2Fg%2F11xyxywtk7!5m1!1e1?entry=ttu&g_ep=EgoyMDI2MDIxOC4wIKXMDSoASAFQAw%3D%3D";
@@ -146,15 +145,14 @@ const HeroSection = () => {
         <div className="absolute inset-0 z-0 bg-black">
           <div className="absolute inset-x-0 bottom-0 top-0 md:left-[35%] md:right-0 bg-black overflow-hidden" style={{ clipPath: "polygon(20% 0, 100% 0, 100% 100%, 0% 100%)" }}>
             <div className="absolute inset-0">
-              <OptimizedImage
+              <img
                 src={heroBg}
                 alt="Mantenimiento de PC Gamer y Laptops High-End en Lima - QuickFix"
                 width={1920}
-                priority={true}
-                className="hero-scale w-full h-full object-cover object-center opacity-80"
                 height={1080}
-                sizes="100vw"
-                breakpoints={[640, 768, 1024, 1280, 1536, 1920]}
+                className="hero-scale w-full h-full object-cover object-center opacity-80"
+                loading="eager"
+                decoding="sync"
               />
               <div className="absolute inset-0 bg-gradient-to-r from-black via-transparent to-transparent opacity-90" />
             </div>
