@@ -26,23 +26,32 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
       window.location.hostname.includes('192.168')
   );
   
-  const getCloudinaryUrl = (w: number) => 
-    `https://res.cloudinary.com/demo/image/fetch/f_auto,q_auto:good,w_${w}/https://quickfix.pe${src}`;
-
-  const finalSrc = isLocalhost 
-    ? src 
-    : getCloudinaryUrl(width);
-
-  const generateSrcSet = () => {
-    if (isLocalhost) return undefined;
-    
-    const widths = breakpoints || [360, 480, 640, 800, 1080, 1200, 1920];
-    
-    return widths
-      .filter(w => w <= width)
-      .map(w => `${getCloudinaryUrl(w)} ${w}w`)
-      .join(', ');
+  const CLOUDINARY_BY_KEY: Record<string, string> = {
+    "console-ps5": "https://res.cloudinary.com/dmegp6gmd/image/upload/f_webp/q_auto/console-ps5_ctyf97.webp",
+    "laptopgamer-repair": "https://res.cloudinary.com/dmegp6gmd/image/upload/f_webp/q_auto/laptopgamer-repair_jdsfo1.webp",
+    "laptopoffice-repair": "https://res.cloudinary.com/dmegp6gmd/image/upload/f_webp/q_auto/laptopoffice-repair_hjj0ln.webp",
+    "laptop-maintenance": "https://res.cloudinary.com/dmegp6gmd/image/upload/f_webp/q_auto/laptop-maintenance_oi0tk0.webp",
+    "hero-background": "https://res.cloudinary.com/dmegp6gmd/image/upload/f_webp/q_auto/hero-background_ynkel5.webp",
+    "logo": "https://res.cloudinary.com/dmegp6gmd/image/upload/f_webp/q_auto/logo_md70dc.webp",
+    "gpu-repair": "https://res.cloudinary.com/dmegp6gmd/image/upload/f_webp/q_auto/gpu-repair_yyggjp.webp",
+    "macbook-maintenance": "https://res.cloudinary.com/dmegp6gmd/image/upload/f_webp/q_auto/macbook-maintenance_h2qwjz.webp",
+    "pc-gamer-setup": "https://res.cloudinary.com/dmegp6gmd/image/upload/f_webp/q_auto/pc-gamer-setup_vxoowh.webp",
+    "gpu-maintenance": "https://res.cloudinary.com/dmegp6gmd/image/upload/f_webp/q_auto/gpu-maintenance_tuaud6.webp",
+    "hardware-tools": "https://res.cloudinary.com/dmegp6gmd/image/upload/f_webp/q_auto/hardware-tools_bxonku.webp",
   };
+
+  const resolveCloudinarySrc = (inputSrc: string): string => {
+    const s = inputSrc.toLowerCase();
+    for (const [key, url] of Object.entries(CLOUDINARY_BY_KEY)) {
+      if (s.includes(key)) return url;
+    }
+    return inputSrc; // fallback local si no hay match
+  };
+
+  const finalSrc = isLocalhost ? src : resolveCloudinarySrc(src);
+
+  // Con URLs fijas de Cloudinary no armamos srcSet dinámico aquí.
+  const generateSrcSet = () => undefined;
 
   return (
     <img
