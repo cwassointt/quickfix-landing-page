@@ -35,6 +35,7 @@ if (typeof document !== "undefined" && !document.getElementById("global-scroll-c
 
 const links = [
   { label: "Servicios", href: "#servicios" },
+  { label: "Cotizador", href: "#cotizador" },
   { label: "Proceso",   href: "#proceso"   },
   { label: "Contacto",  href: "#contacto"  },
 ];

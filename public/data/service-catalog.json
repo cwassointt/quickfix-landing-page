@@ -1,0 +1,152 @@
+{
+  "service_catalog": {
+    "mantenimiento": {
+      "laptops": [
+        {
+          "id": "lap_oficina_basica",
+          "name": "Oficina Básica (1 Chip - Sin GPU dedicada)",
+          "base_price": 70.0,
+          "addons": {
+            "thermal_pads": 45.0,
+            "liquid_metal": null
+          }
+        },
+        {
+          "id": "lap_oficina_pro",
+          "name": "Oficina Pro (2 Chips - CPU + GPU dedicada)",
+          "base_price": 85.0,
+          "addons": {
+            "thermal_pads": 60.0,
+            "liquid_metal": null
+          }
+        },
+        {
+          "id": "lap_gamer_media",
+          "name": "Gamer Entrada / Media (Gen <= 2020)",
+          "base_price": 135.0,
+          "addons": {
+            "thermal_pads": 90.0,
+            "liquid_metal": null
+          }
+        },
+        {
+          "id": "lap_gamer_alta",
+          "name": "Gamer Gama Alta (Gen >= 2020)",
+          "base_price": 150.0,
+          "addons": {
+            "thermal_pads": 120.0,
+            "liquid_metal_1_chip": 80.0,
+            "liquid_metal_2_chips": 150.0
+          }
+        }
+      ],
+      "desktops": [
+        {
+          "id": "pc_oficina",
+          "name": "PC de Oficina (Configuración estándar sin GPU dedicada)",
+          "base_price": 90.0,
+          "addons": {
+            "pads_vrm": 35.0
+          }
+        },
+        {
+          "id": "pc_gamer_mid",
+          "name": "PC Gamer Pequeña / Mediana (Torres compactas / Mid-Tower)",
+          "base_price": 150.0,
+          "addons": {
+            "pads_vrm": 65.0
+          }
+        },
+        {
+          "id": "pc_gamer_high",
+          "name": "PC Gamer Grande (Torres Full-Tower / High-End)",
+          "base_price": 250.0,
+          "addons": {
+            "pads_vrm": 95.0
+          }
+        }
+      ],
+      "gpus": [
+        {
+          "id": "gpu_low_1fan",
+          "name": "Gama Media/Baja - 1 Ventilador",
+          "base_price": 65.0
+        },
+        {
+          "id": "gpu_low_2fan",
+          "name": "Gama Media/Baja - 2 Ventiladores",
+          "base_price": 85.0
+        },
+        {
+          "id": "gpu_low_3fan",
+          "name": "Gama Media/Baja - 3 Ventiladores",
+          "base_price": 130.0
+        },
+        {
+          "id": "gpu_high_3fan",
+          "name": "Gama Alta - 3 Ventiladores",
+          "base_price": 150.0
+        }
+      ],
+      "consoles": [
+        {
+          "id": "console_ps4",
+          "name": "PlayStation 4 (PS4)",
+          "base_price": 150.0,
+          "addons": {
+            "thermal_pads": 90.0,
+            "liquid_metal": null
+          }
+        },
+        {
+          "id": "console_ps5",
+          "name": "PlayStation 5 (PS5)",
+          "base_price": 150.0,
+          "addons": {
+            "thermal_pads": 120.0,
+            "liquid_metal": 80.0
+          }
+        }
+      ]
+    },
+    "reparacion": {
+      "diagnosticos": [
+        {
+          "id": "rep_laptop_gamer",
+          "platform": "laptops",
+          "name": "Laptop Gamer (Alta Gama)",
+          "diagnosis_price": 99.0,
+          "preview_text": "Reparación base estimada desde S/. 399.00"
+        },
+        {
+          "id": "rep_laptop_oficina",
+          "platform": "laptops",
+          "name": "Laptop de Oficina",
+          "diagnosis_price": 99.0,
+          "preview_text": "Reparación base estimada desde S/. 199.00"
+        },
+        {
+          "id": "rep_gpu",
+          "platform": "gpus",
+          "name": "Tarjeta Gráfica Dedicada (GPU)",
+          "diagnosis_price": 99.0,
+          "preview_text": "Reparación base estimada desde S/. 299.00"
+        },
+        {
+          "id": "rep_desktop",
+          "platform": "desktops",
+          "name": "PC de Escritorio / Placa Madre",
+          "diagnosis_price": 50.0,
+          "preview_text": "Reparación a cotizar por componente tras evaluación"
+        },
+        {
+          "id": "rep_console",
+          "platform": "consoles",
+          "name": "Consola (PS4 / PS5 / Xbox)",
+          "diagnosis_price": 99.0,
+          "preview_text": "Reparación base estimada desde S/. 299.00"
+        }
+      ]
+    }
+  }
+}
