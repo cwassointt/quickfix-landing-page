@@ -1,6 +1,7 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { Star } from "lucide-react";
 import { reviews } from "@/data/reviews";
+import ReviewAvatar from "@/components/ReviewAvatar";
 import { MAPS_URL, RATING } from "@/lib/site";
 
 // La de Jak Steve ya está en el hero; aquí la estrella es la de James.
@@ -36,8 +37,12 @@ const ReviewsSection = () => {
             <blockquote className="mt-5 text-2xl leading-snug text-white md:text-[2rem] md:leading-[1.2]">
               “En Gianluca confío ciegamente: profesional, detallista y con materiales de primera.”
             </blockquote>
-            <figcaption className="mt-5 text-white/60">
-              {featured.author} · Local Guide en Google
+            <figcaption className="mt-5 flex items-center gap-3 text-white/60">
+              <ReviewAvatar name={featured.author} photo={featured.photo} size={44} />
+              <span>
+                <span className="block text-white">{featured.author}</span>
+                Local Guide en Google
+              </span>
             </figcaption>
           </motion.figure>
           <motion.a
@@ -56,9 +61,12 @@ const ReviewsSection = () => {
             <motion.li key={r.author} {...rise(i)} className="break-inside-avoid rounded-3xl bg-white/[0.04] p-6">
               <Stars />
               <p className="mt-4 text-[17px] leading-relaxed text-white">“{r.text}”</p>
-              <p className="mt-5 text-white/60">
-                <span className="text-white">{r.author}</span>
-                {r.device && <> · {r.device}</>}
+              <p className="mt-5 flex items-center gap-3 text-white/60">
+                <ReviewAvatar name={r.author} photo={r.photo} />
+                <span className="min-w-0">
+                  <span className="block text-white">{r.author}</span>
+                  {r.device}
+                </span>
               </p>
             </motion.li>
           ))}

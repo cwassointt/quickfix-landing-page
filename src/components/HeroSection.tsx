@@ -3,6 +3,7 @@ import { Star } from "lucide-react";
 import heroBg from "@/images/hero/hero-background.webp";
 import OptimizedImage from "@/components/OptimizedImage";
 import { reviews } from "@/data/reviews";
+import ReviewAvatar from "@/components/ReviewAvatar";
 import { MAPS_URL, RATING, openQuote, waLink } from "@/lib/site";
 
 const featured = reviews[0];
@@ -86,8 +87,12 @@ const HeroSection = () => {
             <blockquote className="mt-4 text-lg leading-snug text-white md:text-xl">
               “Me solucionaron todo en exactamente 1 hora. El técnico me grabó videos y me mandó fotos paso a paso.”
             </blockquote>
-            <figcaption className="mt-4 text-white/60">
-              {featured.author} · {featured.device}
+            <figcaption className="mt-4 flex items-center gap-3 text-white/60">
+              <ReviewAvatar name={featured.author} photo={featured.photo} />
+              <span>
+                <span className="block text-white">{featured.author}</span>
+                {featured.device}
+              </span>
             </figcaption>
           </motion.figure>
         </div>

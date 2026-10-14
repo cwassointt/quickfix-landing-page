@@ -1,6 +1,7 @@
 // Reseñas elegidas de Google Maps, acortadas para la web sin cambiar su sentido.
 
-export type Review = { author: string; stars: number; device?: string; text: string };
+/** `photo`: ruta de la foto de perfil, p. ej. "/reviews/james-maysundo.webp" (archivo en public/reviews/). Sin foto se muestran las iniciales. */
+export type Review = { author: string; stars: number; device?: string; text: string; photo?: string };
 
 export const reviews: Review[] = [
   {
