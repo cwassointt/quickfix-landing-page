@@ -2,6 +2,12 @@ import { motion, useReducedMotion } from "framer-motion";
 import OptimizedImage from "@/components/OptimizedImage";
 import { diagnosis, includes, maintenance, others, repairs } from "@/data/catalog";
 import { openQuote, waLink } from "@/lib/site";
+import { servicePages } from "@/data/pages";
+
+// Página de servicio de cada tipo de equipo (enlaces internos para Google).
+const PAGE: Record<string, string> = Object.fromEntries(
+  servicePages.filter((p) => p.quote !== "reparacion" && p.slug !== "mantenimiento-asus-rog").map((p) => [p.quote, p.slug]),
+);
 
 import laptopImg from "../images/services/laptop-maintenance.webp";
 import pcImg from "../images/services/pc-gamer-setup.webp";
@@ -53,7 +59,11 @@ const ServicesSection = () => {
                   />
                 </div>
                 <div className="p-6 md:p-8">
-                  <h3 className="text-3xl font-bold tracking-[-0.03em] text-white">{c.name}</h3>
+                  <h3 className="text-3xl font-bold tracking-[-0.03em] text-white">
+                    <a href={`/${PAGE[c.id]}/`} className="underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-sm">
+                      {c.name}
+                    </a>
+                  </h3>
                   <p className="mt-3 max-w-[60ch] text-white/70">{includes[c.id].join(" · ")}</p>
                 </div>
                 <div className="flex items-center justify-between gap-6 px-6 pb-6 md:px-8 lg:flex-col lg:items-end lg:p-8">
@@ -75,11 +85,14 @@ const ServicesSection = () => {
               Reparación a nivel de placa
             </motion.h3>
             <motion.p {...rise(1)} className="mt-5 max-w-[46ch] text-lg text-white/80">
-              Microsoldadura para equipos que no encienden, se apagan o recibieron líquido. Empieza con un diagnóstico electrónico de S/ {electronic.price} (1 a 2 días) y luego te doy el precio exacto.
+              Microsoldadura para equipos que no encienden, se apagan o recibieron líquido. Empieza con un diagnóstico electrónico de S/ {electronic.price} (1 a 2 días), que se descuenta si reparas conmigo, y luego te doy el precio exacto.
             </motion.p>
             <motion.button {...rise(2)} type="button" onClick={() => openQuote("reparacion")} className={`${PRESS} mt-8 rounded-full bg-white/[0.08] px-6 py-3.5 text-white hover:bg-white/[0.14]`}>
               Cotizar un diagnóstico
             </motion.button>
+            <motion.a {...rise(3)} href="/reparacion-placa-laptop/" className="mt-4 block text-primary underline-offset-4 hover:underline">
+              Más sobre reparación de placa
+            </motion.a>
           </div>
 
           <ul className="space-y-10">

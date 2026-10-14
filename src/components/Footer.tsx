@@ -1,6 +1,7 @@
 import { useState } from "react";
 import WarrantyDialog from "@/components/WarrantyDialog";
 import TermsDialog from "@/components/TermsDialog";
+import { servicePages } from "@/data/pages";
 import { ADDRESS, EMAIL, INSTAGRAM_URL, PHONE_DISPLAY, TIKTOK_URL, scrollToId, waLink } from "@/lib/site";
 
 const sections = [
@@ -23,12 +24,23 @@ const Footer = () => {
     <footer className="bg-primary text-black">
       <div className="mx-auto max-w-7xl px-5 pt-16 md:px-8 md:pt-24">
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="lg:col-span-2">
+          <div>
             <p className="max-w-[24ch] text-2xl font-medium leading-snug md:text-3xl">Mantenimiento y reparación de alta gama, 24/7 con cita.</p>
             <a href={waLink()} target="_blank" rel="noopener noreferrer" className="mt-8 inline-flex rounded-full bg-black px-7 py-3.5 text-lg text-white transition-transform duration-150 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 focus-visible:ring-offset-primary">
               Escribir por WhatsApp
             </a>
           </div>
+          <nav aria-label="Servicios">
+            <ul className="space-y-2 text-lg">
+              {servicePages.map((p) => (
+                <li key={p.slug}>
+                  <a href={`/${p.slug}/`} className={LINK}>
+                    {p.h1.replace(" en Lima", "")}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </nav>
           <nav aria-label="Secciones">
             <ul className="space-y-2 text-lg">
               {sections.map((s) => (
@@ -61,8 +73,9 @@ const Footer = () => {
         <p className="py-6 text-sm text-black/70">© {new Date().getFullYear()} QuickFix · San Miguel, Lima</p>
       </div>
 
-      <WarrantyDialog open={warrantyOpen} onClose={() => setWarrantyOpen(false)} />
-      <TermsDialog open={termsOpen} onClose={() => setTermsOpen(false)} />
+      {/* Se montan solo al abrirse: usan document.body y el HTML pregenerado no tiene documento. */}
+      {warrantyOpen && <WarrantyDialog open onClose={() => setWarrantyOpen(false)} />}
+      {termsOpen && <TermsDialog open onClose={() => setTermsOpen(false)} />}
     </footer>
   );
 };

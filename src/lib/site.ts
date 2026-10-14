@@ -18,11 +18,22 @@ export const waLink = (text = "Hola QuickFix, quiero agendar una cita para mi eq
 /** Lleva al cotizador con un equipo ya elegido (QuoteSection escucha este evento). */
 export const QUOTE_EVENT = "quickfix:cotizar";
 export function openQuote(categoryId?: string) {
+  // Sin cotizador en esta página: ir a la portada con el equipo en la URL.
+  if (!document.getElementById("cotizar")) {
+    window.location.href = `/${categoryId ? `?equipo=${categoryId}` : ""}#cotizar`;
+    return;
+  }
   if (categoryId) window.dispatchEvent(new CustomEvent(QUOTE_EVENT, { detail: categoryId }));
   scrollToId("cotizar");
 }
 
+/** Baja a una sección; si no existe en esta página, va a esa sección de la portada. */
 export function scrollToId(id: string) {
+  const el = document.getElementById(id);
+  if (!el) {
+    window.location.href = `/#${id}`;
+    return;
+  }
   const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  document.getElementById(id)?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+  el.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
 }

@@ -74,7 +74,7 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
       className={className}
       loading={priority ? "eager" : "lazy"}
       decoding={priority ? "sync" : "async"}
-      fetchPriority={priority ? "high" : "auto"}
+      {...{ fetchpriority: priority ? "high" : "auto" }} // minúscula: React 18 no conoce fetchPriority
       title={title}
       style={style}
       {...props}

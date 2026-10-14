@@ -37,7 +37,7 @@ export const faq: { q: string; a: string[] }[] = [
   {
     q: `¿Por qué el diagnóstico electrónico cuesta S/ ${diagPrice("diag-electronico")}?`,
     a: [
-      "Encontrar una falla de placa exige desarmar el equipo, estudiar sus planos eléctricos y medir con multímetro, osciloscopio y cámara térmica hasta dar con el componente exacto. Toma de 1 a 2 días y no es reembolsable.",
+      "Encontrar una falla de placa exige desarmar el equipo, estudiar sus planos eléctricos y medir con multímetro, osciloscopio y cámara térmica hasta dar con el componente exacto. Toma de 1 a 2 días y, si reparas conmigo, se descuenta del total.",
       `Si solo necesitas saber qué falla a nivel de hardware o software, el diagnóstico general cuesta S/ ${diagPrice("diag-general")}.`,
     ],
   },

@@ -12,7 +12,7 @@
 
     "dev": "vite",
 
-    "build": "npm run compress && vite build",
+    "build": "npm run compress && vite build && vite build --ssr src/entry-server.tsx --outDir dist-ssr && node scripts/prerender.mjs",
 
     "compress": "node scripts/compress-images.mjs",
 

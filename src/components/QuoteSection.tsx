@@ -7,6 +7,7 @@ import { diagnosis, maintenance, type Category, type Service } from "@/data/cata
 import { buildCart, findService, formatSoles, whatsappUrl, type CartItem } from "@/lib/quote";
 import { laptopLabel, searchLaptops, type Laptop } from "@/lib/laptopSearch";
 import { QUOTE_EVENT } from "@/lib/site";
+import { rogSaving, rogSeparate } from "@/data/pages";
 
 import laptopImg from "../images/services/laptop-maintenance.webp";
 import pcImg from "../images/services/pc-gamer-setup.webp";
@@ -264,7 +265,7 @@ const LaptopSearch = ({ onPick }: { onPick: (l: Laptop) => void }) => {
 
 let nextKey = 1;
 
-const QuoteSection = () => {
+const QuoteSection = ({ initial }: { initial?: string }) => {
   const [mode, setMode] = useState<Mode>("mantenimiento");
   const [phase, setPhase] = useState(1);
   const [reached, setReached] = useState(1);
@@ -278,10 +279,12 @@ const QuoteSection = () => {
   const sectionRef = useRef<HTMLElement>(null);
   const inView = useInView(sectionRef, { amount: 0.1 });
 
-  // Los botones "Cotizar" de otras secciones abren el cotizador con el equipo (o la reparación) ya elegido.
+  const [mounted, setMounted] = useState(false);
+  const [today, setToday] = useState("");
+
+  // Los botones "Cotizar" de otras secciones (o ?equipo= en la URL, o la página de servicio) abren el cotizador con el equipo ya elegido.
   useEffect(() => {
-    const onQuote = (e: Event) => {
-      const id = (e as CustomEvent<string>).detail;
+    const preselect = (id: string) => {
       const repair = id === "reparacion";
       setMode(repair ? "reparacion" : "mantenimiento");
       setCategoryId(repair ? null : id);
@@ -292,9 +295,15 @@ const QuoteSection = () => {
       setPhase(repair ? 1 : 2);
       setReached(repair ? 1 : 2);
     };
+    const onQuote = (e: Event) => preselect((e as CustomEvent<string>).detail);
+    const start = initial ?? new URLSearchParams(window.location.search).get("equipo");
+    if (start === "reparacion" || maintenance.some((c) => c.id === start)) preselect(start!);
+    // La fecha y el portal solo existen en el navegador (el HTML pregenerado no los lleva).
+    setMounted(true);
+    setToday(new Date().toLocaleDateString("es-PE"));
     window.addEventListener(QUOTE_EVENT, onQuote);
     return () => window.removeEventListener(QUOTE_EVENT, onQuote);
-  }, []);
+  }, [initial]);
 
   const service = findService(serviceId);
   const category = maintenance.find((c) => c.id === categoryId);
@@ -428,8 +437,9 @@ const QuoteSection = () => {
                             <span className="text-lg font-medium leading-tight">{rogPackage.name}</span>
                             <span className={`mt-1 text-sm ${rogPicked ? "text-black/70" : "text-white/50"}`}>{rogPackage.detail}</span>
                             <span className="mt-auto pt-3 text-3xl font-bold tracking-[-0.03em] tabular-nums">
-                              S/ {rogPackage.price} <s className="text-base font-normal opacity-50">{rogPackage.regularPrice}</s>
+                              S/ {rogPackage.price} <s className="text-base font-normal opacity-50">{rogSeparate}</s>
                             </span>
+                            <span className={`text-sm font-medium ${rogPicked ? "text-black" : "text-primary"}`}>Ahorras S/ {rogSaving}</span>
                           </span>
                         </button>
                       </>
@@ -460,10 +470,10 @@ const QuoteSection = () => {
                                 setExtraIds([]);
                               }}
                               title="Paquete completo ROG"
-                              detail={rogPackage.detail}
+                              detail={`${rogPackage.detail} · ahorras S/ ${rogSaving}`}
                               price={
                                 <>
-                                  <s className="mr-2 text-white/40">{rogPackage.regularPrice}</s>S/ {rogPackage.price}
+                                  <s className="mr-2 text-white/40">{rogSeparate}</s>S/ {rogPackage.price}
                                 </>
                               }
                             />
@@ -518,7 +528,7 @@ const QuoteSection = () => {
                       <PickCard key={s.id} active={s.id === serviceId} onClick={() => pickService(s)} img={SERVICE_IMG[s.id]} title={s.name} caption={`S/ ${s.price}`} />
                     ))}
                   </div>
-                  <p className="mt-4 text-sm text-white/50">Es el costo del diagnóstico. La reparación se cotiza después de revisar el equipo.</p>
+                  <p className="mt-4 text-sm text-white/50">Es el costo del diagnóstico. La reparación se cotiza después de revisar el equipo, y si reparas conmigo el diagnóstico se descuenta.</p>
                 </Phase>
                 <Reveal show={!!service && phase > 1}>
                   {service && <DeviceStage src={SERVICE_IMG[service.id]} title={service.name} subtitle={service.detail} />}
@@ -545,7 +555,7 @@ const QuoteSection = () => {
               <p className="text-center text-zinc-500 text-xs mt-1">
                 San Miguel, Lima
                 <br />
-                COTIZACIÓN · {new Date().toLocaleDateString("es-PE")}
+                COTIZACIÓN{today && ` · ${today}`}
               </p>
 
               {quote.groups.length === 0 ? (
@@ -615,7 +625,7 @@ const QuoteSection = () => {
 
       {/* Barra fija en móvil: el ticket queda al final de la sección, así que el total y el botón siempre están a mano.
           Va en un portal porque el contenedor con content-visibility de Index rompe position: fixed. */}
-      {createPortal(
+      {mounted && createPortal(
         <AnimatePresence>
           {inView && quote.groups.length > 0 && (
             <motion.div

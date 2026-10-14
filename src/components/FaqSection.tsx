@@ -3,7 +3,7 @@ import { faq } from "@/data/faq";
 import { waLink } from "@/lib/site";
 
 /** Preguntas frecuentes con <details> nativo: accesible y funciona sin JavaScript. */
-const FaqSection = () => (
+const FaqSection = ({ items = faq }: { items?: typeof faq }) => (
   <section id="faq" className="bg-[#0b0b0b] py-24 md:py-36">
     <div className="mx-auto grid max-w-7xl gap-12 px-5 md:px-8 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
       <div className="lg:sticky lg:top-28 lg:self-start">
@@ -18,7 +18,7 @@ const FaqSection = () => (
       </div>
 
       <div className="space-y-2">
-        {faq.map((f) => (
+        {items.map((f) => (
           <details key={f.q} className="group rounded-3xl bg-white/[0.04] open:bg-white/[0.07] transition-colors duration-200">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-6 rounded-3xl px-6 py-5 text-lg text-white hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary [&::-webkit-details-marker]:hidden">
               {f.q}

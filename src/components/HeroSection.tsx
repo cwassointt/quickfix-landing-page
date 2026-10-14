@@ -49,10 +49,10 @@ const HeroSection = () => {
               <p className="font-display text-4xl font-bold tracking-[-0.03em] text-white md:text-5xl">24/7</p>
               <p className="mt-3 text-sm text-white/70">Todos los días, con cita previa</p>
             </div>
-            <div>
+            <a href="/mantenimiento-asus-rog/" className={`${PRESS} group rounded-2xl -m-2 p-2 hover:bg-white/[0.05]`}>
               <p className="font-display text-4xl font-bold tracking-[-0.03em] text-primary md:text-5xl">ROG</p>
-              <p className="mt-3 text-sm text-white/70">Strix, Zephyrus, SCAR y gama alta</p>
-            </div>
+              <p className="mt-3 text-sm text-white/70 group-hover:text-white">Strix, Zephyrus, SCAR y gama alta</p>
+            </a>
           </motion.div>
 
           <motion.div {...item(3)} className="mt-10 flex flex-col gap-3 sm:flex-row">
