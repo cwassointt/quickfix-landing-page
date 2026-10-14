@@ -4,6 +4,7 @@ import HeroSection from "@/components/HeroSection";
 import ServicesSection from "@/components/ServicesSection";
 import ProcessSection from "@/components/ProcessSection";
 import ContactSection from "@/components/ContactSection";
+import QuoteSection from "@/components/QuoteSection";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import Footer from "@/components/Footer";
 
@@ -33,6 +34,9 @@ const Index = () => {
       <HeroSection />
       <div style={{ contentVisibility: "auto", containIntrinsicSize: "0 800px" }}>
         <ServicesSection />
+      </div>
+      <div style={{ contentVisibility: "auto", containIntrinsicSize: "0 1000px" }}>
+        <QuoteSection />
       </div>
       <div style={{ contentVisibility: "auto", containIntrinsicSize: "0 1200px" }}>
         <ProcessSection />

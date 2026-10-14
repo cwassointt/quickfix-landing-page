@@ -1,5 +1,8 @@
 import { X, ChevronDown, HelpCircle, Thermometer, MapPin, CreditCard, Calendar, Microscope, Clock, AlertTriangle } from "lucide-react";
 import { useState, useEffect } from "react";
+import { diagnosis } from "@/data/catalog";
+
+const diagPrice = (id: string) => diagnosis.find((d) => d.id === id)!.price;
 
 interface FAQItemProps {
   question: string;
@@ -178,7 +181,7 @@ const FAQDialog = ({ open, onClose }: FAQDialogProps) => {
         answer: "No. El mantenimiento de hardware (limpieza y pasta térmica) no afecta en absoluto tu información. El disco duro/SSD no se toca ni se formatea, a menos que solicites explícitamente un servicio de 'Formateo y Optimización' de software.",
       },
       {
-          question: "¿Por qué el diagnóstico electrónico tiene un costo (S/. 99)?",
+          question: `¿Por qué el diagnóstico electrónico tiene un costo (S/ ${diagPrice("diag-electronico")})?`,
           icon: <Microscope className="w-5 h-5" />,
           answer: (
               <div className="space-y-3">
@@ -187,6 +190,9 @@ const FAQDialog = ({ open, onClose }: FAQDialogProps) => {
                   </p>
                   <p>
                       Nuestros especialistas deben desensamblar el equipo por completo, estudiar los <strong>esquemáticos (planos eléctricos)</strong> de la placa base, y utilizar multímetros, osciloscopios y cámaras térmicas para encontrar el micro-componente exacto (Mosfet, IC, Resistencia) que está en cortocircuito.
+                  </p>
+                  <p className="text-orange-300 text-sm">
+                      Si solo necesitas saber qué falla a nivel de hardware o software, el diagnóstico general cuesta S/ {diagPrice("diag-general")}.
                   </p>
                   <p className="text-orange-300 text-sm">
                       * Este monto cubre el tiempo de laboratorio y el uso de instrumentación de alta precisión, por lo cual no es reembolsable.
@@ -204,7 +210,7 @@ const FAQDialog = ({ open, onClose }: FAQDialogProps) => {
                   </p>
                   <div className="bg-white/5 p-4 rounded-lg border-l-2 border-orange-500">
                       <ul className="space-y-2 text-sm">
-                          <li><span className="text-orange-400 font-bold">1. Fase de Diagnóstico:</span> 48 a 72 horas laborables para aislar el cortocircuito o la falla.</li>
+                          <li><span className="text-orange-400 font-bold">1. Fase de Diagnóstico:</span> 1 a 2 días para aislar el cortocircuito o la falla.</li>
                           <li><span className="text-orange-400 font-bold">2. Fase de Reparación:</span> 2 a 4 días laborables para realizar la microsoldadura y reemplazar los chips dañados en placa.</li>
                           <li><span className="text-orange-400 font-bold">3. Fase de Estrés (QC):</span> 24 horas obligatorias de pruebas sintéticas para certificar que el equipo soporta carga térmica y eléctrica sin reiniciarse.</li>
                       </ul>

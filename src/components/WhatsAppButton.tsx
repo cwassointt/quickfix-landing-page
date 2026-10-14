@@ -13,7 +13,7 @@ const WhatsAppButton = () => {
 
   return (
     <div
-        className={`fixed bottom-6 right-6 md:bottom-12 md:right-12 z-[60] flex items-center justify-end gap-5 group transition-all duration-700 [transition-timing-function:cubic-bezier(0.34,1.56,0.64,1)] ${visible ? "translate-y-0 opacity-100" : "translate-y-20 opacity-0"}`}
+        className={`wa-float fixed bottom-6 right-6 md:bottom-12 md:right-12 z-[60] flex items-center justify-end gap-5 group transition-all duration-700 [transition-timing-function:cubic-bezier(0.34,1.56,0.64,1)] ${visible ? "translate-y-0 opacity-100" : "translate-y-20 opacity-0"}`}
         style={{ fontFamily: "var(--font-visual-sans, sans-serif)" }}
     >
       {/* Label/Tooltip - Pill Style (Slightly larger text) */}

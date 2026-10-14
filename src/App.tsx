@@ -18,6 +18,13 @@ const App = () => (
       body, button, input, textarea, div, span, h1, h2, h3, h4, h5, h6, p, a, li {
         font-family: var(--font-visual-sans) !important;
       }
+      /* La barra del cotizador ya tiene su botón de WhatsApp; no apilar dos en móvil. */
+      @media (max-width: 1023px) {
+        body:has(.qf-bar) .wa-float { opacity: 0; pointer-events: none; }
+      }
+      .font-mono, .font-mono * {
+        font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace !important;
+      }
     `}</style>
     <TooltipProvider>
       <Toaster />
