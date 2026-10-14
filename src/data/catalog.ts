@@ -98,3 +98,47 @@ export const diagnosis: Service[] = [
   { id: "diag-general", name: "Diagnóstico de hardware y software", detail: "Encontramos qué falla en tu equipo", price: 60 },
   { id: "diag-electronico", name: "Diagnóstico electrónico", detail: "Revisión a nivel de placa · 1 a 2 días", price: 99 },
 ];
+
+/** Qué incluye el mantenimiento de cada tipo de equipo (sección Servicios). */
+export const includes: Record<string, string[]> = {
+  laptops: ["Desarmado completo", "Lavado químico y descontaminado", "Pasta Thermalright TF8 (13.8 W/mK)", "Bisagras calibradas y lubricadas", "Limpieza de teclado y pantalla", "Encerado mate"],
+  pcs: ["Desarmado de todos los componentes", "Lavado químico y descontaminado", "Pasta Thermalright TF8 (13.8 W/mK)", "Gestión de cables", "Ventiladores lubricados", "Encerado mate"],
+  gpus: ["Desarmado de la tarjeta", "Lavado químico y descontaminado", "Pasta Thermalright TF8 (13.8 W/mK)", "Ventiladores lubricados", "Encerado mate"],
+  macbook: ["Desarmado completo", "Lavado químico y descontaminado", "Pasta térmica nueva", "Limpieza de teclado y pantalla", "Encerado mate"],
+  consolas: ["Desarmado completo", "Lavado químico y descontaminado", "Pasta térmica nueva", "Encerado mate"],
+};
+
+/** Reparación a nivel de placa: precio desde, después del diagnóstico electrónico. */
+export const repairs = [
+  {
+    id: "gpu",
+    name: "Tarjetas gráficas",
+    detail: "RTX 3060 en adelante",
+    from: 299,
+    days: "3 a 4 días",
+    work: ["Reballing y cambio de memorias VRAM", "Cortos en fases de poder (MOSFET / VRM)", "BIOS y pistas dañadas", "Puertos HDMI y DisplayPort"],
+  },
+  {
+    id: "laptop-gamer",
+    name: "Laptops gamer",
+    detail: "ASUS ROG, TUF, Lenovo LOQ y similares",
+    from: 399,
+    days: "2 a 4 días",
+    work: ["Placas en corto o con humedad", "Circuito de carga y encendido", "Chip KBC / Super I/O", "Daños por derrame de metal líquido"],
+  },
+  {
+    id: "laptop-oficina",
+    name: "Laptops de oficina",
+    detail: "HP, Acer, Lenovo y similares",
+    from: 199,
+    days: "2 a 4 días",
+    work: ["Equipos que no encienden", "Salida de video y retroiluminación", "Puertos USB-C, USB y de carga", "Lavado químico por derrame"],
+  },
+];
+
+/** Otros trabajos, cotizados por WhatsApp. */
+export const others = [
+  { name: "Ensamble de PC", detail: "Con tus componentes y gestión de cables", from: 70 },
+  { name: "Ensamble a medida", detail: "Te asesoro en las piezas y lo armo", from: 100 },
+  { name: "Instalación y software", detail: "Componentes, formateo y optimización", from: 30 },
+];

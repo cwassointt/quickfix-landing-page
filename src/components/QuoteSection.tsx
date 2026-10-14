@@ -6,6 +6,7 @@ import OptimizedImage from "@/components/OptimizedImage";
 import { diagnosis, maintenance, type Category, type Service } from "@/data/catalog";
 import { buildCart, findService, formatSoles, whatsappUrl, type CartItem } from "@/lib/quote";
 import { laptopLabel, searchLaptops, type Laptop } from "@/lib/laptopSearch";
+import { QUOTE_EVENT } from "@/lib/site";
 
 import laptopImg from "../images/services/laptop-maintenance.webp";
 import pcImg from "../images/services/pc-gamer-setup.webp";
@@ -45,7 +46,7 @@ const SPRING = { type: "spring", bounce: 0, duration: 0.4 } as const;
 const SPRING_SLOW = { type: "spring", bounce: 0, duration: 0.6 } as const;
 // Respuesta al presionar: en pointer-down, no al soltar.
 const PRESS =
-  "transition-[transform,background-color,color,opacity] duration-150 ease-out active:scale-[0.98] motion-reduce:active:scale-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#050505]";
+  "transition-[transform,background-color,color,opacity] duration-150 ease-out active:scale-[0.98] motion-reduce:active:scale-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b0b0b]";
 const ROG_PACKAGE = "asus-rog";
 const gpus = maintenance.find((c) => c.id === "gpus")!.services;
 const fromPrice = (c: Category) => Math.min(...c.services.map((s) => s.price));
@@ -277,6 +278,24 @@ const QuoteSection = () => {
   const sectionRef = useRef<HTMLElement>(null);
   const inView = useInView(sectionRef, { amount: 0.1 });
 
+  // Los botones "Cotizar" de otras secciones abren el cotizador con el equipo (o la reparación) ya elegido.
+  useEffect(() => {
+    const onQuote = (e: Event) => {
+      const id = (e as CustomEvent<string>).detail;
+      const repair = id === "reparacion";
+      setMode(repair ? "reparacion" : "mantenimiento");
+      setCategoryId(repair ? null : id);
+      setServiceId(null);
+      setModel(null);
+      setExtraIds([]);
+      setGpuId(null);
+      setPhase(repair ? 1 : 2);
+      setReached(repair ? 1 : 2);
+    };
+    window.addEventListener(QUOTE_EVENT, onQuote);
+    return () => window.removeEventListener(QUOTE_EVENT, onQuote);
+  }, []);
+
   const service = findService(serviceId);
   const category = maintenance.find((c) => c.id === categoryId);
   const modelName = model ? laptopLabel(model) : undefined;
@@ -345,16 +364,16 @@ const QuoteSection = () => {
     <section
       id="cotizar"
       ref={sectionRef}
-      className="py-24 pb-36 lg:pb-28 bg-[#050505] text-white"
+      className="py-24 pb-36 md:py-36 bg-[#0b0b0b] text-white"
       style={{ fontFamily: "var(--font-visual-sans, sans-serif)" }}
     >
-      <div className="container mx-auto px-6">
-        <div className="max-w-5xl mx-auto mb-12">
+      <div className="mx-auto max-w-7xl px-5 md:px-8">
+        <div className="mb-12">
           <h2 className="text-5xl md:text-7xl font-bold tracking-[-0.035em] leading-[0.95]">Arma tu ticket</h2>
           <p className="mt-5 max-w-xl text-lg text-white/70">Suma uno o varios equipos, mira el total al instante y envíalo por WhatsApp para agendar.</p>
         </div>
 
-        <div className="grid lg:grid-cols-[minmax(0,1fr)_360px] gap-10 max-w-5xl mx-auto items-start">
+        <div className="grid lg:grid-cols-[minmax(0,1fr)_380px] gap-10 lg:gap-16 items-start">
           <div>
             <div className="inline-flex p-1 rounded-full bg-white/[0.06] mb-5">
               {(["mantenimiento", "reparacion"] as Mode[]).map((m) => (
@@ -521,7 +540,7 @@ const QuoteSection = () => {
 
           <aside className="lg:sticky lg:top-24" aria-live="polite">
             {/* El ticket térmico es el objeto del negocio: su tipografía mono y sus cortes punteados son parte del artefacto. */}
-            <div data-ui className="bg-[#f7f6f2] text-zinc-900 px-6 pt-7 pb-10 font-mono text-[13px]" style={{ clipPath: TEAR }}> {/* taste-skill-ignore: el ticket es el artefacto */}
+            <div data-ui className="bg-[#f3f3f1] text-zinc-900 px-6 pt-7 pb-10 font-mono text-[13px]" style={{ clipPath: TEAR }}> {/* taste-skill-ignore: el ticket es el artefacto */}
               <p className="text-center text-base font-bold tracking-[0.2em]">QUICKFIX.PE</p>
               <p className="text-center text-zinc-500 text-xs mt-1">
                 San Miguel, Lima

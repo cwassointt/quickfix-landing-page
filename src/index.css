@@ -78,9 +78,19 @@
     @apply border-border;
   }
 
-  body {
-    @apply bg-background text-foreground font-body antialiased;
+  html {
+    color-scheme: dark;
+    background: #050505;
+    scroll-padding-top: 88px;
+    -webkit-tap-highlight-color: transparent;
   }
+  @media (prefers-reduced-motion: no-preference) {
+    html { scroll-behavior: smooth; }
+  }
+  body {
+    @apply bg-[#050505] text-white font-body antialiased;
+  }
+  ::selection { background: hsl(var(--primary)); color: #000; }
 
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Space Grotesk', sans-serif;
@@ -111,4 +121,9 @@
   .glow-orange {
     box-shadow: 0 0 30px -5px hsl(24 100% 50% / 0.4);
   }
+}
+
+@keyframes heroDrift {
+  from { transform: scale(1); }
+  to { transform: scale(1.06); }
 }

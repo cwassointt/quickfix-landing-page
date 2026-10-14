@@ -10,13 +10,17 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    {/* Global Font Injection */}
+    {/* Tipografía global: DM Sans para texto, Space Grotesk para títulos (ambas cargadas en index.html). */}
     <style>{`
       :root {
-        --font-visual-sans: 'WF Visual Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-visual-sans: 'DM Sans', system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        --font-display: 'Space Grotesk', 'DM Sans', system-ui, sans-serif;
       }
-      body, button, input, textarea, div, span, h1, h2, h3, h4, h5, h6, p, a, li {
+      body, button, input, textarea, div, span, p, a, li {
         font-family: var(--font-visual-sans) !important;
+      }
+      h1, h2, h3, h4, h5, h6, .font-display {
+        font-family: var(--font-display) !important;
       }
       /* La barra del cotizador ya tiene su botón de WhatsApp; no apilar dos en móvil. */
       @media (max-width: 1023px) {
