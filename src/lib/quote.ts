@@ -1,4 +1,4 @@
-import { diagnosis, maintenance } from "@/data/catalog";
+import { diagnosis, homeVisit, maintenance } from "@/data/catalog";
 
 export const WHATSAPP_NUMBER = "51940755119";
 
@@ -31,8 +31,22 @@ export const formatSoles = (n: number) => `S/ ${n.toFixed(2)}`;
 /** Un equipo del carrito; `title` es lo que se lee arriba de sus líneas en el ticket (modelo o tipo de equipo). */
 export type CartItem = Selection & { title: string };
 
-export function buildCart(items: CartItem[]) {
-  const groups = items.map((item) => ({ title: item.title, ...buildQuote(item) })).filter((g) => g.lines.length > 0);
+/** Movilidad de un distrito, o undefined si no está en las zonas atendidas. */
+export const travelFor = (district: string) => homeVisit.zones.find((z) => z.districts.includes(district))?.price;
+
+/** `district`: atención a domicilio en ese distrito (visita + movilidad, una vez por pedido). */
+export function buildCart(items: CartItem[], district?: string | null) {
+  const groups: { title: string; lines: Line[]; total: number; visit?: boolean }[] = items
+    .map((item) => ({ title: item.title, ...buildQuote(item) }))
+    .filter((g) => g.lines.length > 0);
+  const travel = district ? travelFor(district) : undefined;
+  if (groups.length > 0 && travel !== undefined) {
+    const lines: Line[] = [
+      { label: "Visita a domicilio", price: homeVisit.fee },
+      { label: `Movilidad ${district}`, price: travel },
+    ];
+    groups.push({ title: `A domicilio · ${district}`, lines, total: homeVisit.fee + travel, visit: true });
+  }
   return { groups, total: groups.reduce((sum, g) => sum + g.total, 0) };
 }
 

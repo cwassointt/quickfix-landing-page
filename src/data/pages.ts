@@ -1,4 +1,4 @@
-import { diagnosis, maintenance } from "@/data/catalog";
+import { diagnosis, maintenance, warranty } from "@/data/catalog";
 
 /** Página de un servicio: su URL, lo que ve Google (title/description) y lo que ve el cliente. */
 export type ServicePage = {
@@ -36,9 +36,9 @@ export const servicePages: ServicePage[] = [
     points: [
       { title: "Metal líquido como de fábrica", text: "Muchas ROG salen con metal líquido en el CPU. Lo retiro sin derrames, aíslo los componentes cercanos y lo reaplico con Thermalright Silver King o Thermal Grizzly." },
       { title: "Masilla térmica en VRAM y VRM", text: "Reemplazo los pads secos por masilla UTP-8 (14.8 W/mK), que rellena mejor los espacios irregulares de las placas ROG." },
-      { title: "Fotos y videos de cada paso", text: "Te mando por WhatsApp el antes, el durante y el después, para que veas exactamente qué se le hizo a tu equipo." },
+      { title: `Materiales por ${warranty.rogMaterialsYears} años`, text: `El metal líquido y la masilla del paquete duran ${warranty.rogMaterialsYears} años, con ${warranty.thermalMonths} meses de garantía térmica. Te mando fotos y videos de cada paso por WhatsApp.` },
     ],
-    faq: ["¿Qué gano con metal líquido o masilla térmica?", "¿Cada cuánto debo hacer mantenimiento?", "¿Pierdo mis archivos con el mantenimiento?"],
+    faq: ["¿Qué gano con metal líquido o masilla térmica?", "¿Qué garantía tiene el mantenimiento?", "¿Cada cuánto debo hacer mantenimiento?"],
     priceFrom: rog.price,
     image: "laptopGamer",
   },

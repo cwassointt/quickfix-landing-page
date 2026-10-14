@@ -142,3 +142,15 @@ export const others = [
   { name: "Ensamble a medida", detail: "Te asesoro en las piezas y lo armo", from: 100 },
   { name: "Instalación y software", detail: "Componentes, formateo y optimización", from: 30 },
 ];
+
+/** Servicio a domicilio: visita fija + movilidad según el distrito. */
+export const homeVisit = {
+  fee: 50,
+  zones: [
+    { price: 15, districts: ["San Miguel", "La Perla", "Magdalena"] },
+    { price: 25, districts: ["San Isidro", "Pueblo Libre", "Miraflores", "Lince", "Barranco", "San Borja", "Surquillo", "Jesús María", "La Victoria"] },
+    { price: 35, districts: ["Chorrillos", "La Molina", "Surco"] },
+  ],
+};
+
+export const warranty = { thermalMonths: 6, rogMaterialsYears: 2 };

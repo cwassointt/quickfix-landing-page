@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { AnimatePresence, motion, useInView, useReducedMotion } from "framer-motion";
 import { Check, MessageCircle, Plus, Search, X } from "lucide-react";
 import OptimizedImage from "@/components/OptimizedImage";
-import { diagnosis, maintenance, type Category, type Service } from "@/data/catalog";
+import { diagnosis, homeVisit, maintenance, warranty, type Category, type Service } from "@/data/catalog";
 import { buildCart, findService, formatSoles, whatsappUrl, type CartItem } from "@/lib/quote";
 import { laptopLabel, searchLaptops, type Laptop } from "@/lib/laptopSearch";
 import { QUOTE_EVENT } from "@/lib/site";
@@ -275,6 +275,8 @@ const QuoteSection = ({ initial }: { initial?: string }) => {
   const [extraIds, setExtraIds] = useState<string[]>([]);
   const [gpuId, setGpuId] = useState<string | null>(null);
   const [cart, setCart] = useState<Saved[]>([]);
+  // null = en el taller; si no, el distrito para la visita a domicilio.
+  const [district, setDistrict] = useState<string | null>(null);
   const reduce = useReducedMotion();
   const sectionRef = useRef<HTMLElement>(null);
   const inView = useInView(sectionRef, { amount: 0.1 });
@@ -310,7 +312,8 @@ const QuoteSection = ({ initial }: { initial?: string }) => {
   const modelName = model ? laptopLabel(model) : undefined;
   const isRog = !!model?.name.startsWith("ROG");
   const draft: CartItem = { title: modelName ?? category?.name ?? "Diagnóstico", serviceId, extraIds, gpuId };
-  const quote = buildCart([...cart, draft]);
+  const quote = buildCart([...cart, draft], district);
+  const devices = quote.groups.filter((g) => !g.visit).length;
   const draftLines = buildCart([draft]).groups.length > 0;
 
   const go = (n: number) => {
@@ -439,7 +442,9 @@ const QuoteSection = ({ initial }: { initial?: string }) => {
                             <span className="mt-auto pt-3 text-3xl font-bold tracking-[-0.03em] tabular-nums">
                               S/ {rogPackage.price} <s className="text-base font-normal opacity-50">{rogSeparate}</s>
                             </span>
-                            <span className={`text-sm font-medium ${rogPicked ? "text-black" : "text-primary"}`}>Ahorras S/ {rogSaving}</span>
+                            <span className={`text-sm font-medium ${rogPicked ? "text-black" : "text-primary"}`}>
+                              Ahorras S/ {rogSaving} · materiales por {warranty.rogMaterialsYears} años
+                            </span>
                           </span>
                         </button>
                       </>
@@ -470,7 +475,7 @@ const QuoteSection = ({ initial }: { initial?: string }) => {
                                 setExtraIds([]);
                               }}
                               title="Paquete completo ROG"
-                              detail={`${rogPackage.detail} · ahorras S/ ${rogSaving}`}
+                              detail={`${rogPackage.detail} · ahorras S/ ${rogSaving} · materiales por ${warranty.rogMaterialsYears} años`}
                               price={
                                 <>
                                   <s className="mr-2 text-white/40">{rogSeparate}</s>S/ {rogPackage.price}
@@ -536,6 +541,51 @@ const QuoteSection = ({ initial }: { initial?: string }) => {
               </div>
             )}
 
+            <Reveal show={devices > 0}>
+              <div className="mt-6 rounded-3xl bg-white/[0.04] p-5">
+                <p className="text-lg font-medium text-white">¿Dónde lo atiendo?</p>
+                <div className="mt-3 inline-flex flex-wrap gap-1 rounded-full bg-white/[0.06] p-1">
+                  <button
+                    type="button"
+                    aria-pressed={!district}
+                    onClick={() => setDistrict(null)}
+                    className={`${PRESS} rounded-full px-4 py-2 text-sm ${!district ? "bg-white text-black" : "text-white/70 hover:text-white"}`}
+                  >
+                    En el taller · San Miguel
+                  </button>
+                  <button
+                    type="button"
+                    aria-pressed={!!district}
+                    onClick={() => setDistrict((d) => d ?? homeVisit.zones[0].districts[0])}
+                    className={`${PRESS} rounded-full px-4 py-2 text-sm ${district ? "bg-white text-black" : "text-white/70 hover:text-white"}`}
+                  >
+                    A domicilio
+                  </button>
+                </div>
+                <Reveal show={!!district}>
+                  <label className="mt-4 block">
+                    <span className="text-sm text-white/60">Tu distrito · visita S/ {homeVisit.fee} + movilidad</span>
+                    <select
+                      value={district ?? ""}
+                      onChange={(e) => setDistrict(e.target.value)}
+                      className="mt-2 w-full rounded-2xl bg-[#1a1a1a] px-4 py-3.5 text-base text-white outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
+                    >
+                      {homeVisit.zones.map((z) => (
+                        <optgroup key={z.price} label={`Movilidad S/ ${z.price}`} className="bg-[#1a1a1a] text-white">
+                          {z.districts.map((d) => (
+                            <option key={d} value={d} className="bg-[#1a1a1a] text-white">
+                              {d} · + S/ {z.price}
+                            </option>
+                          ))}
+                        </optgroup>
+                      ))}
+                    </select>
+                  </label>
+                  <p className="mt-2 text-sm text-white/50">¿Otro distrito? Consúltame la movilidad por WhatsApp.</p>
+                </Reveal>
+              </div>
+            </Reveal>
+
             <Reveal show={draftLines}>
               <button
                 type="button"
@@ -565,9 +615,9 @@ const QuoteSection = ({ initial }: { initial?: string }) => {
                 </>
               ) : (
                 quote.groups.map((g, i) => {
-                  const saved = cart[i];
+                  const saved = g.visit ? undefined : cart[i];
                   return (
-                    <div key={saved?.key ?? "draft"} className="animate-in fade-in slide-in-from-top-1">
+                    <div key={g.visit ? "visit" : saved?.key ?? "draft"} className="animate-in fade-in slide-in-from-top-1">
                       <hr className="my-4 border-0 border-t border-dashed border-zinc-400" /> {/* taste-skill-ignore: corte del ticket */}
                       <div className="flex items-center justify-between gap-2 mb-2">
                         <p className="font-bold uppercase truncate">{g.title}</p>
@@ -581,7 +631,7 @@ const QuoteSection = ({ initial }: { initial?: string }) => {
                             <X className="w-4 h-4" aria-hidden="true" />
                           </button>
                         ) : (
-                          cart.length > 0 && <span className="shrink-0 text-xs text-orange-600">armando</span>
+                          !g.visit && cart.length > 0 && <span className="shrink-0 text-xs text-orange-600">armando</span>
                         )}
                       </div>
                       <ul className="space-y-1.5">
@@ -603,7 +653,11 @@ const QuoteSection = ({ initial }: { initial?: string }) => {
                 <span className="tabular-nums">{formatSoles(quote.total)}</span>
               </p>
               <hr className="my-4 border-0 border-t border-dashed border-zinc-400" /> {/* taste-skill-ignore: corte del ticket */}
-              <p className="text-center text-zinc-500 text-xs">Precio referencial.<br />Se confirma al revisar el equipo.</p>
+              <p className="text-center text-zinc-500 text-xs">
+                Garantía térmica: {warranty.thermalMonths} meses.
+                <br />
+                Precio referencial, se confirma al revisar el equipo.
+              </p>
             </div>
 
             {quote.groups.length > 0 ? (
@@ -637,7 +691,7 @@ const QuoteSection = ({ initial }: { initial?: string }) => {
             >
               <div className="min-w-0 flex-1">
                 <p className="text-sm text-white/60">
-                  {quote.groups.length} {quote.groups.length === 1 ? "equipo" : "equipos"} · total
+                  {devices} {devices === 1 ? "equipo" : "equipos"}{district ? " · a domicilio" : ""} · total
                 </p>
                 <p className="text-xl font-bold tabular-nums">{formatSoles(quote.total)}</p>
               </div>

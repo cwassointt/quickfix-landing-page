@@ -1,4 +1,4 @@
-import { diagnosis } from "@/data/catalog";
+import { diagnosis, homeVisit, warranty } from "@/data/catalog";
 
 const diagPrice = (id: string) => diagnosis.find((d) => d.id === id)!.price;
 
@@ -31,7 +31,16 @@ export const faq: { q: string; a: string[] }[] = [
   {
     q: "¿Van a domicilio?",
     a: [
-      "Sí, a San Miguel, Magdalena, Pueblo Libre, Jesús María, Lince, San Isidro, Miraflores, San Borja, Surquillo, Surco, La Molina, Breña, La Victoria y Chorrillos. Para otros distritos, consulta por WhatsApp la movilidad.",
+      `Sí. La visita cuesta S/ ${homeVisit.fee} más la movilidad según tu distrito:`,
+      ...homeVisit.zones.map((z) => `S/ ${z.price}: ${z.districts.join(", ")}.`),
+      "Para otros distritos, consúltame la movilidad por WhatsApp. En el cotizador puedes elegir tu distrito y ver el total.",
+    ],
+  },
+  {
+    q: "¿Qué garantía tiene el mantenimiento?",
+    a: [
+      `${warranty.thermalMonths} meses de garantía térmica: si las temperaturas no mejoran como se esperaba, lo reviso sin costo y reaplico los materiales si hace falta.`,
+      `En el paquete ASUS ROG con metal líquido, los materiales duran ${warranty.rogMaterialsYears} años. Las reparaciones de placa tienen 90 días de garantía.`,
     ],
   },
   {

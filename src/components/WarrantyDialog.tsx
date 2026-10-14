@@ -1,4 +1,5 @@
 import { X, ShieldCheck, Thermometer, Wrench, CheckCircle2, Cpu } from "lucide-react";
+import { warranty } from "@/data/catalog";
 import { memo } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -62,9 +63,9 @@ const WarrantyDialog = memo(({ open, onClose }: WarrantyDialogProps) =>
                               <Thermometer className="w-6 h-6 text-blue-400" />
                           </div>
                           <div>
-                              <h3 className="text-xl font-bold text-white mb-2">Garantía Térmica</h3>
+                              <h3 className="text-xl font-bold text-white mb-2">Garantía Térmica ({warranty.thermalMonths} Meses)</h3>
                               <p className="text-gray-400 text-sm leading-relaxed">
-                                  Nuestros servicios de mantenimiento preventivo y correctivo cuentan con una <strong>Garantía de Satisfacción Térmica</strong>.
+                                  Nuestros servicios de mantenimiento preventivo y correctivo cuentan con una <strong>Garantía de Satisfacción Térmica de {warranty.thermalMonths} meses</strong>. En el paquete ASUS ROG con metal líquido, los materiales duran {warranty.rogMaterialsYears} años.
                               </p>
                           </div>
                       </div>

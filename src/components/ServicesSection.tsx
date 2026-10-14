@@ -1,6 +1,6 @@
 import { motion, useReducedMotion } from "framer-motion";
 import OptimizedImage from "@/components/OptimizedImage";
-import { diagnosis, includes, maintenance, others, repairs } from "@/data/catalog";
+import { diagnosis, homeVisit, includes, maintenance, others, repairs, warranty } from "@/data/catalog";
 import { openQuote, waLink } from "@/lib/site";
 import { servicePages } from "@/data/pages";
 
@@ -78,6 +78,23 @@ const ServicesSection = () => {
             );
           })}
         </ul>
+
+        <div className="mt-6 grid gap-3 md:grid-cols-2">
+          <div className="rounded-3xl bg-white/[0.04] p-6 md:p-8">
+            <p className="font-display text-4xl font-bold tracking-[-0.03em] text-primary">{warranty.thermalMonths} meses</p>
+            <p className="mt-2 text-lg text-white">de garantía térmica en todos los mantenimientos</p>
+            <p className="mt-1 text-white/60">Materiales por {warranty.rogMaterialsYears} años en el paquete ASUS ROG con metal líquido.</p>
+          </div>
+          <div className="rounded-3xl bg-white/[0.04] p-6 md:p-8">
+            <p className="font-display text-4xl font-bold tracking-[-0.03em] text-white">
+              S/ {homeVisit.fee} <span className="text-2xl text-white/60">+ movilidad</span>
+            </p>
+            <p className="mt-2 text-lg text-white">a domicilio en Lima</p>
+            <p className="mt-1 text-white/60">
+              {homeVisit.zones.map((z) => `S/ ${z.price}: ${z.districts.slice(0, 3).join(", ")}${z.districts.length > 3 ? " y más" : ""}`).join(" · ")}
+            </p>
+          </div>
+        </div>
 
         <div className="mt-28 md:mt-36 grid gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
           <div>

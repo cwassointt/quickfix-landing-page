@@ -43,4 +43,15 @@ describe("buildQuote", () => {
     expect(text).toContain("*PlayStation 5*");
     expect(text).toContain("Total referencial: S/ 365.00");
   });
+
+  it("suma visita a domicilio y movilidad una sola vez por pedido", () => {
+    const items = [
+      { title: "PS5", serviceId: "ps5", extraIds: [], gpuId: null },
+      { title: "PS4", serviceId: "ps4", extraIds: [], gpuId: null },
+    ];
+    expect(buildCart(items, "Surco").total).toBe(140 + 110 + 50 + 35);
+    expect(buildCart(items, "San Miguel").total).toBe(140 + 110 + 50 + 15);
+    expect(buildCart(items, null).total).toBe(140 + 110);
+    expect(buildCart([], "Surco").total).toBe(0);
+  });
 });
