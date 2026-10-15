@@ -2,7 +2,7 @@
  * Google Analytics 4. Pega aquí tu ID de medición (Admin → Flujos de datos → Web), p. ej. "G-ABC123XYZ".
  * Vacío = la web no carga Analytics ni mide nada.
  */
-export const GA_ID = "";
+export const GA_ID = "G-7H8LELPGDD";
 
 type Gtag = (...args: unknown[]) => void;
 declare global {
@@ -23,7 +23,8 @@ export function track(event: string, params: Record<string, unknown> = {}) {
  * - cotizador_equipo: qué equipo eligen en el cotizador (lo envía QuoteSection)
  */
 export function initAnalytics() {
-  if (!GA_ID) return;
+  // Solo en el sitio publicado: tus pruebas en localhost no ensucian las estadísticas.
+  if (!GA_ID || !location.hostname.endsWith("quickfix.pe")) return;
   window.dataLayer = window.dataLayer || [];
   window.gtag = function () {
     // gtag.js necesita el objeto `arguments`, no un array.
