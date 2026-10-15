@@ -93,10 +93,10 @@ const Phase = ({ title, state, summary, onOpen, children }: { title: string; sta
           <span className="block text-sm text-white/50">{title}</span>
           <span className="block text-lg text-white truncate">{summary}</span>
         </span>
-        <span className="text-sm text-white/40 group-hover:text-orange-400 transition-colors duration-150">Cambiar</span>
+        <span className="text-sm text-white/60 group-hover:text-orange-400 transition-colors duration-150">Cambiar</span>
       </button>
     ) : (
-      <p className={`px-5 pt-5 text-lg font-medium ${state === "locked" ? "pb-5 text-white/25" : "text-white"}`}>{title}</p>
+      <p className={`px-5 pt-5 text-lg font-medium ${state === "locked" ? "pb-5 text-white/50" : "text-white"}`}>{title}</p>
     )}
     <Reveal show={state === "open"}>
       <div className="px-5 pb-6 pt-4">{children}</div>
@@ -229,10 +229,10 @@ const LaptopSearch = ({ onPick }: { onPick: (l: Laptop) => void }) => {
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && results[0] && onPick(results[0])}
           placeholder="Escribe tu modelo: Strix G614JV, Legion 5…"
-          className="w-full rounded-2xl bg-white/[0.07] focus:bg-white/[0.1] outline-none focus-visible:ring-2 focus-visible:ring-orange-500 pl-14 pr-4 py-4 text-lg text-white placeholder:text-white/35 transition-colors duration-150"
+          className="w-full rounded-2xl bg-white/[0.07] focus:bg-white/[0.1] outline-none focus-visible:ring-2 focus-visible:ring-orange-500 pl-14 pr-4 py-4 text-lg text-white placeholder:text-white/50 transition-colors duration-150"
         />
       </label>
-      <p className="mt-2 text-sm text-white/45">Está en la etiqueta debajo de la laptop. Te decimos qué tipo es.</p>
+      <p className="mt-2 text-sm text-white/60">Está en la etiqueta debajo de la laptop. Te decimos qué tipo es.</p>
       {query.trim().length >= 2 && (
         <ul className="mt-4 space-y-2">
           {results.map((l) => {
@@ -245,7 +245,7 @@ const LaptopSearch = ({ onPick }: { onPick: (l: Laptop) => void }) => {
                   className={`${PRESS} w-full grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1 text-left px-5 py-4 rounded-2xl bg-white/[0.04] hover:bg-white/[0.09]`}
                 >
                   <span className="min-w-0">
-                    <span className="block text-sm text-white/45">{l.brand}</span>
+                    <span className="block text-sm text-white/60">{l.brand}</span>
                     <span className="block text-white text-lg leading-tight truncate">{[l.name, l.code].filter(Boolean).join(" ")}</span>
                   </span>
                   <span className="text-right">
@@ -478,7 +478,7 @@ const QuoteSection = ({ initial }: { initial?: string }) => {
                               detail={`${rogPackage.detail} · ahorras S/ ${rogSaving} · materiales por ${warranty.rogMaterialsYears} años`}
                               price={
                                 <>
-                                  <s className="mr-2 text-white/40">{rogSeparate}</s>S/ {rogPackage.price}
+                                  <s className="mr-2 text-white/55">{rogSeparate}</s>S/ {rogPackage.price}
                                 </>
                               }
                             />
@@ -510,7 +510,7 @@ const QuoteSection = ({ initial }: { initial?: string }) => {
                                 price={
                                   g.comboPrice ? (
                                     <>
-                                      <s className="mr-2 text-white/40">{g.price}</s>+ S/ {g.comboPrice}
+                                      <s className="mr-2 text-white/55">{g.price}</s>+ S/ {g.comboPrice}
                                     </>
                                   ) : (
                                     `+ S/ ${g.price}`
@@ -602,7 +602,7 @@ const QuoteSection = ({ initial }: { initial?: string }) => {
             {/* El ticket térmico es el objeto del negocio: su tipografía mono y sus cortes punteados son parte del artefacto. */}
             <div data-ui className="bg-[#f3f3f1] text-zinc-900 px-6 pt-7 pb-10 font-mono text-[13px]" style={{ clipPath: TEAR }}> {/* taste-skill-ignore: el ticket es el artefacto */}
               <p className="text-center text-base font-bold tracking-[0.2em]">QUICKFIX.PE</p>
-              <p className="text-center text-zinc-500 text-xs mt-1">
+              <p className="text-center text-zinc-600 text-xs mt-1">
                 San Miguel, Lima
                 <br />
                 COTIZACIÓN{today && ` · ${today}`}
@@ -611,7 +611,7 @@ const QuoteSection = ({ initial }: { initial?: string }) => {
               {quote.groups.length === 0 ? (
                 <>
                   <hr className="my-4 border-0 border-t border-dashed border-zinc-400" /> {/* taste-skill-ignore: corte del ticket */}
-                  <p className="text-center text-zinc-400 py-6">Elige un equipo</p>
+                  <p className="text-center text-zinc-600 py-6">Elige un equipo</p>
                 </>
               ) : (
                 quote.groups.map((g, i) => {
@@ -653,7 +653,7 @@ const QuoteSection = ({ initial }: { initial?: string }) => {
                 <span className="tabular-nums">{formatSoles(quote.total)}</span>
               </p>
               <hr className="my-4 border-0 border-t border-dashed border-zinc-400" /> {/* taste-skill-ignore: corte del ticket */}
-              <p className="text-center text-zinc-500 text-xs">
+              <p className="text-center text-zinc-600 text-xs">
                 Garantía térmica: {warranty.thermalMonths} meses.
                 <br />
                 Precio referencial, se confirma al revisar el equipo.
@@ -671,7 +671,7 @@ const QuoteSection = ({ initial }: { initial?: string }) => {
                 Enviar ticket por WhatsApp
               </a>
             ) : (
-              <p className="mt-5 text-center text-white/40">Elige un equipo para armar tu ticket.</p>
+              <p className="mt-5 text-center text-white/60">Elige un equipo para armar tu ticket.</p>
             )}
           </aside>
         </div>

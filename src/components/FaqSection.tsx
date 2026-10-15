@@ -10,7 +10,7 @@ const FaqSection = ({ items = faq }: { items?: typeof faq }) => (
         <h2 className="text-5xl font-bold leading-[0.95] tracking-[-0.04em] text-white md:text-7xl">Preguntas frecuentes</h2>
         <p className="mt-6 max-w-[40ch] text-lg text-white/80">
           ¿Tu duda no está aquí?{" "}
-          <a href={waLink("Hola QuickFix, tengo una consulta.")} target="_blank" rel="noopener noreferrer" className="text-primary underline-offset-4 hover:underline">
+          <a href={waLink("Hola QuickFix, tengo una consulta.")} target="_blank" rel="noopener noreferrer" className="text-primary underline underline-offset-4 hover:decoration-2">
             Pregúntame por WhatsApp
           </a>
           .

@@ -148,7 +148,7 @@ export const homeVisit = {
   fee: 50,
   zones: [
     { price: 15, districts: ["San Miguel", "La Perla", "Magdalena"] },
-    { price: 25, districts: ["San Isidro", "Pueblo Libre", "Miraflores", "Lince", "Barranco", "San Borja", "Surquillo", "Jesús María", "La Victoria"] },
+    { price: 25, districts: ["San Isidro", "Pueblo Libre", "Miraflores", "Lince", "Barranco", "San Borja", "Surquillo", "Jesús María", "La Victoria", "Breña"] },
     { price: 35, districts: ["Chorrillos", "La Molina", "Surco"] },
   ],
 };
