@@ -56,7 +56,7 @@ const ContactSection = () => (
           src={MAPS_EMBED}
           loading="lazy"
           referrerPolicy="no-referrer-when-downgrade"
-          className="h-full min-h-[420px] w-full [filter:grayscale(1)_invert(0.92)_contrast(0.9)]"
+          className="h-full min-h-[420px] w-full"
         />
       </div>
     </div>

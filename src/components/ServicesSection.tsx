@@ -2,7 +2,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import OptimizedImage from "@/components/OptimizedImage";
 import { diagnosis, homeVisit, includes, maintenance, others, repairs, warranty } from "@/data/catalog";
 import { openQuote, waLink } from "@/lib/site";
-import { servicePages } from "@/data/pages";
+import { rogSaving, rogSeparate, servicePages } from "@/data/pages";
 
 // Página de servicio de cada tipo de equipo (enlaces internos para Google).
 const PAGE: Record<string, string> = Object.fromEntries(
@@ -23,6 +23,7 @@ const REPAIR_IMG: Record<string, string> = { gpu: gpuRepairImg, "laptop-gamer": 
 const PRESS =
   "transition-[transform,background-color,color] duration-150 ease-out active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-[#050505]";
 const electronic = diagnosis.find((d) => d.id === "diag-electronico")!;
+const rog = maintenance.find((c) => c.id === "laptops")!.services.find((s) => s.id === "asus-rog")!;
 
 const ServicesSection = () => {
   const reduce = useReducedMotion();
@@ -43,7 +44,34 @@ const ServicesSection = () => {
           Precios fijos por tipo de equipo. Elige el tuyo y el cotizador te arma el total con los extras.
         </motion.p>
 
-        <ul className="mt-14 space-y-3">
+        {/* Oferta estrella: campo naranja, lo primero de la lista de precios. */}
+        <motion.div {...rise(2)} className="mt-14 grid gap-6 rounded-3xl bg-primary p-6 text-black md:p-10 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+          <div>
+            <h3 className="text-4xl font-bold leading-[1] tracking-[-0.035em] md:text-5xl">Paquete completo ASUS ROG</h3>
+            <p className="mt-4 max-w-[52ch] text-lg">
+              Para toda la línea ROG: limpieza profunda, masilla térmica y metal líquido. Materiales por {warranty.rogMaterialsYears} años y {warranty.thermalMonths} meses de garantía.
+            </p>
+          </div>
+          <div className="lg:text-right">
+            <p className="flex items-end gap-3 lg:justify-end">
+              <span className="font-display text-6xl font-bold tracking-[-0.04em] tabular-nums">S/ {rog.price}</span>
+              <s className="pb-1.5 text-2xl text-black/60">S/ {rogSeparate}</s>
+            </p>
+            <p className="font-medium">Ahorras S/ {rogSaving}</p>
+            <button
+              type="button"
+              onClick={() => openQuote("laptops")}
+              className="mt-5 rounded-full bg-black px-7 py-4 text-lg text-white transition-transform duration-150 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 focus-visible:ring-offset-primary"
+            >
+              Cotizar mi ROG
+            </button>
+            <a href="/mantenimiento-asus-rog/" className="ml-5 font-medium underline underline-offset-4">
+              Ver qué incluye
+            </a>
+          </div>
+        </motion.div>
+
+        <ul className="mt-3 space-y-3">
           {maintenance.map((c, i) => {
             const from = Math.min(...c.services.map((s) => s.price));
             return (
@@ -92,7 +120,7 @@ const ServicesSection = () => {
             </p>
             <p className="mt-2 text-lg text-white">a domicilio en Lima</p>
             <p className="mt-1 text-white/60">
-              {homeVisit.zones.map((z) => `S/ ${z.price}: ${z.districts.slice(0, 3).join(", ")}${z.districts.length > 3 ? " y más" : ""}`).join(" · ")}
+              Movilidad de S/ {Math.min(...homeVisit.zones.map((z) => z.price))} a S/ {Math.max(...homeVisit.zones.map((z) => z.price))} según tu distrito. ¿Solo quieres que lo recoja? Pagas únicamente la movilidad (no aplica a PC de escritorio).
             </p>
           </div>
         </div>

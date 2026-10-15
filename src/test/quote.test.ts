@@ -20,13 +20,12 @@ describe("buildQuote", () => {
   });
 
   it("suma solo extras del servicio elegido", () => {
-    const q = buildQuote({ serviceId: "laptop-gamer-pro", extraIds: ["pads", "metal-2", "no-existe"], gpuId: null });
-    expect(q.total).toBe(150 + 120 + 150);
+    const q = buildQuote({ serviceId: "laptop-gamer-pro", extraIds: ["pads", "metal", "no-existe"], gpuId: null });
+    expect(q.total).toBe(150 + 99 + 80);
   });
 
   it("masilla térmica con precio fijo; laptop de oficina no tiene extras", () => {
-    expect(buildQuote({ serviceId: "laptop-oficina-gpu", extraIds: ["pads"], gpuId: null }).total).toBe(85 + 45);
-    expect(buildQuote({ serviceId: "laptop-gamer", extraIds: ["pads"], gpuId: null }).total).toBe(135 + 90);
+    expect(buildQuote({ serviceId: "laptop-gamer", extraIds: ["pads"], gpuId: null }).total).toBe(120 + 79);
     expect(buildQuote({ serviceId: "laptop-oficina", extraIds: ["pads"], gpuId: null }).total).toBe(70);
   });
 
@@ -37,11 +36,11 @@ describe("buildQuote", () => {
       { title: "vacío", serviceId: null, extraIds: [], gpuId: null },
     ]);
     expect(cart.groups).toHaveLength(2);
-    expect(cart.total).toBe(135 + 90 + 140);
+    expect(cart.total).toBe(120 + 79 + 140);
     const text = decodeURIComponent(whatsappUrl(cart));
     expect(text).toContain("*ASUS ROG Strix G16 G614JV*");
     expect(text).toContain("*PlayStation 5*");
-    expect(text).toContain("Total referencial: S/ 365.00");
+    expect(text).toContain("Total referencial: S/ 339.00");
   });
 
   it("suma visita a domicilio y movilidad una sola vez por pedido", () => {
@@ -49,9 +48,16 @@ describe("buildQuote", () => {
       { title: "PS5", serviceId: "ps5", extraIds: [], gpuId: null },
       { title: "PS4", serviceId: "ps4", extraIds: [], gpuId: null },
     ];
-    expect(buildCart(items, "Surco").total).toBe(140 + 110 + 50 + 35);
-    expect(buildCart(items, "San Miguel").total).toBe(140 + 110 + 50 + 15);
+    expect(buildCart(items, { mode: "domicilio", district: "Surco" }).total).toBe(140 + 110 + 50 + 35);
+    expect(buildCart(items, { mode: "domicilio", district: "San Miguel" }).total).toBe(140 + 110 + 50 + 15);
     expect(buildCart(items, null).total).toBe(140 + 110);
-    expect(buildCart([], "Surco").total).toBe(0);
+    expect(buildCart([], { mode: "domicilio", district: "Surco" }).total).toBe(0);
+  });
+
+  it("recojo cobra solo movilidad y no aplica a PC de escritorio", () => {
+    const gpu = { title: "GPU", serviceId: "gpu-3fan", extraIds: [], gpuId: null, categoryId: "gpus" };
+    const pc = { title: "PC", serviceId: "pc-gamer", extraIds: [], gpuId: null, categoryId: "pcs" };
+    expect(buildCart([gpu], { mode: "recojo", district: "Breña" }).total).toBe(90 + 25);
+    expect(buildCart([gpu, pc], { mode: "recojo", district: "Breña" }).total).toBe(90 + 120);
   });
 });

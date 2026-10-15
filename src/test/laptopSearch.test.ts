@@ -31,6 +31,10 @@ describe("searchLaptops", () => {
     expect(searchLaptops(laptops, "a")).toEqual([]);
   });
 
+  it("toda la línea ROG Strix es gama alta", () => {
+    expect(laptops.filter((l) => l.name.startsWith("ROG Strix") && l.tier !== "laptop-gamer-pro")).toEqual([]);
+  });
+
   it("cada modelo apunta a un servicio de laptop que existe", () => {
     const ids = new Set(maintenance.find((c) => c.id === "laptops")!.services.map((s) => s.id));
     expect(laptops.filter((l) => !ids.has(l.tier))).toEqual([]);

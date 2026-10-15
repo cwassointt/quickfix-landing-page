@@ -2,6 +2,7 @@ import { Check, X } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
+import BackButton from "@/components/BackButton";
 import type { LegalDoc } from "@/data/legal";
 import { waLink } from "@/lib/site";
 
@@ -10,7 +11,8 @@ const LegalPage = ({ doc }: { doc: LegalDoc }) => (
   <div className="relative min-h-[100svh] w-full overflow-x-clip bg-[#050505]">
     <Navbar />
     <main className="mx-auto max-w-3xl px-5 pb-28 pt-[120px] md:px-8 md:pt-[150px]">
-      <nav aria-label="Ruta" className="text-white/60">
+      <BackButton fallback="/#contacto" />
+      <nav aria-label="Ruta" className="mt-8 text-white/60">
         <a href="/" className="hover:text-white">Inicio</a> <span aria-hidden="true">/</span> <span className="text-white/80">{doc.title}</span>
       </nav>
       <h1 className="mt-6 text-5xl font-bold leading-[0.95] tracking-[-0.04em] text-white md:text-7xl">{doc.title}</h1>

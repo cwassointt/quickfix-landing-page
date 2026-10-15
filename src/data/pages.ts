@@ -20,9 +20,8 @@ const from = (categoryId: string) => Math.min(...maintenance.find((c) => c.id ==
 const laptops = maintenance.find((c) => c.id === "laptops")!.services;
 const price = (id: string) => laptops.find((s) => s.id === id)!.price;
 const rog = laptops.find((s) => s.id === "asus-rog")!;
-const pro = laptops.find((s) => s.id === "laptop-gamer-pro")!;
-/** Lo que costaría el paquete ROG armado por partes: base + masilla + metal líquido en 2 chips. */
-export const rogSeparate = pro.price + pro.extras!.find((e) => e.id === "pads")!.price + pro.extras!.find((e) => e.id === "metal-2")!.price;
+/** Precio de referencia del paquete ROG (lo que cuesta por separado en el mercado), mostrado tachado. */
+export const rogSeparate = rog.regularPrice!;
 export const rogSaving = rogSeparate - rog.price;
 
 export const servicePages: ServicePage[] = [

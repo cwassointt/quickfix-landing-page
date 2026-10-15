@@ -4,7 +4,7 @@ import { AnimatePresence, motion, useInView, useReducedMotion } from "framer-mot
 import { Check, MessageCircle, Plus, Search, X } from "lucide-react";
 import OptimizedImage from "@/components/OptimizedImage";
 import { diagnosis, homeVisit, maintenance, warranty, type Category, type Service } from "@/data/catalog";
-import { buildCart, findService, formatSoles, whatsappUrl, type CartItem } from "@/lib/quote";
+import { buildCart, findService, formatSoles, pickupAllowed, whatsappUrl, type CartItem, type Visit } from "@/lib/quote";
 import { laptopLabel, searchLaptops, type Laptop } from "@/lib/laptopSearch";
 import { QUOTE_EVENT } from "@/lib/site";
 import { track } from "@/lib/analytics";
@@ -27,7 +27,6 @@ type Saved = CartItem & { key: number };
 const CATEGORY_IMG: Record<string, string> = { laptops: laptopImg, pcs: pcImg, gpus: gpuImg, macbook: macbookImg, consolas: consoleImg };
 const SERVICE_IMG: Record<string, string> = {
   "laptop-oficina": laptopOfficeImg,
-  "laptop-oficina-gpu": laptopOfficeImg,
   "laptop-gamer": laptopGamerImg,
   "laptop-gamer-pro": laptopGamerImg,
   "asus-rog": laptopGamerImg,
@@ -38,9 +37,8 @@ const SERVICE_IMG: Record<string, string> = {
 /** Cuánto trabajo térmico lleva cada tipo de laptop (1–4) y ejemplos para reconocerse. */
 const TIER: Record<string, { level: number; examples: string }> = {
   "laptop-oficina": { level: 1, examples: "IdeaPad 3, Vivobook 15, HP 15, Inspiron" },
-  "laptop-oficina-gpu": { level: 2, examples: "XPS 15, Vivobook Pro, ThinkPad P, Envy 16" },
-  "laptop-gamer": { level: 3, examples: "TUF, Nitro 5, Victus, LOQ, Strix G16 RTX 4060" },
-  "laptop-gamer-pro": { level: 4, examples: "Legion Pro 7, Strix SCAR, Alienware, Omen 17" },
+  "laptop-gamer": { level: 2, examples: "TUF, Nitro 5, Victus, LOQ y oficina con gráfica (XPS 15, ThinkPad P)" },
+  "laptop-gamer-pro": { level: 3, examples: "Toda ROG Strix, Legion Pro, Alienware, Omen 17" },
 };
 
 // Springs críticamente amortiguadas (sin rebote): se pueden interrumpir y siempre parten del valor en pantalla.
@@ -170,24 +168,24 @@ const PickCard = ({ active, onClick, img, title, caption }: { active: boolean; o
         alt=""
         width={320}
         height={240}
-        sizes="(max-width: 1024px) 30vw, 130px"
+        sizes="(max-width: 1024px) 46vw, 300px"
         className={`w-full h-full object-cover transition-[opacity,transform] duration-300 ease-out ${
           active ? "opacity-100" : "opacity-60 [@media(hover:hover)]:group-hover:opacity-90 [@media(hover:hover)]:group-hover:scale-[1.04]"
         }`}
       />
     </div>
-    <div className="px-3 py-2.5">
-      <p className={`text-sm leading-tight font-medium ${active ? "text-black" : "text-white"}`}>{title}</p>
-      <p className={`text-xs ${active ? "text-black/70" : "text-white/50"}`}>{caption}</p>
+    <div className="px-4 py-3.5">
+      <p className={`text-base md:text-lg leading-tight font-medium ${active ? "text-black" : "text-white"}`}>{title}</p>
+      <p className={`mt-0.5 text-sm ${active ? "text-black/70" : "text-white/60"}`}>{caption}</p>
     </div>
   </button>
 );
 
-/** Medidor de gama: cuatro tramos, se llenan según el trabajo térmico del tipo de laptop. */
+/** Medidor de gama: tres tramos, se llenan según el trabajo térmico del tipo de laptop. */
 const Meter = ({ level, inverted }: { level: number; inverted?: boolean }) => (
-  <span className="flex gap-1" aria-label={`Nivel ${level} de 4`}>
-    {[1, 2, 3, 4].map((i) => (
-      <span key={i} className={`h-1.5 w-6 rounded-full ${i <= level ? (inverted ? "bg-black" : "bg-orange-500") : inverted ? "bg-black/20" : "bg-white/15"}`} />
+  <span className="flex gap-1" aria-label={`Nivel ${level} de 3`}>
+    {[1, 2, 3].map((i) => (
+      <span key={i} className={`h-1.5 w-8 rounded-full ${i <= level ? (inverted ? "bg-black" : "bg-orange-500") : inverted ? "bg-black/20" : "bg-white/15"}`} />
     ))}
   </span>
 );
@@ -207,6 +205,100 @@ const TierTile = ({ service, active, onClick }: { service: Service; active: bool
       <span className={`mt-1 text-sm ${active ? "text-black/70" : "text-white/50"}`}>{t.examples}</span>
       <span className="mt-auto pt-4 text-3xl font-bold tracking-[-0.03em] tabular-nums">S/ {service.price}</span>
     </button>
+  );
+};
+
+const ROG_INCLUDES = [
+  "Limpieza profunda y lavado químico",
+  "Masilla térmica UTP-8 (14.8 W/mK)",
+  "Metal líquido Thermal Grizzly o Silver King",
+  `Materiales por ${warranty.rogMaterialsYears} años y ${warranty.thermalMonths} meses de garantía`,
+];
+
+/** Paquete ROG: la oferta estrella, en un campo naranja que se distingue de todo lo demás. */
+const RogPackageCard = ({ picked, onPick }: { picked: boolean; onPick: () => void }) => {
+  const rog = findService(ROG_PACKAGE)!;
+  return (
+    <button
+      type="button"
+      aria-pressed={picked}
+      onClick={onPick}
+      className={`${PRESS} mt-5 grid w-full overflow-hidden rounded-3xl bg-orange-500 text-left text-black hover:bg-[#ff7a1f] sm:grid-cols-[40%_minmax(0,1fr)]`}
+    >
+      <span className="block aspect-[16/9] overflow-hidden sm:aspect-auto">
+        <OptimizedImage src={laptopGamerImg} alt="" width={480} height={480} sizes="(max-width: 640px) 92vw, 260px" className="h-full w-full object-cover" />
+      </span>
+      <span className="flex flex-col p-6">
+        <span className="text-sm font-medium text-black/70">¿Tienes una ASUS ROG?</span>
+        <span className="font-display mt-1 text-[1.75rem] font-bold leading-[1.05] tracking-[-0.03em]">Paquete completo ASUS ROG</span>
+        <span className="mt-4 space-y-1.5">
+          {ROG_INCLUDES.map((i) => (
+            <span key={i} className="flex gap-2 text-[15px] leading-snug">
+              <Check className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={3} aria-hidden="true" />
+              {i}
+            </span>
+          ))}
+        </span>
+        <span className="mt-5 flex flex-wrap items-end gap-x-3">
+          <span className="font-display text-5xl font-bold tracking-[-0.04em] tabular-nums">S/ {rog.price}</span>
+          <s className="pb-1 text-xl text-black/60">S/ {rogSeparate}</s>
+        </span>
+        <span className="font-medium">Ahorras S/ {rogSaving}</span>
+        <span className="mt-5 inline-flex items-center gap-2 self-start rounded-full bg-black px-6 py-3 text-white">
+          {picked && <Check className="h-4 w-4" strokeWidth={3} aria-hidden="true" />}
+          {picked ? "Paquete elegido" : "Elegir paquete ROG"}
+        </span>
+      </span>
+    </button>
+  );
+};
+
+const DISTRICTS = homeVisit.zones.flatMap((z) => z.districts);
+const MODES = [
+  ["taller", "En el taller · San Miguel"],
+  ["domicilio", "A domicilio"],
+  ["recojo", "Recojo a domicilio"],
+] as const;
+const fold = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+
+/** Buscador de distrito (como el de modelos). El precio de la movilidad solo aparece en el ticket. */
+const DistrictSearch = ({ value, onPick }: { value: string; onPick: (d: string) => void }) => {
+  const [query, setQuery] = useState("");
+  if (value)
+    return (
+      <div className="mt-4 flex items-center justify-between gap-3 rounded-2xl bg-white/[0.07] px-5 py-4">
+        <span className="text-lg text-white">{value}</span>
+        <button type="button" onClick={() => onPick("")} className={`${PRESS} rounded-full px-3 py-1.5 text-sm text-orange-400 hover:text-orange-300`}>
+          Cambiar
+        </button>
+      </div>
+    );
+  const results = query.trim() ? DISTRICTS.filter((d) => fold(d).includes(fold(query))) : DISTRICTS;
+  return (
+    <div className="mt-4">
+      <label className="relative block">
+        <span className="sr-only">Tu distrito</span>
+        <Search className="absolute left-5 top-1/2 h-5 w-5 -translate-y-1/2 text-white/50" aria-hidden="true" />
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && results[0] && onPick(results[0])}
+          placeholder="Escribe tu distrito: Surco, Miraflores…"
+          autoComplete="address-level2"
+          className="w-full rounded-2xl bg-white/[0.07] py-4 pl-14 pr-4 text-lg text-white outline-none transition-colors duration-150 placeholder:text-white/50 focus:bg-white/[0.1] focus-visible:ring-2 focus-visible:ring-orange-500"
+        />
+      </label>
+      <ul className="mt-3 flex flex-wrap gap-2">
+        {results.map((d) => (
+          <li key={d}>
+            <button type="button" onClick={() => onPick(d)} className={`${PRESS} rounded-full bg-white/[0.06] px-4 py-2.5 text-white hover:bg-white/[0.12]`}>
+              {d}
+            </button>
+          </li>
+        ))}
+        {results.length === 0 && <li className="text-white/60">No llego a ese distrito por ahora. Consúltame por WhatsApp.</li>}
+      </ul>
+    </div>
   );
 };
 
@@ -276,8 +368,8 @@ const QuoteSection = ({ initial }: { initial?: string }) => {
   const [extraIds, setExtraIds] = useState<string[]>([]);
   const [gpuId, setGpuId] = useState<string | null>(null);
   const [cart, setCart] = useState<Saved[]>([]);
-  // null = en el taller; si no, el distrito para la visita a domicilio.
-  const [district, setDistrict] = useState<string | null>(null);
+  // null = en el taller; si no, domicilio o recojo y el distrito ("" = aún sin elegir).
+  const [visit, setVisit] = useState<Visit | null>(null);
   const reduce = useReducedMotion();
   const sectionRef = useRef<HTMLElement>(null);
   const inView = useInView(sectionRef, { amount: 0.1 });
@@ -312,8 +404,10 @@ const QuoteSection = ({ initial }: { initial?: string }) => {
   const category = maintenance.find((c) => c.id === categoryId);
   const modelName = model ? laptopLabel(model) : undefined;
   const isRog = !!model?.name.startsWith("ROG");
-  const draft: CartItem = { title: modelName ?? category?.name ?? "Diagnóstico", serviceId, extraIds, gpuId };
-  const quote = buildCart([...cart, draft], district);
+  const draft: CartItem = { title: modelName ?? category?.name ?? "Diagnóstico", serviceId, extraIds, gpuId, categoryId: category?.id };
+  const quote = buildCart([...cart, draft], visit);
+  const canPickup = pickupAllowed([...cart, draft]);
+  const setVisitMode = (mode: Visit["mode"] | null) => setVisit((v) => (mode ? { mode, district: v?.district ?? "" } : null));
   const devices = quote.groups.filter((g) => !g.visit).length;
   const draftLines = buildCart([draft]).groups.length > 0;
 
@@ -406,7 +500,7 @@ const QuoteSection = ({ initial }: { initial?: string }) => {
             {mode === "mantenimiento" ? (
               <div className="space-y-3">
                 <Phase title={cart.length ? "¿Qué otro equipo traes?" : "¿Qué equipo traes?"} state={state(1)} summary={category?.name} onOpen={() => go(1)}>
-                  <div className="grid grid-cols-3 lg:grid-cols-5 gap-2.5">
+                  <div className="grid grid-cols-2 gap-3">
                     {maintenance.map((c) => (
                       <PickCard key={c.id} active={c.id === categoryId} onClick={() => pickCategory(c.id)} img={CATEGORY_IMG[c.id]} title={c.name} caption={`Desde S/ ${fromPrice(c)}`} />
                     ))}
@@ -423,32 +517,13 @@ const QuoteSection = ({ initial }: { initial?: string }) => {
                     (categoryId === "laptops" ? (
                       <>
                         <LaptopSearch onPick={(l) => pickService(findService(l.tier)!, l)} />
+                        <RogPackageCard picked={rogPicked} onPick={() => pickService(rogPackage)} />
                         <p className="mt-8 mb-3 text-white/70">¿No sabes el modelo? Elige el tipo:</p>
-                        <div className="grid sm:grid-cols-2 gap-2.5">
+                        <div className="grid gap-2.5 sm:grid-cols-3">
                           {laptopTiers.map((s) => (
                             <TierTile key={s.id} service={s} active={s.id === serviceId && !model} onClick={() => pickService(s)} />
                           ))}
                         </div>
-                        <button
-                          type="button"
-                          aria-pressed={rogPicked}
-                          onClick={() => pickService(rogPackage)}
-                          className={`${PRESS} mt-2.5 w-full grid grid-cols-[38%_minmax(0,1fr)] overflow-hidden rounded-2xl text-left ${
-                            rogPicked ? "bg-orange-500 text-black" : "bg-white/[0.04] hover:bg-white/[0.08] text-white"
-                          }`}
-                        >
-                          <OptimizedImage src={laptopGamerImg} alt="" width={320} height={240} sizes="200px" className="w-full h-full object-cover" />
-                          <span className="p-5 flex flex-col">
-                            <span className="text-lg font-medium leading-tight">{rogPackage.name}</span>
-                            <span className={`mt-1 text-sm ${rogPicked ? "text-black/70" : "text-white/50"}`}>{rogPackage.detail}</span>
-                            <span className="mt-auto pt-3 text-3xl font-bold tracking-[-0.03em] tabular-nums">
-                              S/ {rogPackage.price} <s className="text-base font-normal opacity-50">{rogSeparate}</s>
-                            </span>
-                            <span className={`text-sm font-medium ${rogPicked ? "text-black" : "text-primary"}`}>
-                              Ahorras S/ {rogSaving} · materiales por {warranty.rogMaterialsYears} años
-                            </span>
-                          </span>
-                        </button>
                       </>
                     ) : (
                       <>
@@ -530,7 +605,7 @@ const QuoteSection = ({ initial }: { initial?: string }) => {
             ) : (
               <div className="space-y-3">
                 <Phase title="¿Qué diagnóstico necesitas?" state={phase === 1 ? "open" : "done"} summary={service?.name} onOpen={() => go(1)}>
-                  <div className="grid grid-cols-2 gap-2.5">
+                  <div className="grid grid-cols-2 gap-3">
                     {diagnosis.map((s) => (
                       <PickCard key={s.id} active={s.id === serviceId} onClick={() => pickService(s)} img={SERVICE_IMG[s.id]} title={s.name} caption={`S/ ${s.price}`} />
                     ))}
@@ -546,44 +621,36 @@ const QuoteSection = ({ initial }: { initial?: string }) => {
             <Reveal show={devices > 0}>
               <div className="mt-6 rounded-3xl bg-white/[0.04] p-5">
                 <p className="text-lg font-medium text-white">¿Dónde lo atiendo?</p>
-                <div className="mt-3 inline-flex flex-wrap gap-1 rounded-full bg-white/[0.06] p-1">
-                  <button
-                    type="button"
-                    aria-pressed={!district}
-                    onClick={() => setDistrict(null)}
-                    className={`${PRESS} rounded-full px-4 py-2 text-sm ${!district ? "bg-white text-black" : "text-white/70 hover:text-white"}`}
-                  >
-                    En el taller · San Miguel
-                  </button>
-                  <button
-                    type="button"
-                    aria-pressed={!!district}
-                    onClick={() => setDistrict((d) => d ?? homeVisit.zones[0].districts[0])}
-                    className={`${PRESS} rounded-full px-4 py-2 text-sm ${district ? "bg-white text-black" : "text-white/70 hover:text-white"}`}
-                  >
-                    A domicilio
-                  </button>
+                <div className="mt-3 inline-flex flex-wrap gap-1 rounded-3xl bg-white/[0.06] p-1">
+                  {MODES.map(([mode, label]) => {
+                    const active = mode === "taller" ? !visit : visit?.mode === mode;
+                    return (
+                      <button
+                        key={mode}
+                        type="button"
+                        aria-pressed={active}
+                        onClick={() => setVisitMode(mode === "taller" ? null : mode)}
+                        className={`${PRESS} rounded-full px-4 py-2 text-sm ${active ? "bg-white text-black" : "text-white/70 hover:text-white"}`}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
                 </div>
-                <Reveal show={!!district}>
-                  <label className="mt-4 block">
-                    <span className="text-sm text-white/60">Tu distrito · visita S/ {homeVisit.fee} + movilidad</span>
-                    <select
-                      value={district ?? ""}
-                      onChange={(e) => setDistrict(e.target.value)}
-                      className="mt-2 w-full rounded-2xl bg-[#1a1a1a] px-4 py-3.5 text-base text-white outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
-                    >
-                      {homeVisit.zones.map((z) => (
-                        <optgroup key={z.price} label={`Movilidad S/ ${z.price}`} className="bg-[#1a1a1a] text-white">
-                          {z.districts.map((d) => (
-                            <option key={d} value={d} className="bg-[#1a1a1a] text-white">
-                              {d} · + S/ {z.price}
-                            </option>
-                          ))}
-                        </optgroup>
-                      ))}
-                    </select>
-                  </label>
-                  <p className="mt-2 text-sm text-white/50">¿Otro distrito? Consúltame la movilidad por WhatsApp.</p>
+                <Reveal show={!!visit}>
+                  {visit?.mode === "recojo" && !canPickup ? (
+                    <p className="mt-4 text-white/80">El recojo no aplica para PC de escritorio: tráela al taller o elige atención a domicilio.</p>
+                  ) : (
+                    <>
+                      <p className="mt-4 text-white/70">
+                        {visit?.mode === "domicilio"
+                          ? `Voy a tu casa: visita de S/ ${homeVisit.fee} más la movilidad de tu distrito.`
+                          : "Recojo tu laptop, consola o componente y te lo devuelvo listo. Solo pagas la movilidad."}{" "}
+                        Lo verás en el ticket.
+                      </p>
+                      <DistrictSearch value={visit?.district ?? ""} onPick={(d) => setVisit((v) => (v ? { ...v, district: d } : v))} />
+                    </>
+                  )}
                 </Reveal>
               </div>
             </Reveal>
@@ -694,7 +761,7 @@ const QuoteSection = ({ initial }: { initial?: string }) => {
             >
               <div className="min-w-0 flex-1">
                 <p className="text-sm text-white/60">
-                  {devices} {devices === 1 ? "equipo" : "equipos"}{district ? " · a domicilio" : ""} · total
+                  {devices} {devices === 1 ? "equipo" : "equipos"}{visit?.district ? (visit.mode === "domicilio" ? " · a domicilio" : " · con recojo") : ""} · total
                 </p>
                 <p className="text-xl font-bold tabular-nums">{formatSoles(quote.total)}</p>
               </div>

@@ -6,6 +6,7 @@ import ContactSection from "@/components/ContactSection";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import OptimizedImage from "@/components/OptimizedImage";
+import BackButton from "@/components/BackButton";
 import { faq } from "@/data/faq";
 import { servicePages, type ServicePage as Page } from "@/data/pages";
 import { openQuote, waLink } from "@/lib/site";
@@ -30,7 +31,8 @@ const ServicePage = ({ page }: { page: Page }) => (
       <section className="bg-[#050505] pt-[72px]">
         <div className="mx-auto grid max-w-7xl lg:grid-cols-[1.05fr_0.95fr]">
           <div className="flex flex-col justify-center px-5 pb-12 pt-10 md:px-8 lg:py-20">
-            <nav aria-label="Ruta" className="text-white/60">
+            <BackButton fallback="/#servicios" />
+            <nav aria-label="Ruta" className="mt-8 text-white/60">
               <a href="/" className="hover:text-white">Inicio</a> <span aria-hidden="true">/</span> <span className="text-white/80">{page.h1}</span>
             </nav>
             <h1 className="mt-6 text-[2.6rem] font-bold leading-[0.95] tracking-[-0.04em] text-white sm:text-6xl xl:text-7xl">{page.h1}</h1>
