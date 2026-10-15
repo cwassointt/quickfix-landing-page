@@ -34,7 +34,7 @@ const ServicesSection = () => {
   });
 
   return (
-    <section id="servicios" className="bg-[#050505] py-24 md:py-36">
+    <section id="servicios" className="bg-[#0b0b0b] py-24 md:py-36">
       <div className="mx-auto max-w-7xl px-5 md:px-8">
         <motion.h2 {...rise()} className="text-5xl font-bold leading-[0.95] tracking-[-0.04em] text-white md:text-7xl">
           Servicios y precios
@@ -84,6 +84,7 @@ const ServicesSection = () => {
             <p className="font-display text-4xl font-bold tracking-[-0.03em] text-primary">{warranty.thermalMonths} meses</p>
             <p className="mt-2 text-lg text-white">de garantía térmica en todos los mantenimientos</p>
             <p className="mt-1 text-white/60">Materiales por {warranty.rogMaterialsYears} años en el paquete ASUS ROG con metal líquido.</p>
+            <a href="/garantia/" className="mt-3 inline-block text-primary underline underline-offset-4">Ver la garantía completa</a>
           </div>
           <div className="rounded-3xl bg-white/[0.04] p-6 md:p-8">
             <p className="font-display text-4xl font-bold tracking-[-0.03em] text-white">

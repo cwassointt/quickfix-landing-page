@@ -37,7 +37,7 @@ const ProcessSection = () => {
   });
 
   return (
-    <section id="proceso" className="bg-[#050505] py-24 md:py-36">
+    <section id="proceso" className="bg-[#0b0b0b] py-24 md:py-36">
       <div className="mx-auto max-w-7xl px-5 md:px-8">
         <div className="grid gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:gap-20">
           <div>

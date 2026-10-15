@@ -1,6 +1,3 @@
-import { useState } from "react";
-import WarrantyDialog from "@/components/WarrantyDialog";
-import TermsDialog from "@/components/TermsDialog";
 import { servicePages } from "@/data/pages";
 import { ADDRESS, EMAIL, INSTAGRAM_URL, PHONE_DISPLAY, TIKTOK_URL, scrollToId, waLink } from "@/lib/site";
 
@@ -17,9 +14,6 @@ const LINK = "rounded-sm text-black underline-offset-4 hover:underline focus-vis
 
 /** Cierre de la página: campo naranja de marca y el nombre a todo lo ancho. */
 const Footer = () => {
-  const [warrantyOpen, setWarrantyOpen] = useState(false);
-  const [termsOpen, setTermsOpen] = useState(false);
-
   return (
     <footer className="bg-primary text-black">
       <div className="mx-auto max-w-7xl px-5 pt-16 md:px-8 md:pt-24">
@@ -61,8 +55,8 @@ const Footer = () => {
               <a href={TIKTOK_URL} target="_blank" rel="noopener noreferrer" className={LINK}>TikTok</a>
             </p>
             <p className="flex gap-4 pt-2">
-              <button type="button" onClick={() => setWarrantyOpen(true)} className={LINK}>Garantía</button>
-              <button type="button" onClick={() => setTermsOpen(true)} className={LINK}>Términos</button>
+              <a href="/garantia/" className={LINK}>Garantía</a>
+              <a href="/terminos/" className={LINK}>Términos</a>
             </p>
           </div>
         </div>
@@ -73,9 +67,6 @@ const Footer = () => {
         <p className="py-6 text-sm text-black/70">© {new Date().getFullYear()} QuickFix · San Miguel, Lima</p>
       </div>
 
-      {/* Se montan solo al abrirse: usan document.body y el HTML pregenerado no tiene documento. */}
-      {warrantyOpen && <WarrantyDialog open onClose={() => setWarrantyOpen(false)} />}
-      {termsOpen && <TermsDialog open onClose={() => setTermsOpen(false)} />}
     </footer>
   );
 };

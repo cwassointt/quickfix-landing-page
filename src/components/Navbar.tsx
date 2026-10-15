@@ -64,7 +64,7 @@ const Navbar = () => {
   };
 
   return (
-    <header className={`fixed inset-x-0 top-0 z-50 transition-colors duration-300 ${scrolled || open ? "bg-[#050505]" : "bg-transparent"}`}>
+    <header data-lugar="navbar" className={`fixed inset-x-0 top-0 z-50 transition-colors duration-300 ${scrolled || open ? "bg-[#050505]" : "bg-transparent"}`}>
       <a href="#cotizar" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[80] focus:rounded-full focus:bg-primary focus:px-4 focus:py-2 focus:text-black">
         Saltar al cotizador
       </a>

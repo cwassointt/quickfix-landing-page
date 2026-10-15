@@ -1,5 +1,6 @@
 import { diagnosis, maintenance, repairs } from "@/data/catalog";
 import { servicePages, type ServicePage } from "@/data/pages";
+import { legalDocs } from "@/data/legal";
 import { EMAIL, INSTAGRAM_URL, MAPS_URL, TIKTOK_URL } from "@/lib/site";
 import { WHATSAPP_NUMBER } from "@/lib/quote";
 
@@ -77,4 +78,5 @@ export const heads: Head[] = [
     jsonLd: [business],
   },
   ...servicePages.map((p) => ({ path: `/${p.slug}/`, title: p.title, description: p.description, jsonLd: [business, service(p), breadcrumb(p)] })),
+  ...legalDocs.map((d) => ({ path: `/${d.slug}/`, title: `${d.title} | QuickFix`, description: d.description, jsonLd: [] })),
 ];

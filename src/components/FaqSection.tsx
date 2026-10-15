@@ -4,7 +4,7 @@ import { waLink } from "@/lib/site";
 
 /** Preguntas frecuentes con <details> nativo: accesible y funciona sin JavaScript. */
 const FaqSection = ({ items = faq }: { items?: typeof faq }) => (
-  <section id="faq" className="bg-[#0b0b0b] py-24 md:py-36">
+  <section id="faq" className="bg-[#050505] py-24 md:py-36">
     <div className="mx-auto grid max-w-7xl gap-12 px-5 md:px-8 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
       <div className="lg:sticky lg:top-28 lg:self-start">
         <h2 className="text-5xl font-bold leading-[0.95] tracking-[-0.04em] text-white md:text-7xl">Preguntas frecuentes</h2>

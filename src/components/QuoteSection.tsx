@@ -7,6 +7,7 @@ import { diagnosis, homeVisit, maintenance, warranty, type Category, type Servic
 import { buildCart, findService, formatSoles, whatsappUrl, type CartItem } from "@/lib/quote";
 import { laptopLabel, searchLaptops, type Laptop } from "@/lib/laptopSearch";
 import { QUOTE_EVENT } from "@/lib/site";
+import { track } from "@/lib/analytics";
 import { rogSaving, rogSeparate } from "@/data/pages";
 
 import laptopImg from "../images/services/laptop-maintenance.webp";
@@ -47,7 +48,7 @@ const SPRING = { type: "spring", bounce: 0, duration: 0.4 } as const;
 const SPRING_SLOW = { type: "spring", bounce: 0, duration: 0.6 } as const;
 // Respuesta al presionar: en pointer-down, no al soltar.
 const PRESS =
-  "transition-[transform,background-color,color,opacity] duration-150 ease-out active:scale-[0.98] motion-reduce:active:scale-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b0b0b]";
+  "transition-[transform,background-color,color,opacity] duration-150 ease-out active:scale-[0.98] motion-reduce:active:scale-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#050505]";
 const ROG_PACKAGE = "asus-rog";
 const gpus = maintenance.find((c) => c.id === "gpus")!.services;
 const fromPrice = (c: Category) => Math.min(...c.services.map((s) => s.price));
@@ -333,6 +334,7 @@ const QuoteSection = ({ initial }: { initial?: string }) => {
   };
 
   const pickCategory = (id: string) => {
+    track("cotizador_equipo", { equipo: id });
     if (id !== categoryId) {
       setCategoryId(id);
       setServiceId(null);
@@ -376,7 +378,7 @@ const QuoteSection = ({ initial }: { initial?: string }) => {
     <section
       id="cotizar"
       ref={sectionRef}
-      className="py-24 pb-36 md:py-36 bg-[#0b0b0b] text-white"
+      className="py-24 pb-36 md:py-36 bg-[#050505] text-white"
       style={{ fontFamily: "var(--font-visual-sans, sans-serif)" }}
     >
       <div className="mx-auto max-w-7xl px-5 md:px-8">
@@ -665,6 +667,7 @@ const QuoteSection = ({ initial }: { initial?: string }) => {
                 href={whatsappUrl(quote)}
                 target="_blank"
                 rel="noopener noreferrer"
+                data-total={quote.total}
                 className={`${PRESS} mt-5 flex items-center justify-center gap-2 w-full rounded-full bg-orange-500 hover:bg-orange-400 text-black font-medium py-4`}
               >
                 <MessageCircle className="w-5 h-5" aria-hidden="true" />
@@ -699,6 +702,8 @@ const QuoteSection = ({ initial }: { initial?: string }) => {
                 href={whatsappUrl(quote)}
                 target="_blank"
                 rel="noopener noreferrer"
+                data-total={quote.total}
+                data-lugar="barra-movil"
                 className={`${PRESS} flex items-center gap-2 rounded-full bg-orange-500 text-black font-medium px-5 py-3`}
               >
                 <MessageCircle className="w-5 h-5" aria-hidden="true" />

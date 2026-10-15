@@ -3,6 +3,8 @@ import { Routes, Route, useLocation } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import ServicePage from "./pages/ServicePage";
+import LegalPage from "./pages/LegalPage";
+import { legalDocs } from "./data/legal";
 import { servicePages } from "./data/pages";
 import { heads } from "./lib/seo";
 
@@ -21,6 +23,9 @@ const App = () => {
       <Route path="/" element={<Index />} />
       {servicePages.map((p) => (
         <Route key={p.slug} path={`/${p.slug}`} element={<ServicePage page={p} />} />
+      ))}
+      {legalDocs.map((d) => (
+        <Route key={d.slug} path={`/${d.slug}`} element={<LegalPage doc={d} />} />
       ))}
       <Route path="*" element={<NotFound />} />
     </Routes>
