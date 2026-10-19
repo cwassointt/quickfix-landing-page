@@ -55,7 +55,7 @@ const ServicesSection = () => {
           <div className="lg:text-right">
             <p className="flex items-end gap-3 lg:justify-end">
               <span className="font-display text-6xl font-bold tracking-[-0.04em] tabular-nums">S/ {rog.price}</span>
-              <s className="pb-1.5 text-2xl text-black/60">S/ {rogSeparate}</s>
+              <s className="pb-1.5 text-2xl text-black/80">S/ {rogSeparate}</s>
             </p>
             <p className="font-medium">Ahorras S/ {rogSaving}</p>
             <button

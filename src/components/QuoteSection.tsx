@@ -242,7 +242,7 @@ const RogPackageCard = ({ picked, onPick }: { picked: boolean; onPick: () => voi
         </span>
         <span className="mt-5 flex flex-wrap items-end gap-x-3">
           <span className="font-display text-5xl font-bold tracking-[-0.04em] tabular-nums">S/ {rog.price}</span>
-          <s className="pb-1 text-xl text-black/60">S/ {rogSeparate}</s>
+          <s className="pb-1 text-xl text-black/80">S/ {rogSeparate}</s>
         </span>
         <span className="font-medium">Ahorras S/ {rogSaving}</span>
         <span className="mt-5 inline-flex items-center gap-2 self-start rounded-full bg-black px-6 py-3 text-white">

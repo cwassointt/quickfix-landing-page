@@ -1,4 +1,5 @@
 import React from 'react';
+import { SERVICE_SRCSETS } from '@/images/services/srcsets';
 
 interface OptimizedImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   src: string;
@@ -66,7 +67,7 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
   return (
     <img
       src={finalSrc}
-      srcSet={generateSrcSet()}
+      srcSet={generateSrcSet() ?? SERVICE_SRCSETS[src]}
       sizes={sizes}
       alt={alt}
       width={width}
