@@ -1,6 +1,9 @@
 import { motion, useReducedMotion } from "framer-motion";
-import MockImage from "@/components/MockImage";
 import OptimizedImage from "@/components/OptimizedImage";
+import { TIKTOK_URL } from "@/lib/site";
+
+// Video del proceso en TikTok (@quickfixpe). Para cambiarlo, reemplaza el ID del video.
+const TIKTOK_VIDEO_ID = "7375588706150829317";
 
 import grizzlyImg from "../images/materials/GRIZZLY.webp";
 import utp8Img from "../images/materials/UTP8.webp";
@@ -59,7 +62,25 @@ const ProcessSection = () => {
           </div>
 
           <motion.div {...rise(2)} className="lg:sticky lg:top-28 lg:self-start">
-            <MockImage label="Video vertical: Gianluca aplicando metal líquido a una ASUS ROG Strix" className="aspect-[4/5] w-full rounded-3xl" />
+            {/* Reproductor oficial de TikTok; carga solo al llegar a esta sección. */}
+            <div className="mx-auto aspect-[9/16] w-full max-w-[380px] overflow-hidden rounded-3xl bg-[#151515] lg:ml-auto lg:mr-0">
+              <iframe
+                src={`https://www.tiktok.com/player/v1/${TIKTOK_VIDEO_ID}?music_info=0&description=0&rel=0&controls=1&progress_bar=1&play_button=1&volume_control=1&fullscreen_button=1`}
+                title="Video en TikTok: mantenimiento de una laptop en QuickFix"
+                loading="lazy"
+                allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+                allowFullScreen
+                className="h-full w-full border-0"
+              />
+            </div>
+            <a
+              href={`${TIKTOK_URL}/video/${TIKTOK_VIDEO_ID}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mx-auto mt-4 block max-w-[380px] text-center text-white/70 underline underline-offset-4 hover:text-white lg:ml-auto lg:mr-0"
+            >
+              Ver más videos en TikTok @quickfixpe
+            </a>
           </motion.div>
         </div>
 

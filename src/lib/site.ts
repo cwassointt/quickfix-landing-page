@@ -10,7 +10,7 @@ export const TIKTOK_URL = "https://www.tiktok.com/@quickfixpe";
 export const EMAIL = "quickfix.pe24@gmail.com";
 export const ADDRESS = "Talambo 135, San Miguel, Lima";
 export const PHONE_DISPLAY = "+51 940 755 119";
-export const RATING = { score: "5.0", count: "+140" };
+export const RATING = { score: "5.0", count: "+220" };
 
 export const waLink = (text = "Hola QuickFix, quiero agendar una cita para mi equipo.") =>
   `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`;

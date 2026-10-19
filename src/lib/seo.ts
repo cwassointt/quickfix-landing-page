@@ -1,7 +1,7 @@
 import { diagnosis, maintenance, repairs } from "@/data/catalog";
 import { servicePages, type ServicePage } from "@/data/pages";
 import { legalDocs } from "@/data/legal";
-import { EMAIL, INSTAGRAM_URL, MAPS_URL, TIKTOK_URL } from "@/lib/site";
+import { EMAIL, INSTAGRAM_URL, MAPS_URL, RATING, TIKTOK_URL } from "@/lib/site";
 import { WHATSAPP_NUMBER } from "@/lib/quote";
 
 export const SITE = "https://quickfix.pe";
@@ -74,7 +74,7 @@ export const heads: Head[] = [
     path: "/",
     title: "Mantenimiento ASUS ROG y laptops gamer en Lima | QuickFix",
     description:
-      "Especialista en ASUS ROG y laptops gamer en San Miguel, Lima: mantenimiento con metal líquido, masilla térmica y reparación de placa. 5.0 en Google con +140 reseñas. Atención 24/7 con cita.",
+      `Especialista en ASUS ROG y laptops gamer en San Miguel, Lima: mantenimiento con metal líquido, masilla térmica y reparación de placa. ${RATING.score} en Google con ${RATING.count} reseñas. Atención 24/7 con cita.`,
     jsonLd: [business],
   },
   ...servicePages.map((p) => ({ path: `/${p.slug}/`, title: p.title, description: p.description, jsonLd: [business, service(p), breadcrumb(p)] })),
