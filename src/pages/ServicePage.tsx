@@ -11,12 +11,12 @@ import { faq } from "@/data/faq";
 import { servicePages, type ServicePage as Page } from "@/data/pages";
 import { openQuote, waLink } from "@/lib/site";
 
-import laptopImg from "../images/services/laptop-maintenance.webp";
+import laptopImg from "../images/services/servicio-laptop.webp";
 import laptopGamerImg from "../images/repair/laptopgamer-repair.webp";
-import pcImg from "../images/services/pc-gamer-setup.webp";
-import gpuImg from "../images/services/gpu-maintenance.webp";
-import macbookImg from "../images/services/macbook-maintenance.webp";
-import consoleImg from "../images/services/console-ps5.webp";
+import pcImg from "../images/services/servicio-pc.webp";
+import gpuImg from "../images/services/servicio-gpu.webp";
+import macbookImg from "../images/services/servicio-macbook.webp";
+import consoleImg from "../images/services/servicio-consola.webp";
 import boardImg from "../images/repair/gpu-repair.webp";
 
 const IMG: Record<Page["image"], string> = { laptop: laptopImg, laptopGamer: laptopGamerImg, pc: pcImg, gpu: gpuImg, macbook: macbookImg, console: consoleImg, board: boardImg };
