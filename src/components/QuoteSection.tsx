@@ -37,8 +37,8 @@ const SERVICE_IMG: Record<string, string> = {
 /** Cuánto trabajo térmico lleva cada tipo de laptop (1–4) y ejemplos para reconocerse. */
 const TIER: Record<string, { level: number; examples: string }> = {
   "laptop-oficina": { level: 1, examples: "IdeaPad 3, Vivobook 15, HP 15, Inspiron" },
-  "laptop-gamer": { level: 2, examples: "TUF, Nitro 5, Victus, LOQ y oficina con gráfica (XPS 15, ThinkPad P)" },
-  "laptop-gamer-pro": { level: 3, examples: "Toda ROG Strix, Legion Pro, Alienware, Omen 17" },
+  "laptop-gamer": { level: 2, examples: "Ideapad Gaming, HP Envy, MSI, Nitro 5" },
+  "laptop-gamer-pro": { level: 3, examples: "ROG Strix, Legion Pro, TUF, Omen 17" },
 };
 
 // Springs críticamente amortiguadas (sin rebote): se pueden interrumpir y siempre parten del valor en pantalla.
