@@ -34,10 +34,19 @@ export function initAnalytics() {
   window.gtag("js", new Date());
   window.gtag("config", GA_ID);
 
-  const script = document.createElement("script");
-  script.async = true;
-  script.src = `https://www.googletagmanager.com/gtag/js?id=${GA_ID}`;
-  document.head.appendChild(script);
+  // gtag.js pesa ~190 KB: se descarga con la primera interacción o a los 4 s, para no competir con la carga.
+  // Los eventos anteriores quedan en dataLayer y se envían al llegar el script.
+  let loaded = false;
+  const load = () => {
+    if (loaded) return;
+    loaded = true;
+    const script = document.createElement("script");
+    script.async = true;
+    script.src = `https://www.googletagmanager.com/gtag/js?id=${GA_ID}`;
+    document.head.appendChild(script);
+  };
+  for (const ev of ["pointerdown", "keydown", "scroll", "touchstart"]) addEventListener(ev, load, { once: true, passive: true });
+  setTimeout(load, 4000);
 
   document.addEventListener(
     "click",
