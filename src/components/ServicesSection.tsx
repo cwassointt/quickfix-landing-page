@@ -9,11 +9,11 @@ const PAGE: Record<string, string> = Object.fromEntries(
   servicePages.filter((p) => p.quote !== "reparacion" && p.slug !== "mantenimiento-asus-rog").map((p) => [p.quote, p.slug]),
 );
 
-import laptopImg from "../images/services/laptop-maintenance.webp";
-import pcImg from "../images/services/pc-gamer-setup.webp";
-import gpuImg from "../images/services/gpu-maintenance.webp";
-import macbookImg from "../images/services/macbook-maintenance.webp";
-import consoleImg from "../images/services/console-ps5.webp";
+import laptopImg from "../images/services/servicio-laptop.webp";
+import pcImg from "../images/services/servicio-pc.webp";
+import gpuImg from "../images/services/servicio-gpu.webp";
+import macbookImg from "../images/services/servicio-macbook.webp";
+import consoleImg from "../images/services/servicio-consola.webp";
 import gpuRepairImg from "../images/repair/gpu-repair.webp";
 import laptopGamerRepairImg from "../images/repair/laptopgamer-repair.webp";
 import laptopOfficeRepairImg from "../images/repair/laptopoffice-repair.webp";
@@ -76,7 +76,7 @@ const ServicesSection = () => {
             const from = Math.min(...c.services.map((s) => s.price));
             return (
               <motion.li key={c.id} {...rise(i)} className="group grid overflow-hidden rounded-3xl bg-white/[0.04] md:grid-cols-[240px_minmax(0,1fr)] lg:grid-cols-[280px_minmax(0,1fr)_auto] md:items-center">
-                <div className="aspect-[16/9] overflow-hidden md:row-span-2 md:aspect-auto md:h-full lg:row-span-1">
+                <div className="aspect-[4/3] overflow-hidden md:row-span-2 md:aspect-auto md:h-full lg:row-span-1">
                   <OptimizedImage
                     src={IMG[c.id]}
                     alt={`Mantenimiento de ${c.name.toLowerCase()} en QuickFix`}
