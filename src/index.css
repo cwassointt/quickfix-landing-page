@@ -78,9 +78,19 @@
     @apply border-border;
   }
 
-  body {
-    @apply bg-background text-foreground font-body antialiased;
+  html {
+    color-scheme: dark;
+    background: #050505;
+    scroll-padding-top: 88px;
+    -webkit-tap-highlight-color: transparent;
   }
+  @media (prefers-reduced-motion: no-preference) {
+    html { scroll-behavior: smooth; }
+  }
+  body {
+    @apply bg-[#050505] text-white font-body antialiased;
+  }
+  ::selection { background: hsl(var(--primary)); color: #000; }
 
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Space Grotesk', sans-serif;
@@ -97,18 +107,26 @@
   font-display: fallback;
 }
 
-@layer utilities {
-  .text-gradient-orange {
-    @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(135deg, hsl(24 100% 50%), hsl(30 100% 60%));
-  }
+@keyframes heroDrift {
+  from { transform: scale(1); }
+  to { transform: scale(1.06); }
+}
 
-  .bg-dark-section {
-    background-color: hsl(var(--surface-dark));
-    color: hsl(var(--surface-dark-foreground));
-  }
-
-  .glow-orange {
-    box-shadow: 0 0 30px -5px hsl(24 100% 50% / 0.4);
-  }
+/* Tipografía global: DM Sans para texto, Space Grotesk para títulos (ambas cargadas en index.html). */
+:root {
+  --font-visual-sans: 'DM Sans', system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: 'Space Grotesk', 'DM Sans', system-ui, sans-serif;
+}
+body, button, input, textarea, div, span, p, a, li {
+  font-family: var(--font-visual-sans) !important;
+}
+h1, h2, h3, h4, h5, h6, .font-display {
+  font-family: var(--font-display) !important;
+}
+/* La barra del cotizador ya tiene su botón de WhatsApp; no apilar dos en móvil. */
+@media (max-width: 1023px) {
+  body:has(.qf-bar) .wa-float { opacity: 0; pointer-events: none; }
+}
+.font-mono, .font-mono * {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace !important;
 }

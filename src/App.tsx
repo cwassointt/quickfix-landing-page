@@ -1,41 +1,35 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { useEffect } from "react";
+import { Routes, Route, useLocation } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import ServicePage from "./pages/ServicePage";
+import LegalPage from "./pages/LegalPage";
+import { legalDocs } from "./data/legal";
+import { servicePages } from "./data/pages";
+import { heads } from "./lib/seo";
 
-const queryClient = new QueryClient();
+/** Rutas de la web. El router lo pone main.tsx (navegador) o entry-server.tsx (HTML pregenerado). */
+const App = () => {
+  const { pathname } = useLocation();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    {/* Global Font Injection */}
-    <style>{`
-      :root {
-        --font-visual-sans: 'WF Visual Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      }
-      body, button, input, textarea, div, span, h1, h2, h3, h4, h5, h6, p, a, li {
-        font-family: var(--font-visual-sans) !important;
-      }
-    `}</style>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <Router
-        future={{
-          v7_startTransition: true,
-          v7_relativeSplatPath: true,
-        }}
-      >
-        <Routes>
-          <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </Router>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+  // Al navegar dentro de la app, el título sigue a la página (el HTML pregenerado ya lo trae).
+  useEffect(() => {
+    const head = heads.find((h) => h.path === pathname || h.path === `${pathname}/`);
+    if (head) document.title = head.title;
+  }, [pathname]);
+
+  return (
+    <Routes>
+      <Route path="/" element={<Index />} />
+      {servicePages.map((p) => (
+        <Route key={p.slug} path={`/${p.slug}`} element={<ServicePage page={p} />} />
+      ))}
+      {legalDocs.map((d) => (
+        <Route key={d.slug} path={`/${d.slug}`} element={<LegalPage doc={d} />} />
+      ))}
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  );
+};
 
 export default App;

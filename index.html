@@ -2,138 +2,49 @@
 <html lang="es-PE">
 <head>
   <meta charset="UTF-8" />
-  <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+  <link rel="icon" type="image/png" href="/favicon.ico" />
   <link rel="manifest" href="/manifest.json" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <meta name="theme-color" content="#000000" />
+  <meta name="theme-color" content="#050505" />
+  <meta name="color-scheme" content="dark" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://res.cloudinary.com" crossorigin />
 
-  <link rel="canonical" href="https://quickfix.pe/" />
 
-  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Sans:wght@400;500;600&display=swap" as="style">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Sans:wght@400;500;600&display=swap">
+  <!-- Fuentes sin bloquear el primer pintado: el texto se ve con la del sistema y cambia al cargar (display=swap). -->
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Sans:wght@400;500;600&display=swap" as="style" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Sans:wght@400;500;600&display=swap" media="print" onload="this.media='all'" />
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Sans:wght@400;500;600&display=swap" /></noscript>
 
   <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
 
-  <title>QuickFix - Reparación de Laptops y PCs de Alta Gama</title>
-
-  <meta name="description" content="Servicio técnico especializado en laptops y PCs en Lima. Microsoldadura, reparación de placas, mantenimiento premium y recuperación por líquidos en equipos de alta gama." />
-  <meta name="keywords" content="servicio tecnico laptops lima, reparacion laptops lima, microsoldadura laptops lima, reparacion placas madre lima, servicio tecnico pc gamer lima, mantenimiento laptops gamer, reparacion gpu lima, asus rog servicio tecnico peru, reparacion tarjetas de video lima, quickfix lima" />
-  <meta name="locality" content="Lima, Perú" />
-
+  <!-- title, description, canonical, og:* y JSON-LD los reemplaza scripts/prerender.mjs en cada página. -->
+  <title>Mantenimiento ASUS ROG y laptops gamer en Lima | QuickFix</title>
+  <meta name="description" content="Especialista en ASUS ROG y laptops gamer en San Miguel, Lima: mantenimiento con metal líquido, masilla térmica y reparación de placa. 5.0 en Google con +220 reseñas. Atención 24/7 con cita." />
+  <link rel="canonical" href="https://quickfix.pe/" />
   <meta name="author" content="QuickFix - Gianluca Pasquale" />
 
   <meta name="geo.region" content="PE-LIM" />
-  <meta name="geo.placename" content="San Miguel" />
-  <meta name="geo.position" content="-12.0914;-77.0784" />
-  <meta name="ICBM" content="-12.0914, -77.0784" />
+  <meta name="geo.placename" content="San Miguel, Lima" />
+  <meta name="geo.position" content="-12.078437;-77.110188" />
+  <meta name="ICBM" content="-12.078437, -77.110188" />
 
   <meta property="og:type" content="website" />
+  <meta property="og:locale" content="es_PE" />
   <meta property="og:site_name" content="QuickFix" />
   <meta property="og:url" content="https://quickfix.pe/" />
-  <meta property="og:title" content="QuickFix - Reparación de Laptops y PCs de Alta Gama" />
-  <meta property="og:description" content="Microsoldadura, reparación de placas y mantenimiento premium para laptops gamer y PCs de alta gama en Lima." />
-  <meta property="og:image" content="https://res.cloudinary.com/dmegp6gmd/image/upload/f_webp/q_auto/logo_md70dc.webp" />
+  <meta property="og:title" content="Mantenimiento ASUS ROG y laptops gamer en Lima | QuickFix" />
+  <meta property="og:description" content="Especialista en ASUS ROG y laptops gamer en San Miguel, Lima: mantenimiento con metal líquido, masilla térmica y reparación de placa. 5.0 en Google con +220 reseñas. Atención 24/7 con cita." />
+  <meta property="og:image" content="https://quickfix.pe/og-image.jpg" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
-
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="QuickFix - Reparación de Laptops y PCs de Alta Gama" />
-  <meta name="twitter:description" content="Reparación electrónica, microsoldadura y mantenimiento premium para equipos de alta gama en Lima." />
-  <meta name="twitter:image" content="https://res.cloudinary.com/dmegp6gmd/image/upload/f_webp/q_auto/logo_md70dc.webp" />
-
-
-  <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "ElectronicsRepairShop",
-      "name": "QuickFix",
-      "image": "https://res.cloudinary.com/dmegp6gmd/image/upload/f_webp/q_auto/logo_md70dc.webp",
-      "@id": "https://quickfix.pe/",
-      "url": "https://quickfix.pe/",
-      "telephone": "+51940755119",
-      "priceRange": "S/. 50 - S/. 400+",
-      "description": "Laboratorio técnico especializado en reparación electrónica a nivel de componente, microsoldadura y mantenimiento de hardware de alta gama para Laptops y PCs en Lima, Perú.",
-      "serviceType": [
-        "Reparación de laptops",
-        "Reparación de PCs",
-        "Microsoldadura",
-        "Reparación de GPU",
-        "Mantenimiento de hardware"
-      ],
-      "sameAs": [
-        "https://www.tiktok.com/@quickfix.pe",
-        "https://www.instagram.com/quickfix.pe"
-      ],
-      "address": {
-        "@type": "PostalAddress",
-        "streetAddress": "Talambo 135",
-        "addressLocality": "San Miguel",
-        "addressRegion": "Lima",
-        "postalCode": "15087",
-        "addressCountry": "PE"
-      },
-      "geo": {
-        "@type": "GeoCoordinates",
-        "latitude": -12.0914041,
-        "longitude": -77.078401
-      },
-      "areaServed": {
-        "@type": "City",
-        "name": "Lima"
-      },
-      "openingHoursSpecification": {
-        "@type": "OpeningHoursSpecification",
-        "dayOfWeek": [
-          "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
-        ],
-        "opens": "00:00",
-        "closes": "23:59"
-      },
-      "aggregateRating": {
-        "@type": "AggregateRating",
-        "ratingValue": "5.0",
-        "reviewCount": "132"
-      },
-      "hasOfferCatalog": {
-        "@type": "OfferCatalog",
-        "name": "Catálogo de Reparación y Mantenimiento",
-        "itemListElement": [
-          {
-            "@type": "Offer",
-            "itemOffered": {
-              "@type": "Service",
-              "name": "Reparación Electrónica a Nivel de Componente (Microsoldadura)"
-            }
-          },
-          {
-            "@type": "Offer",
-            "itemOffered": {
-              "@type": "Service",
-              "name": "Reparación de Tarjetas de Video (GPU) y Laptops Gamer"
-            }
-          },
-          {
-            "@type": "Offer",
-            "itemOffered": {
-              "@type": "Service",
-              "name": "Mantenimiento con Metal Líquido para Hardware de Gama Alta"
-            }
-          },
-          {
-            "@type": "Offer",
-            "itemOffered": {
-              "@type": "Service",
-              "name": "Lavado Químico Profundo por Derrame de Líquidos"
-            }
-          }
-        ]
-      }
-    }
-  </script>
+  <!--json-ld-->
 </head>
 <body>
-<main id="root"></main>
+<div id="root"><!--app--></div>
 <script type="module" src="/src/main.tsx"></script>
 </body>
 </html>

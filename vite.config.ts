@@ -5,7 +5,7 @@ import path from "path";
 import { componentTagger } from "lovable-tagger";
 import viteImagemin from "vite-plugin-imagemin";
 
-export default defineConfig(({ mode }) => ({
+export default defineConfig(({ mode, isSsrBuild }) => ({
   server: {
     host: "::",
     port: 8080,
@@ -34,7 +34,8 @@ export default defineConfig(({ mode }) => ({
     target: "esnext",
     minify: "esbuild",
     cssMinify: true,
-    rollupOptions: {
+    // Los chunks manuales son solo para el navegador; en el build SSR (prerender) React es externo.
+    rollupOptions: isSsrBuild ? {} : {
       output: {
         manualChunks: {
           vendor: ["react", "react-dom"],

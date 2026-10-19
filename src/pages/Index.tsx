@@ -1,51 +1,32 @@
-import { useEffect, useState } from "react";
 import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
+import ReviewsSection from "@/components/ReviewsSection";
+import ResultsSection from "@/components/ResultsSection";
 import ServicesSection from "@/components/ServicesSection";
+import QuoteSection from "@/components/QuoteSection";
 import ProcessSection from "@/components/ProcessSection";
+import FaqSection from "@/components/FaqSection";
 import ContactSection from "@/components/ContactSection";
-import WhatsAppButton from "@/components/WhatsAppButton";
 import Footer from "@/components/Footer";
+import WhatsAppButton from "@/components/WhatsAppButton";
 
-const Index = () => {
-  const [scrollProgress, setScrollProgress] = useState(0);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      const totalScroll = document.documentElement.scrollTop;
-      const windowHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-      const scroll = `${totalScroll / windowHeight}`;
-      setScrollProgress(Number(scroll));
-    }
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  return (
-    <div className="min-h-screen w-full overflow-x-hidden relative bg-black">
-       {/* Reading Progress Bar */}
-      <div
-        className="fixed top-0 left-0 h-1 bg-orange-500 z-[60] shadow-[0_0_10px_rgba(249,115,22,0.7)] transition-all duration-100 ease-out"
-        style={{ width: `${scrollProgress * 100}%` }}
-      />
-
-      <Navbar />
+// Orden de la página: primero la confianza (hero y reseñas), luego precios, cotizador y cómo se trabaja.
+const Index = () => (
+  <div className="relative min-h-[100svh] w-full overflow-x-clip bg-[#050505]">
+    <Navbar />
+    <main>
       <HeroSection />
-      <div style={{ contentVisibility: "auto", containIntrinsicSize: "0 800px" }}>
-        <ServicesSection />
-      </div>
-      <div style={{ contentVisibility: "auto", containIntrinsicSize: "0 1200px" }}>
-        <ProcessSection />
-      </div>
-      <div style={{ contentVisibility: "auto", containIntrinsicSize: "0 600px" }}>
-        <ContactSection />
-      </div>
-      <div style={{ contentVisibility: "auto", containIntrinsicSize: "0 400px" }}>
-        <Footer />
-      </div>
-      <WhatsAppButton />
-    </div>
-  );
-};
+      <ReviewsSection />
+      <ResultsSection />
+      <ServicesSection />
+      <QuoteSection />
+      <ProcessSection />
+      <FaqSection />
+      <ContactSection />
+    </main>
+    <Footer />
+    <WhatsAppButton />
+  </div>
+);
 
 export default Index;
