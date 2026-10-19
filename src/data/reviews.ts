@@ -23,6 +23,11 @@ export const reviews: Review[] = [
     text: "Llevé mi laptop gamer para hacerle mantenimiento de cambio de pasta térmica y thermal pads y la verdad quedé muy contento con el resultado. Me atendieron muy bien, me explicaron todo y el equipo quedó funcionando excelente.",
   },
   {
+    author: "Giancarlo Ferreyra",
+    stars: 5,
+    text: "Servicio rápido y confiable. Gianluca hizo un diagnóstico preciso y el mantenimiento fue excelente. Buena atención y comunicación. Definitivamente recomendado.",
+  },
+  {
     author: "Leonardo Pérez",
     stars: 5,
     text: "Atención personalizada impecable, mucha paciencia a la hora de explicar la duda que tengas o el problema que tenga tu equipo. Siempre te recomienda mejoras o cuidados para evitar que te vuelva a pasar.",
