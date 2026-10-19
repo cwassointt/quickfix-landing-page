@@ -38,6 +38,9 @@ export type CartItem = Selection & { title: string; categoryId?: string };
  */
 export type Visit = { mode: "domicilio" | "recojo"; district: string };
 
+/** Los diagnósticos se hacen en el taller: con uno en el pedido no hay atención a domicilio. */
+export const homeVisitAllowed = (items: CartItem[]) => !items.some((i) => diagnosis.some((d) => d.id === i.serviceId));
+
 /** El recojo no aplica a PC de escritorio: se trae al taller. */
 export const pickupAllowed = (items: CartItem[]) => !items.some((i) => i.categoryId === "pcs" && i.serviceId);
 
@@ -49,7 +52,7 @@ export function buildCart(items: CartItem[], visit?: Visit | null) {
     .map((item) => ({ title: item.title, ...buildQuote(item) }))
     .filter((g) => g.lines.length > 0);
   const travel = visit ? travelFor(visit.district) : undefined;
-  if (visit && groups.length > 0 && travel !== undefined && (visit.mode === "domicilio" || pickupAllowed(items))) {
+  if (visit && groups.length > 0 && travel !== undefined && (visit.mode === "domicilio" ? homeVisitAllowed(items) : pickupAllowed(items))) {
     const lines: Line[] =
       visit.mode === "domicilio"
         ? [{ label: "Visita a domicilio", price: homeVisit.fee }, { label: `Movilidad ${visit.district}`, price: travel }]

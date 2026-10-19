@@ -22,6 +22,7 @@ export type Category = { id: string; name: string; services: Service[] };
 
 const pads = (price: number, name = "Pads térmicos"): Extra => ({ id: "pads", name, price });
 const putty = (price: number): Extra => ({ id: "pads", name: "Masilla térmica", price });
+const vram = (price: number): Extra => ({ id: "pads", name: "Masilla o pads térmicos en VRAM", price });
 
 export const maintenance: Category[] = [
   {
@@ -59,9 +60,9 @@ export const maintenance: Category[] = [
     id: "gpus",
     name: "Tarjetas gráficas",
     services: [
-      { id: "gpu-2fan", name: "Tarjeta gráfica", detail: "1 o 2 ventiladores · hasta RTX 3060 / 4060 / 5060", price: 60, comboPrice: 48 },
-      { id: "gpu-3fan", name: "Tarjeta gráfica", detail: "3 ventiladores · hasta RTX 3060 / 4060 / 5060", price: 90, comboPrice: 72 },
-      { id: "gpu-alta", name: "Tarjeta gráfica de gama alta", detail: "RTX 3070 / 4070 / 5070 o superior", price: 135 },
+      { id: "gpu-2fan", name: "Tarjeta gráfica", detail: "1 o 2 ventiladores · hasta RTX 3060 / 4060 / 5060", price: 60, comboPrice: 48, extras: [vram(35)] },
+      { id: "gpu-3fan", name: "Tarjeta gráfica", detail: "3 ventiladores · hasta RTX 3060 / 4060 / 5060", price: 90, comboPrice: 72, extras: [vram(55)] },
+      { id: "gpu-alta", name: "Tarjeta gráfica de gama alta", detail: "RTX 3070 / 4070 / 5070 o superior", price: 135, extras: [vram(75)] },
     ],
   },
   {

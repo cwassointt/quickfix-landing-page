@@ -54,6 +54,18 @@ describe("buildQuote", () => {
     expect(buildCart([], { mode: "domicilio", district: "Surco" }).total).toBe(0);
   });
 
+  it("con un diagnóstico no se cobra visita a domicilio", () => {
+    const diag = { title: "Diagnóstico", serviceId: "diag-electronico", extraIds: [], gpuId: null };
+    expect(buildCart([diag], { mode: "domicilio", district: "Surco" }).total).toBe(99);
+    expect(buildCart([diag], { mode: "recojo", district: "Surco" }).total).toBe(99 + 35);
+  });
+
+  it("masilla o pads en VRAM según la tarjeta gráfica", () => {
+    expect(buildCart([{ title: "GPU", serviceId: "gpu-2fan", extraIds: ["pads"], gpuId: null }]).total).toBe(60 + 35);
+    expect(buildCart([{ title: "GPU", serviceId: "gpu-3fan", extraIds: ["pads"], gpuId: null }]).total).toBe(90 + 55);
+    expect(buildCart([{ title: "GPU", serviceId: "gpu-alta", extraIds: ["pads"], gpuId: null }]).total).toBe(135 + 75);
+  });
+
   it("recojo cobra solo movilidad y no aplica a PC de escritorio", () => {
     const gpu = { title: "GPU", serviceId: "gpu-3fan", extraIds: [], gpuId: null, categoryId: "gpus" };
     const pc = { title: "PC", serviceId: "pc-gamer", extraIds: [], gpuId: null, categoryId: "pcs" };
