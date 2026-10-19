@@ -5,7 +5,7 @@ import { EMAIL, INSTAGRAM_URL, MAPS_URL, TIKTOK_URL } from "@/lib/site";
 import { WHATSAPP_NUMBER } from "@/lib/quote";
 
 export const SITE = "https://quickfix.pe";
-export const OG_IMAGE = "https://res.cloudinary.com/dmegp6gmd/image/upload/c_fill,w_1200,h_630,f_jpg,q_80/hero-background_ynkel5.webp";
+export const OG_IMAGE = "https://quickfix.pe/og-image.jpg";
 
 /** Lo que va en <head> de cada URL; el prerender lo escribe en el HTML. */
 export type Head = { path: string; title: string; description: string; jsonLd: object[] };

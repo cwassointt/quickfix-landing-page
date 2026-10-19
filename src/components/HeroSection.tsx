@@ -1,6 +1,6 @@
 import { Star } from "lucide-react";
-import heroBg from "@/images/hero/hero-background.webp";
-import OptimizedImage from "@/components/OptimizedImage";
+import hero800 from "@/images/hero/hero-zephyrus-duo-800.webp";
+import hero1400 from "@/images/hero/hero-zephyrus-duo-1400.webp";
 import { reviews } from "@/data/reviews";
 import ReviewAvatar from "@/components/ReviewAvatar";
 import { MAPS_URL, RATING, openQuote, waLink } from "@/lib/site";
@@ -62,21 +62,25 @@ const HeroSection = () => {
           </div>
         </div>
 
-        <div className="relative min-h-[420px] overflow-hidden lg:min-h-0">
-          <OptimizedImage
-            src={heroBg}
-            alt="Placa de una laptop gamer durante un mantenimiento en QuickFix"
-            width={1920}
-            height={1080}
-            priority
+        {/* Móvil: foto completa y la reseña debajo. Escritorio: la reseña flota sobre la foto. */}
+        <div className="relative pb-6 lg:min-h-0 lg:overflow-hidden lg:pb-0">
+          <img
+            src={hero1400}
+            srcSet={`${hero800} 800w, ${hero1400} 1400w`}
             sizes="(max-width: 1024px) 100vw, 50vw"
-            className="absolute inset-0 h-full w-full object-cover motion-safe:animate-[heroDrift_18s_ease-in-out_infinite_alternate]"
+            alt="ASUS ROG Zephyrus Duo encendida después de su mantenimiento en QuickFix"
+            width={1400}
+            height={1867}
+            loading="eager"
+            decoding="async"
+            {...{ fetchpriority: "high" }} // minúscula: React 18 no conoce fetchPriority
+            className="aspect-[4/5] w-full object-cover object-[center_30%] sm:aspect-[4/3] lg:absolute lg:inset-0 lg:aspect-auto lg:h-full motion-safe:lg:animate-[heroDrift_18s_ease-in-out_infinite_alternate]"
           />
           {/* Velo neutro para que la reseña se lea sobre la foto. */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" /> {/* taste-skill-ignore: velo neutro bajo la reseña sobre la foto */}
+          <div className="absolute inset-0 hidden bg-gradient-to-t from-black/90 via-black/30 to-transparent lg:block" /> {/* taste-skill-ignore: velo neutro bajo la reseña sobre la foto */}
           <figure
             style={item(4).style}
-            className={`${item(4).className} absolute inset-x-5 bottom-5 rounded-3xl bg-[#0d0d0d] p-6 md:inset-x-8 md:bottom-8 md:p-7`}
+            className={`${item(4).className} relative mx-5 -mt-16 rounded-3xl bg-[#0d0d0d] p-6 md:mx-8 md:p-7 lg:absolute lg:inset-x-8 lg:bottom-8 lg:mx-0 lg:mt-0`}
           >
             <Stars className="w-4 h-4" />
             <blockquote className="mt-4 text-lg leading-snug text-white md:text-xl">
