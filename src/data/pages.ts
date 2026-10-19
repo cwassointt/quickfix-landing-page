@@ -33,7 +33,7 @@ export const servicePages: ServicePage[] = [
     h1: "Mantenimiento ASUS ROG en Lima",
     lead: `Strix, Zephyrus, SCAR y TUF. Limpieza profunda, masilla térmica y metal líquido en un solo paquete de S/ ${rog.price}: ahorras S/ ${rogSaving} frente a hacerlo por partes.`,
     points: [
-      { title: "Metal líquido como de fábrica", text: "Muchas ROG salen con metal líquido en el CPU. Lo retiro sin derrames, aíslo los componentes cercanos y lo reaplico con Thermalright Silver King o Thermal Grizzly." },
+      { title: "Metal líquido como de fábrica", text: "Muchas ROG salen con metal líquido en el CPU. Lo retiro sin derrames, aíslo los componentes cercanos y lo reaplico con Thermalright Silver King (79 W/mK)." },
       { title: "Masilla térmica en VRAM y VRM", text: "Reemplazo los pads secos por masilla UTP-8 (14.8 W/mK), que rellena mejor los espacios irregulares de las placas ROG." },
       { title: `Materiales por ${warranty.rogMaterialsYears} años`, text: `El metal líquido y la masilla del paquete duran ${warranty.rogMaterialsYears} años, con ${warranty.thermalMonths} meses de garantía térmica. Te mando fotos y videos de cada paso por WhatsApp.` },
     ],
@@ -81,7 +81,7 @@ export const servicePages: ServicePage[] = [
     h1: "Mantenimiento de tarjeta gráfica en Lima",
     lead: `Desde S/ ${from("gpus")} según ventiladores y gama. Si la traes junto con tu PC gamer, tiene 20% de descuento.`,
     points: [
-      { title: "Precio por ventiladores y gama", text: "1 o 2 ventiladores, 3 ventiladores, o gama alta (RTX 3070 / 4070 / 5070 o superior)." },
+      { title: "Precio por ventiladores y gama", text: "1 o 2 ventiladores, 3 ventiladores, o gama alta (RTX 3070 / 4070 / 5070 o superior). Masilla o pads térmicos en las VRAM como extra." },
       { title: "Lubricado de ventiladores", text: "Silencia los ruidos y recupera las RPM originales." },
       { title: "¿Tu GPU falla o da artefactos?", text: `Eso ya es reparación de placa: empieza con un diagnóstico electrónico de S/ ${diagnosis.find((d) => d.id === "diag-electronico")!.price}.` },
     ],

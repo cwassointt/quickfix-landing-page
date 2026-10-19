@@ -4,7 +4,7 @@ import { AnimatePresence, motion, useInView, useReducedMotion } from "framer-mot
 import { Check, MessageCircle, Plus, Search, X } from "lucide-react";
 import OptimizedImage from "@/components/OptimizedImage";
 import { diagnosis, homeVisit, maintenance, warranty, type Category, type Service } from "@/data/catalog";
-import { buildCart, findService, formatSoles, pickupAllowed, whatsappUrl, type CartItem, type Visit } from "@/lib/quote";
+import { buildCart, findService, formatSoles, homeVisitAllowed, pickupAllowed, whatsappUrl, type CartItem, type Visit } from "@/lib/quote";
 import { laptopLabel, searchLaptops, type Laptop } from "@/lib/laptopSearch";
 import { QUOTE_EVENT } from "@/lib/site";
 import { track } from "@/lib/analytics";
@@ -211,7 +211,8 @@ const TierTile = ({ service, active, onClick }: { service: Service; active: bool
 const ROG_INCLUDES = [
   "Limpieza profunda y lavado químico",
   "Masilla térmica UTP-8 (14.8 W/mK)",
-  "Metal líquido Thermal Grizzly o Silver King",
+  "Metal líquido Thermalright Silver King (79 W/mK)",
+  "Pasta térmica Thermalright TF8 (13.8 W/mK)",
   `Materiales por ${warranty.rogMaterialsYears} años y ${warranty.thermalMonths} meses de garantía`,
 ];
 
@@ -407,6 +408,11 @@ const QuoteSection = ({ initial }: { initial?: string }) => {
   const draft: CartItem = { title: modelName ?? category?.name ?? "Diagnóstico", serviceId, extraIds, gpuId, categoryId: category?.id };
   const quote = buildCart([...cart, draft], visit);
   const canPickup = pickupAllowed([...cart, draft]);
+  const canHome = homeVisitAllowed([...cart, draft]);
+  // Si entra un diagnóstico al pedido, deja de ofrecerse "A domicilio".
+  useEffect(() => {
+    if (!canHome && visit?.mode === "domicilio") setVisit(null);
+  }, [canHome, visit?.mode]);
   const setVisitMode = (mode: Visit["mode"] | null) => setVisit((v) => (mode ? { mode, district: v?.district ?? "" } : null));
   const devices = quote.groups.filter((g) => !g.visit).length;
   const draftLines = buildCart([draft]).groups.length > 0;
@@ -622,7 +628,7 @@ const QuoteSection = ({ initial }: { initial?: string }) => {
               <div className="mt-6 rounded-3xl bg-white/[0.04] p-5">
                 <p className="text-lg font-medium text-white">¿Dónde lo atiendo?</p>
                 <div className="mt-3 inline-flex flex-wrap gap-1 rounded-3xl bg-white/[0.06] p-1">
-                  {MODES.map(([mode, label]) => {
+                  {MODES.filter(([mode]) => mode !== "domicilio" || canHome).map(([mode, label]) => {
                     const active = mode === "taller" ? !visit : visit?.mode === mode;
                     return (
                       <button
@@ -637,6 +643,7 @@ const QuoteSection = ({ initial }: { initial?: string }) => {
                     );
                   })}
                 </div>
+                {!canHome && <p className="mt-3 text-white/70">Los diagnósticos se hacen en el taller, así que no hay atención a domicilio.</p>}
                 <Reveal show={!!visit}>
                   {visit?.mode === "recojo" && !canPickup ? (
                     <p className="mt-4 text-white/80">El recojo no aplica para PC de escritorio: tráela al taller o elige atención a domicilio.</p>
