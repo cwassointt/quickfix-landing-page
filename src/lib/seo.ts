@@ -14,7 +14,7 @@ export type Head = { path: string; title: string; description: string; jsonLd: o
  * Vista previa al compartir (WhatsApp, Facebook): texto naranja de marca, una por página.
  * Los archivos salen de scripts/og-images.mjs; el ?v= obliga a WhatsApp a pedir la imagen nueva.
  */
-export const ogImage = (path: string) => `${SITE}/og/${path === "/" ? "inicio" : path.split("/").join("")}.jpg?v=2`;
+export const ogImage = (path: string) => `${SITE}/og/${path === "/" ? "inicio" : path.split("/").join("")}.jpg?v=3`;
 
 const allPrices = [...maintenance.flatMap((c) => c.services.map((s) => s.price)), ...diagnosis.map((d) => d.price), ...repairs.map((r) => r.from)];
 
