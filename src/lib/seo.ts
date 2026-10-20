@@ -8,7 +8,13 @@ export const SITE = "https://quickfix.pe";
 export const OG_IMAGE = "https://quickfix.pe/og-image.jpg";
 
 /** Lo que va en <head> de cada URL; el prerender lo escribe en el HTML. */
-export type Head = { path: string; title: string; description: string; jsonLd: object[] };
+export type Head = { path: string; title: string; description: string; jsonLd: object[]; image: string };
+
+/**
+ * Vista previa al compartir (WhatsApp, Facebook): texto naranja de marca, una por página.
+ * Los archivos salen de scripts/og-images.mjs; el ?v= obliga a WhatsApp a pedir la imagen nueva.
+ */
+export const ogImage = (path: string) => `${SITE}/og/${path === "/" ? "inicio" : path.split("/").join("")}.jpg?v=2`;
 
 const allPrices = [...maintenance.flatMap((c) => c.services.map((s) => s.price)), ...diagnosis.map((d) => d.price), ...repairs.map((r) => r.from)];
 
@@ -76,7 +82,8 @@ export const heads: Head[] = [
     description:
       `Especialista en ASUS ROG y laptops gamer en San Miguel, Lima: mantenimiento con metal líquido, masilla térmica y reparación de placa. ${RATING.score} en Google con ${RATING.count} reseñas. Atención 24/7 con cita.`,
     jsonLd: [business],
+    image: ogImage("/"),
   },
-  ...servicePages.map((p) => ({ path: `/${p.slug}/`, title: p.title, description: p.description, jsonLd: [business, service(p), breadcrumb(p)] })),
-  ...legalDocs.map((d) => ({ path: `/${d.slug}/`, title: `${d.title} | QuickFix`, description: d.description, jsonLd: [] })),
+  ...servicePages.map((p) => ({ path: `/${p.slug}/`, title: p.title, description: p.description, jsonLd: [business, service(p), breadcrumb(p)], image: ogImage(`/${p.slug}/`) })),
+  ...legalDocs.map((d) => ({ path: `/${d.slug}/`, title: `${d.title} | QuickFix`, description: d.description, jsonLd: [], image: ogImage(`/${d.slug}/`) })),
 ];
