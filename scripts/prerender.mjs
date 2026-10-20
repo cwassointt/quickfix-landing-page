@@ -22,6 +22,7 @@ function page(head, appHtml, { noindex = false } = {}) {
   html = setAttr(html, '<meta property="og:url"', SITE + head.path);
   html = setAttr(html, '<meta property="og:title"', head.title);
   html = setAttr(html, '<meta property="og:description"', head.description);
+  if (head.image) html = setAttr(html, '<meta property="og:image"', head.image);
   if (noindex) html = setAttr(html, '<meta name="robots"', "noindex, follow");
   const jsonLd = head.jsonLd.map((j) => `<script type="application/ld+json">${JSON.stringify(j).replace(/</g, "\\u003c")}</script>`).join("\n  ");
   return html.replace("<!--json-ld-->", () => jsonLd).replace("<!--app-->", () => appHtml);
