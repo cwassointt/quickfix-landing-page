@@ -10,15 +10,15 @@ import ContactSection from "@/components/ContactSection";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 
-// Orden de la página: primero la confianza (hero y reseñas), luego precios, cotizador y cómo se trabaja.
+// Orden de la página: primero la confianza (hero y reseñas), luego precios, el antes y después, cotizador y cómo se trabaja.
 const Index = () => (
   <div className="relative min-h-[100svh] w-full overflow-x-clip bg-[#050505]">
     <Navbar />
     <main>
       <HeroSection />
       <ReviewsSection />
-      <ResultsSection />
       <ServicesSection />
+      <ResultsSection />
       <QuoteSection />
       <ProcessSection />
       <FaqSection />

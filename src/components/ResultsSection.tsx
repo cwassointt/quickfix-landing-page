@@ -40,7 +40,7 @@ const Case = ({ r }: { r: Result }) => (
 
 /** Prueba medible: cuánto bajó la temperatura en equipos reales, con la misma prueba de estrés. */
 const ResultsSection = () => (
-  <section id="resultados" className="bg-[#050505] py-24 md:py-36">
+  <section id="resultados" className="bg-[#0b0b0b] py-24 md:py-36">
     <div className="mx-auto max-w-7xl px-5 md:px-8">
       <h2 className="text-5xl font-bold leading-[0.95] tracking-[-0.04em] text-white md:text-7xl">Hasta {maxDrop} °C menos, medidos</h2>
       <p className="mt-5 max-w-[56ch] text-lg text-white/80">
