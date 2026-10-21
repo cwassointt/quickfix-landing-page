@@ -85,5 +85,12 @@ export const heads: Head[] = [
     image: ogImage("/"),
   },
   ...servicePages.map((p) => ({ path: `/${p.slug}/`, title: p.title, description: p.description, jsonLd: [business, service(p), breadcrumb(p)], image: ogImage(`/${p.slug}/`) })),
+  {
+    path: "/componentes/",
+    title: "Componentes, upgrades y laptops en Lima | QuickFix",
+    description: "RAM, SSD, tarjetas de video, fuentes, laptops, monitores y periféricos con precio final en soles. Instalación opcional en San Miguel y delivery en Lima.",
+    jsonLd: [business],
+    image: ogImage("/componentes/"),
+  },
   ...legalDocs.map((d) => ({ path: `/${d.slug}/`, title: `${d.title} | QuickFix`, description: d.description, jsonLd: [], image: ogImage(`/${d.slug}/`) })),
 ];

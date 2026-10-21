@@ -5,6 +5,7 @@ import { openQuote, scrollToId, waLink } from "@/lib/site";
 const links = [
   { label: "Reseñas", id: "resenas" },
   { label: "Servicios", id: "servicios" },
+  { label: "Componentes", id: "componentes", href: "/componentes/" },
   { label: "Cotizar", id: "cotizar" },
   { label: "Proceso", id: "proceso" },
   { label: "Preguntas", id: "faq" },
@@ -78,8 +79,8 @@ const Navbar = () => {
           {links.map((l) => (
             <li key={l.id}>
               <a
-                href={`#${l.id}`}
-                onClick={(e) => go(e, l.id)}
+                href={l.href ?? `#${l.id}`}
+                onClick={l.href ? undefined : (e) => go(e, l.id)}
                 aria-current={active === l.id ? "true" : undefined}
                 className={`${PRESS} block rounded-full px-4 py-2 text-[15px] ${active === l.id ? "bg-white/10 text-white" : "text-white/70 hover:text-white hover:bg-white/[0.06]"}`}
               >
@@ -120,7 +121,7 @@ const Navbar = () => {
           <ul>
             {links.map((l) => (
               <li key={l.id}>
-                <a href={`#${l.id}`} onClick={(e) => go(e, l.id)} className="font-display block py-3 text-4xl font-bold tracking-[-0.03em] text-white active:text-primary">
+                <a href={l.href ?? `#${l.id}`} onClick={l.href ? undefined : (e) => go(e, l.id)} className="font-display block py-3 text-4xl font-bold tracking-[-0.03em] text-white active:text-primary">
                   {l.label}
                 </a>
               </li>
