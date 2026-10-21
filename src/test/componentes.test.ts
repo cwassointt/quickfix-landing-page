@@ -6,16 +6,18 @@ const productos = new Map((sample.productos as Producto[]).map((p) => [p.sku, p]
 const taller = { modo: "taller" } as const;
 
 describe("pedido de componentes", () => {
-  it("elige la mano de obra por categoría, no por el nombre", () => {
+  it("elige la mano de obra según la categoría", () => {
     expect(instalacionesPara(productos.get("EJ-RAM-01")!).map((o) => o.precio)).toEqual([30]);
     expect(instalacionesPara(productos.get("EJ-SSD-01")!)).toHaveLength(3);
-    // La laptop dice "16 GB" en el nombre pero no es memoria: solo configuración inicial.
     expect(instalacionesPara(productos.get("EJ-NB-01")!).map((o) => o.id)).toEqual(["config"]);
     expect(instalacionesPara(productos.get("EJ-MOU-01")!)).toEqual([]);
+    // Dentro de Refrigeración, la líquida cuesta más que un cooler de aire.
+    expect(instalacionesPara(productos.get("EJ-AIO-01")!)[0].precio).toBe(80);
+    expect(instalacionesPara({ categoria: "Refrigeración", subcategoria: "FAN COOLER CPU" })[0].precio).toBe(50);
   });
 
   it("pide el mínimo de S/ 150 en productos, salvo con mantenimiento", () => {
-    const solo = [{ sku: "EJ-PAD-01", cantidad: 1, instalacion: null }];
+    const solo = [{ sku: "EJ-MOU-02", cantidad: 1, instalacion: null }];
     expect(armarPedido(solo, productos, false, taller).falta).toBe(91);
     expect(armarPedido(solo, productos, true, taller).falta).toBe(0);
   });

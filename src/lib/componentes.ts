@@ -23,32 +23,25 @@ export const CATALOGO_URL = "/data/componentes.json";
 export const PEDIDO_MINIMO = 150;
 
 export type Instalacion = { id: string; nombre: string; precio: number; conMantenimiento: number };
-type Grupo = { match: RegExp; opciones: Instalacion[] };
-
 const op = (id: string, nombre: string, precio: number, conMantenimiento: number): Instalacion => ({ id, nombre, precio, conMantenimiento });
+const disco = [op("instalar", "Solo instalación", 30, 0), op("clonar", "Instalación + clonar mi disco", 70, 40), op("windows", "Instalación + Windows limpio y drivers", 70, 40)];
 
-// Mano de obra por tipo de producto. Se busca en la categoría y subcategoría de Deltron, no en el nombre
-// (los nombres de laptops dicen "16GB RAM" y no son memorias). Gana el primer grupo que coincide.
-// shortcut: los nombres de categoría son supuestos, ajustar cuando llegue categorias.txt del primer sync.
-const GRUPOS: Grupo[] = [
-  { match: /memoria|\bram\b/i, opciones: [op("instalar", "Instalación", 30, 0)] },
-  {
-    match: /ssd|s[oó]lido|almacenamiento|disco/i,
-    opciones: [op("instalar", "Solo instalación", 30, 0), op("clonar", "Instalación + clonar mi disco", 70, 40), op("windows", "Instalación + Windows limpio y drivers", 70, 40)],
-  },
-  { match: /video|gr[aá]fica|\bgpu\b/i, opciones: [op("instalar", "Instalación, drivers y prueba de estrés", 40, 20)] },
-  { match: /fuente/i, opciones: [op("instalar", "Instalación con reordenado de cables", 60, 30)] },
-  { match: /procesador|\bcpu\b/i, opciones: [op("instalar", "Instalación + pasta + actualizar BIOS", 60, 30)] },
-  { match: /l[ií]quid|\baio\b/i, opciones: [op("instalar", "Instalación de refrigeración líquida", 80, 40)] },
-  { match: /cooler|disipador|refrigera/i, opciones: [op("instalar", "Instalación del cooler", 50, 25)] },
-  { match: /placa madre|motherboard|mainboard/i, opciones: [op("instalar", "Cambio de placa (desarmar y armar)", 120, 80)] },
-  { match: /ventilador|\bfan\b/i, opciones: [op("instalar", "Instalación", 10, 0)] },
-  // Al final: "Memorias para laptop" debe caer en memorias, no aquí.
-  { match: /notebook|laptop|port[aá]til/i, opciones: [op("config", "Configuración inicial (Windows, drivers, sin programas basura)", 50, 50)] },
-];
+// Mano de obra según la categoría que publica server/deltron/sync.php (CATEGORIAS). Las demás no llevan instalación.
+const INSTALACION: Record<string, Instalacion[]> = {
+  Laptops: [op("config", "Configuración inicial (Windows, drivers, sin programas basura)", 50, 50)],
+  Procesadores: [op("instalar", "Instalación + pasta + actualizar BIOS", 60, 30)],
+  "Placas madre": [op("instalar", "Cambio de placa (desarmar y armar)", 120, 80)],
+  "Memorias RAM": [op("instalar", "Instalación", 30, 0)],
+  SSD: disco,
+  "Discos duros": disco,
+  Fuentes: [op("instalar", "Instalación con reordenado de cables", 60, 30)],
+  Cases: [op("instalar", "Pasar tu PC al case nuevo", 70, 50)],
+  Refrigeración: [op("instalar", "Instalación del cooler", 50, 25)],
+};
+const LIQUIDA = [op("instalar", "Instalación de refrigeración líquida", 80, 40)];
 
 export const instalacionesPara = (p: Pick<Producto, "categoria" | "subcategoria">) =>
-  GRUPOS.find((g) => g.match.test(`${p.categoria} ${p.subcategoria}`))?.opciones ?? [];
+  p.categoria === "Refrigeración" && /l[ií]quido/i.test(p.subcategoria) ? LIQUIDA : (INSTALACION[p.categoria] ?? []);
 
 export type ItemPedido = { sku: string; cantidad: number; instalacion: string | null };
 export type Entrega = { modo: "taller" } | { modo: "delivery"; distrito: string };

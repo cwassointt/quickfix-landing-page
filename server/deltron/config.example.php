@@ -4,7 +4,4 @@
 return [
     'api_key'    => 'dtr_key_xxxxxxxxxxxxxxxx',
     'api_secret' => 'dtr_secret_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
-    // category_id o subcategory_id que se venden (salen en categorias.txt tras la primera sincronización).
-    // Vacío: solo descarga el catálogo y escribe categorias.txt, sin publicar nada.
-    'categorias' => [],
 ];

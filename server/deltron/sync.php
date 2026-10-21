@@ -10,6 +10,27 @@ const BASE = 'https://api.deltron.com.pe/vadhsgytGn/partner-service';
 const IGV = 1.18;
 const OUT = '/home/quickfix/public_html/data/componentes.json';
 
+// Qué se vende y con qué nombre se muestra (id de categoría o subcategoría de Deltron → nombre en la web).
+// El orden es el de los filtros en la página. La lista completa queda en categorias.txt tras cada sincronización.
+const CATEGORIAS = [
+    'NBK' => 'Laptops',
+    'MON' => 'Monitores',
+    'CPU' => 'Procesadores',
+    'MBD' => 'Placas madre',
+    'MEM' => 'Memorias RAM',
+    'HDES' => 'SSD',
+    'HD' => 'Discos duros',
+    'PSCS' => 'Fuentes',
+    'CPX' => 'Refrigeración',
+    'CSE' => 'Cases',
+    'KB' => 'Teclados',
+    'MI' => 'Mouse',
+    'AUD' => 'Audio',
+    'CMRV' => 'Webcams',
+    'HDE' => 'Discos externos',
+    'GCH0' => 'Sillas gamer',
+];
+
 // Precio final en soles a partir del costo con IGV. Margen: S/ 25 mínimo, 30 % hasta S/ 75, y 8 % desde ~S/ 937.
 function precioVenta(float $costo): int {
     $margen = $costo > 937.5 ? $costo * 0.08 : min(75, max(25, $costo * 0.30));
@@ -37,7 +58,6 @@ $lock = fopen("$dir/sync.lock", 'c');
 if (!flock($lock, LOCK_EX | LOCK_NB)) exit("Ya hay una sincronización en curso.\n");
 
 $config = require "$dir/config.php";
-$categorias = $config['categorias'] ?? [];
 
 function falla(string $msg): never {
     fwrite(STDERR, "FALLA: $msg\n");
@@ -110,16 +130,12 @@ $txt = "category_id\tcategoría\tsubcategory_id\tsubcategoría\tproductos\n";
 foreach ($resumen as $k => $n) $txt .= "$k\t$n\n";
 file_put_contents("$dir/categorias.txt", $txt);
 
-if (!$categorias) {
-    echo count($items) . " productos descargados. Aún no hay categorías elegidas en config.php, no se publicó nada.\n";
-    echo "Lista de categorías en $dir/categorias.txt\n";
-    exit;
-}
-
 $texto = fn($s) => trim(preg_replace('/\s+/', ' ', strip_tags(str_replace('[@@@]', ' ', (string) $s))));
 $productos = [];
 foreach ($items as $p) {
-    if (!in_array($p['category_id'], $categorias, true) && !in_array($p['subcategory_id'], $categorias, true)) continue;
+    // La subcategoría manda (las sillas gamer son una subcategoría dentro de accesorios).
+    $categoria = CATEGORIAS[$p['subcategory_id']] ?? CATEGORIAS[$p['category_id']] ?? null;
+    if (!$categoria) continue;
     if (($p['status'] ?? '') !== 'ACTIVO') continue;
     $usd = (!empty($p['promocion_activa']) && $p['price_promo'] !== null) ? $p['price_promo'] : $p['price'];
     if (!$usd) continue;
@@ -151,7 +167,7 @@ foreach ($items as $p) {
         'nombre' => $texto($p['name']),
         'descripcion' => $texto($p['description_large']),
         'marca' => $p['brand_name'],
-        'categoria' => $p['category_name'],
+        'categoria' => $categoria,
         'subcategoria' => $p['subcategory_name'],
         'garantia' => $texto($p['warranty']),
         'precio' => precioVenta($usd * IGV * $tc),
@@ -162,6 +178,10 @@ foreach ($items as $p) {
         'specs' => $specs,
     ];
 }
+
+// Ordenados por categoría como en CATEGORIAS (así salen los filtros); dentro, como los entrega Deltron.
+$orden = array_flip(array_values(CATEGORIAS));
+usort($productos, fn($a, $b) => $orden[$a['categoria']] <=> $orden[$b['categoria']]);
 
 // Escritura atómica: la web nunca lee un archivo a medias.
 @mkdir(dirname(OUT), 0755, true);
