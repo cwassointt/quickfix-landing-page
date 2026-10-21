@@ -3,6 +3,7 @@ import { Star } from "lucide-react";
 import { reviews } from "@/data/reviews";
 import ReviewAvatar from "@/components/ReviewAvatar";
 import { MAPS_URL, RATING } from "@/lib/site";
+import { useAutoScroll } from "@/lib/useAutoScroll";
 
 // La de Jak Steve ya está en el hero; aquí la estrella es la de James.
 const featured = reviews.find((r) => r.author === "James Maysundo")!;
@@ -18,6 +19,7 @@ const Stars = () => (
 
 const ReviewsSection = () => {
   const reduce = useReducedMotion();
+  const track = useAutoScroll<HTMLUListElement>();
   const rise = (i: number) => ({
     initial: { opacity: 0, transform: reduce ? "none" : "translateY(24px)" },
     whileInView: { opacity: 1, transform: "translateY(0px)" },
@@ -56,9 +58,10 @@ const ReviewsSection = () => {
           </motion.a>
         </div>
 
-        <ul className="columns-1 gap-4 sm:columns-2 [&>li]:mb-4">
+        {/* Móvil: carrusel horizontal que avanza solo. Desde sm: dos columnas. */}
+        <ul ref={track} className="-mx-5 flex min-w-0 snap-x snap-mandatory scroll-px-5 gap-4 overflow-x-auto px-5 [scrollbar-width:none] sm:mx-0 sm:block sm:columns-2 sm:overflow-visible sm:px-0 sm:[&>li]:mb-4">
           {rest.map((r, i) => (
-            <motion.li key={r.author} {...rise(i)} className="break-inside-avoid rounded-3xl bg-white/[0.04] p-6">
+            <motion.li key={r.author} {...rise(i)} className="w-[85%] shrink-0 snap-start break-inside-avoid rounded-3xl bg-white/[0.04] p-6 sm:w-auto">
               <Stars />
               <p className="mt-4 text-[17px] leading-relaxed text-white">“{r.text}”</p>
               <p className="mt-5 flex items-center gap-3 text-white/60">

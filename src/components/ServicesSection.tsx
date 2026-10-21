@@ -2,6 +2,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import OptimizedImage from "@/components/OptimizedImage";
 import { diagnosis, homeVisit, includes, maintenance, others, repairs, warranty } from "@/data/catalog";
 import { openQuote, waLink } from "@/lib/site";
+import { useAutoScroll } from "@/lib/useAutoScroll";
 import { rogSaving, rogSeparate, servicePages } from "@/data/pages";
 
 // Página de servicio de cada tipo de equipo (enlaces internos para Google).
@@ -27,6 +28,7 @@ const rog = maintenance.find((c) => c.id === "laptops")!.services.find((s) => s.
 
 const ServicesSection = () => {
   const reduce = useReducedMotion();
+  const track = useAutoScroll<HTMLUListElement>();
   const rise = (i = 0) => ({
     initial: { opacity: 0, transform: reduce ? "none" : "translateY(24px)" },
     whileInView: { opacity: 1, transform: "translateY(0px)" },
@@ -35,7 +37,7 @@ const ServicesSection = () => {
   });
 
   return (
-    <section id="servicios" className="bg-[#0b0b0b] py-24 md:py-36">
+    <section id="servicios" className="bg-[#050505] py-24 md:py-36">
       <div className="mx-auto max-w-7xl px-5 md:px-8">
         <motion.h2 {...rise()} className="text-5xl font-bold leading-[0.95] tracking-[-0.04em] text-white md:text-7xl">
           Servicios y precios
@@ -71,11 +73,12 @@ const ServicesSection = () => {
           </div>
         </motion.div>
 
-        <ul className="mt-3 space-y-3">
+        {/* Móvil: carrusel horizontal que avanza solo. Desde md: lista. */}
+        <ul ref={track} className="-mx-5 mt-3 flex snap-x snap-mandatory scroll-px-5 gap-3 overflow-x-auto px-5 [scrollbar-width:none] md:mx-0 md:block md:space-y-3 md:overflow-visible md:px-0">
           {maintenance.map((c, i) => {
             const from = Math.min(...c.services.map((s) => s.price));
             return (
-              <motion.li key={c.id} {...rise(i)} className="group grid overflow-hidden rounded-3xl bg-white/[0.04] md:grid-cols-[240px_minmax(0,1fr)] lg:grid-cols-[280px_minmax(0,1fr)_auto] md:items-center">
+              <motion.li key={c.id} {...rise(i)} className="group grid w-[85%] shrink-0 snap-start content-start overflow-hidden rounded-3xl bg-white/[0.04] md:w-auto md:grid-cols-[240px_minmax(0,1fr)] lg:grid-cols-[280px_minmax(0,1fr)_auto] md:items-center">
                 <div className="aspect-[4/3] overflow-hidden md:row-span-2 md:aspect-auto md:h-full lg:row-span-1">
                   <OptimizedImage
                     src={IMG[c.id]}
@@ -127,10 +130,10 @@ const ServicesSection = () => {
 
         <div className="mt-28 md:mt-36 grid gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
           <div>
-            <motion.h3 {...rise()} className="text-4xl font-bold leading-[1] tracking-[-0.035em] text-white md:text-6xl">
-              Reparación a nivel de placa
+            <motion.h3 {...rise()} className="text-5xl font-bold leading-[0.95] tracking-[-0.04em] text-white md:text-7xl">
+              Reparación a <span className="text-primary">nivel de placa</span>
             </motion.h3>
-            <motion.p {...rise(1)} className="mt-5 max-w-[46ch] text-lg text-white/80">
+            <motion.p {...rise(1)} className="mt-6 max-w-[46ch] text-xl text-white/80 md:text-2xl md:leading-snug">
               Microsoldadura para equipos que no encienden, se apagan o recibieron líquido. Empieza con un diagnóstico electrónico de S/ {electronic.price} (1 a 2 días), que se descuenta si reparas conmigo, y luego te doy el precio exacto.
             </motion.p>
             <motion.button {...rise(2)} type="button" onClick={() => openQuote("reparacion")} className={`${PRESS} mt-8 rounded-full bg-white/[0.08] px-6 py-3.5 text-white hover:bg-white/[0.14]`}>
@@ -143,17 +146,17 @@ const ServicesSection = () => {
 
           <ul className="space-y-10">
             {repairs.map((r, i) => (
-              <motion.li key={r.id} {...rise(i)} className="grid gap-5 sm:grid-cols-[180px_minmax(0,1fr)]">
-                <OptimizedImage src={REPAIR_IMG[r.id]} alt={`Reparación de ${r.name.toLowerCase()}`} width={360} height={270} sizes="(max-width: 640px) 92vw, 180px" className="aspect-[4/3] w-full rounded-2xl object-cover" />
+              <motion.li key={r.id} {...rise(i)} className="grid gap-5 sm:grid-cols-[220px_minmax(0,1fr)]">
+                <OptimizedImage src={REPAIR_IMG[r.id]} alt={`Reparación de ${r.name.toLowerCase()}`} width={360} height={270} sizes="(max-width: 640px) 92vw, 220px" className="aspect-[4/3] w-full rounded-2xl object-cover" />
                 <div>
                   <div className="flex flex-wrap items-baseline justify-between gap-x-4">
-                    <h4 className="text-2xl font-bold tracking-[-0.02em] text-white">{r.name}</h4>
+                    <h4 className="text-3xl font-bold tracking-[-0.03em] text-white md:text-4xl">{r.name}</h4>
                     <p className="text-white/60">
-                      desde <span className="font-display text-2xl font-bold text-white tabular-nums">S/ {r.from}</span>
+                      desde <span className="font-display text-3xl font-bold text-primary tabular-nums md:text-4xl">S/ {r.from}</span>
                     </p>
                   </div>
-                  <p className="mt-1 text-white/60">{r.detail} · {r.days}</p>
-                  <ul className="mt-3 space-y-1 text-white/80">
+                  <p className="mt-2 text-lg text-white/60">{r.detail} · {r.days}</p>
+                  <ul className="mt-3 space-y-1 text-lg text-white/80">
                     {r.work.map((w) => (
                       <li key={w}>{w}</li>
                     ))}
