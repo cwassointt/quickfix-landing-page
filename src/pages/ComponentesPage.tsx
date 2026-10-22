@@ -210,13 +210,8 @@ const ComponentesPage = () => {
                   <button type="button" onClick={() => abrir(p.sku)} className="group text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary">
                     <Foto src={p.imagen} alt={p.nombre} className="aspect-square transition-transform duration-500 ease-out [@media(hover:hover)]:group-hover:scale-[1.02]" />
                     <span className="block px-4 pt-4 font-mono text-xs uppercase tracking-wide text-white/50">{p.marca} · {p.pn}</span>
-                    <span className="mt-1 line-clamp-2 px-4 leading-snug text-white">{p.nombre}</span>
+                    <span className="mt-1 line-clamp-3 px-4 leading-snug text-white">{p.nombre}</span>
                   </button>
-                  <ul className="mt-3 hidden flex-wrap gap-1 px-4 sm:flex">
-                    {Object.values(p.specs).slice(0, 3).map((v) => (
-                      <li key={v} className="rounded-md bg-white/[0.07] px-2 py-0.5 text-xs text-white/80">{v}</li>
-                    ))}
-                  </ul>
                   <div className="mt-auto px-4 pb-4 pt-4">
                     <p className="font-display text-2xl font-bold tracking-[-0.02em] text-white tabular-nums md:text-3xl">{soles(p.precio)}</p>
                     <div className="mt-1"><Stock p={p} corto /></div>

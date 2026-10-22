@@ -130,14 +130,39 @@ $txt = "category_id\tcategoría\tsubcategory_id\tsubcategoría\tproductos\n";
 foreach ($resumen as $k => $n) $txt .= "$k\t$n\n";
 file_put_contents("$dir/categorias.txt", $txt);
 
-$texto = fn($s) => trim(preg_replace('/\s+/', ' ', strip_tags(str_replace('[@@@]', ' ', (string) $s))));
+$texto = fn($s) => trim(preg_replace('/\s+/u', ' ', html_entity_decode(strip_tags(str_replace('[@@@]', ' ', (string) $s)), ENT_QUOTES | ENT_HTML5, 'UTF-8')));
+$frase = fn($s) => mb_strtoupper(mb_substr($s, 0, 1)) . mb_substr(mb_strtolower($s), 1);
+
+// Deltron manda la ficha técnica solo como tabla HTML: celda de sección (firCol) + filas "dato | valor".
+function specsDeHtml(string $html, callable $texto, callable $frase): array {
+    $out = [];
+    $seccion = '';
+    foreach (preg_split('~</tr>~i', $html) as $fila) {
+        $celdas = [];
+        preg_match_all('~<td([^>]*)>((?:(?!<td|</td>).)*)</td>~is', $fila, $m, PREG_SET_ORDER);
+        foreach ($m as [, $attrs, $contenido]) {
+            $t = $texto(preg_replace('~<[^>]*>~', ' ', $contenido));
+            if ($t === '') continue;
+            if (stripos($attrs, 'fircol') !== false) $seccion = $frase($t);
+            else $celdas[] = $t;
+        }
+        if (count($celdas) < 2) continue;
+        $dato = $frase($celdas[0]);
+        $valor = end($celdas);
+        if (preg_match('~^(marca|modelo|n[uú]mero de parte|part number|c[oó]d)~iu', $dato) || preg_match('~https?://~i', $valor)) continue;
+        // Secciones genéricas no aportan; las demás distinguen "Batería · Capacidad" de "Memoria · Capacidad".
+        if ($seccion && !preg_match('~^(descripci[oó]n|caracter[ií]sticas|general|especificaciones)~iu', $seccion)) $dato = "$seccion · $dato";
+        $out[$dato] ??= $valor;
+    }
+    return $out;
+}
 $productos = [];
 foreach ($items as $p) {
     // La subcategoría manda (las sillas gamer son una subcategoría dentro de accesorios).
     $categoria = CATEGORIAS[$p['subcategory_id']] ?? CATEGORIAS[$p['category_id']] ?? null;
     if (!$categoria) continue;
-    if (($p['status'] ?? '') !== 'ACTIVO') continue;
-    $usd = (!empty($p['promocion_activa']) && $p['price_promo'] !== null) ? $p['price_promo'] : $p['price'];
+    // El catálogo real no trae promocion_activa y todo viene con status "F": la promo vale si trae precio.
+    $usd = $p['price_promo'] !== null && $p['price_promo'] > 0 ? min($p['price'] ?: INF, $p['price_promo']) : $p['price'];
     if (!$usd) continue;
 
     // Solo cuenta el stock de Lima: lo de provincia tardaría días en llegar.
@@ -153,8 +178,7 @@ foreach ($items as $p) {
     $stock = $lima >= 5 || $hayMas ? 'stock' : ($lima > 0 ? 'pocas' : ($llega ? 'transito' : null));
     if (!$stock) continue;
 
-    $specs = [];
-    foreach ($p['specs'] ?? [] as $k => $v) if ($k !== 'specs_all_html' && is_scalar($v) && $texto($v) !== '') $specs[$texto($k)] = $texto($v);
+    $specs = specsDeHtml((string) ($p['specs']['specs_all_html'] ?? ''), $texto, $frase);
     $img = $p['images']['image_listado'] ?? null;
     $fotos = array_values(array_filter(array_map(
         fn($i) => str_contains($i['filename'] ?? '', 'blanco.jpg') ? null : $i['url'],
@@ -164,8 +188,9 @@ foreach ($items as $p) {
     $productos[] = [
         'sku' => $p['sku'],
         'pn' => $p['part_number'],
-        'nombre' => $texto($p['name']),
-        'descripcion' => $texto($p['description_large']),
+        // El nombre de Deltron viene abreviado ("MEM 16G (2X8) TG..."); la 1.ª parte de la descripción es legible.
+        'nombre' => $texto(explode('[@@@]', (string) $p['description_large'])[0]) ?: $texto($p['name']),
+        'descripcion' => $texto(explode('[@@@]', (string) $p['description_large'], 2)[1] ?? ''),
         'marca' => $p['brand_name'],
         'categoria' => $categoria,
         'subcategoria' => $p['subcategory_name'],
@@ -179,9 +204,9 @@ foreach ($items as $p) {
     ];
 }
 
-// Ordenados por categoría como en CATEGORIAS (así salen los filtros); dentro, como los entrega Deltron.
+// Ordenados por categoría como en CATEGORIAS (así salen los filtros); dentro, primero los que tienen foto.
 $orden = array_flip(array_values(CATEGORIAS));
-usort($productos, fn($a, $b) => $orden[$a['categoria']] <=> $orden[$b['categoria']]);
+usort($productos, fn($a, $b) => [$orden[$a['categoria']], $a['imagen'] === null] <=> [$orden[$b['categoria']], $b['imagen'] === null]);
 
 // Escritura atómica: la web nunca lee un archivo a medias.
 @mkdir(dirname(OUT), 0755, true);
