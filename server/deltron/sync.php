@@ -144,7 +144,7 @@ foreach ($items as $p) {
     $lima = 0;
     $hayMas = false;
     foreach ($p['stock']['almacenes'] ?? [] as $a) {
-        if (stripos($a['almacen_name'], 'lima') === false) continue;
+        if (stripos((string) ($a['almacen_name'] ?? ''), 'lima') === false) continue;
         $lima += (int) $a['cantidad'];
         $hayMas = $hayMas || !empty($a['hay_mas']);
     }
