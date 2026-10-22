@@ -4,6 +4,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import ServicePage from "./pages/ServicePage";
 import LegalPage from "./pages/LegalPage";
+import ComponentesPage from "./pages/ComponentesPage";
 import { legalDocs } from "./data/legal";
 import { servicePages } from "./data/pages";
 import { heads } from "./lib/seo";
@@ -27,6 +28,7 @@ const App = () => {
       {legalDocs.map((d) => (
         <Route key={d.slug} path={`/${d.slug}`} element={<LegalPage doc={d} />} />
       ))}
+      <Route path="/componentes" element={<ComponentesPage />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

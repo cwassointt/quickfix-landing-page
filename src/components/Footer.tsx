@@ -55,6 +55,7 @@ const Footer = () => {
               <a href={TIKTOK_URL} target="_blank" rel="noopener noreferrer" className={LINK}>TikTok</a>
             </p>
             <p className="flex gap-4 pt-2">
+              <a href="/componentes/" className={LINK}>Componentes</a>
               <a href="/garantia/" className={LINK}>Garantía</a>
               <a href="/terminos/" className={LINK}>Términos</a>
             </p>

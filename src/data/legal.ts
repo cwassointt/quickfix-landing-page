@@ -76,6 +76,14 @@ export const termsDoc: LegalDoc = {
         "En equipos con cortos severos o daños por líquido, aislar la falla puede hacer que la placa pierda funciones que aún tenía o deje de encender. QuickFix no se responsabiliza por daños propios de esa degradación.",
       ],
     },
+    {
+      title: "Venta de componentes",
+      paragraphs: [
+        "Los precios de la tienda de componentes son finales y en soles. QuickFix no emite boleta ni factura.",
+        "El stock se actualiza una vez al día: antes de que pagues te confirmo por WhatsApp que el producto está disponible y su precio. Con tu pago compro el producto al proveedor y lo entrego en 24 a 48 horas, o en la fecha de llegada si está en tránsito. Si el proveedor no puede atender el pedido, te devuelvo el pago completo.",
+        "La garantía del producto es la de su fabricante y yo me encargo del trámite. La instalación tiene la garantía de instalación de QuickFix.",
+      ],
+    },
   ],
   closing: GA_ID
     ? "Esta web usa Google Analytics para contar visitas y clics de forma anónima, sin datos personales. Para consultas sobre estos términos, escribe a quickfix.pe24@gmail.com."

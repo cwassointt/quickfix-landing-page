@@ -26,3 +26,6 @@ vite.config.ts.timestamp-*
 *.njsproj
 *.sln
 *.sw?
+
+# Credenciales de Deltron: solo en el servidor
+server/deltron/config.php
