@@ -14,6 +14,9 @@ export type Producto = {
   precio: number;
   stock: "stock" | "pocas" | "transito";
   llega: string | null;
+  /** Unidades en Lima; hayMas: Deltron tiene más de las que informa. Opcionales: catálogos antiguos no los traen. */
+  cantidad?: number;
+  hayMas?: boolean;
   imagen: string | null;
   fotos: string[];
   specs: Record<string, string>;
@@ -42,6 +45,9 @@ const LIQUIDA = [op("instalar", "Instalación de refrigeración líquida", 80, 4
 
 export const instalacionesPara = (p: Pick<Producto, "categoria" | "subcategoria">) =>
   p.categoria === "Refrigeración" && /l[ií]quido/i.test(p.subcategoria) ? LIQUIDA : (INSTALACION[p.categoria] ?? []);
+
+/** Tope de unidades por pedido: lo que hay en Lima, salvo que Deltron tenga más o venga en tránsito. */
+export const maximo = (p: Producto) => (p.stock === "transito" || p.hayMas || p.cantidad === undefined ? 99 : Math.max(1, p.cantidad));
 
 export type ItemPedido = { sku: string; cantidad: number; instalacion: string | null };
 export type Entrega = { modo: "taller" } | { modo: "delivery"; distrito: string };
