@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import sample from "@/data/componentes.sample.json";
-import { armarPedido, instalacionesPara, mensajePedido, type Producto } from "@/lib/componentes";
+import { armarPedido, instalacionesPara, maximo, mensajePedido, type Producto } from "@/lib/componentes";
 
 const productos = new Map((sample.productos as Producto[]).map((p) => [p.sku, p]));
 const taller = { modo: "taller" } as const;
@@ -38,5 +38,14 @@ describe("pedido de componentes", () => {
     const msg = mensajePedido([{ sku: "EJ-SSD-01", cantidad: 1, instalacion: "clonar" }], productos, false, taller);
     expect(msg).toContain("EJ-SSD-01 · SFYRD/1000G");
     expect(msg).toContain(`Total: S/ ${(389 + 70).toLocaleString("es-PE")}`);
+  });
+});
+
+describe("tope de unidades", () => {
+  it("no deja pedir más de lo que hay en Lima, salvo que haya más o venga en tránsito", () => {
+    expect(maximo(productos.get("EJ-SSD-01")!)).toBe(2);
+    expect(maximo(productos.get("EJ-RAM-01")!)).toBe(99); // hayMas
+    expect(maximo(productos.get("EJ-AIO-01")!)).toBe(99); // en tránsito
+    expect(maximo({ ...productos.get("EJ-SSD-01")!, cantidad: undefined })).toBe(99); // catálogo sin cantidad
   });
 });

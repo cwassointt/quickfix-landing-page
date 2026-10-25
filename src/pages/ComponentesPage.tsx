@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Cpu, Minus, Plus, Search, ShoppingBag, Trash2, X } from "lucide-react";
+import { ImageOff, Minus, Plus, Search, ShoppingBag, Trash2, X } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { track } from "@/lib/analytics";
 import { waLink } from "@/lib/site";
 import {
-  CATALOGO_URL, DISTRITOS, PEDIDO_MINIMO, armarPedido, instalacionesPara, mensajePedido, soles,
+  CATALOGO_URL, DISTRITOS, PEDIDO_MINIMO, armarPedido, instalacionesPara, maximo, mensajePedido, soles,
   type Entrega, type ItemPedido, type Producto,
 } from "@/lib/componentes";
 
@@ -18,8 +18,15 @@ const normal = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLower
 const fecha = (iso: string) => new Date(`${iso}T12:00:00`).toLocaleDateString("es-PE", { day: "numeric", month: "short" });
 
 const Stock = ({ p, corto = false }: { p: Producto; corto?: boolean }) => {
+  // cantidad puede faltar en un catálogo publicado antes de que el sync la incluyera.
+  const n = p.cantidad;
+  const unidades = n === undefined ? null : `${p.hayMas ? "+" : ""}${n}${corto ? "" : n === 1 && !p.hayMas ? " unidad" : " unidades"}`;
   const [color, texto] =
-    p.stock === "stock" ? ["bg-[#3ecf8e]", corto ? "En stock" : "En stock · entrega en 24 a 48 h"] : p.stock === "pocas" ? ["bg-[#f5a524]", "Pocas unidades"] : ["bg-white/40", `Llega el ${p.llega ? fecha(p.llega) : "pronto"}`];
+    p.stock === "stock"
+      ? ["bg-[#3ecf8e]", `${unidades ? `${unidades} en stock` : "En stock"}${corto ? "" : " · entrega en 24 a 48 h"}`]
+      : p.stock === "pocas"
+        ? ["bg-[#f5a524]", unidades ? `Solo ${unidades}` : "Pocas unidades"]
+        : ["bg-white/40", `${corto ? "" : "Sin stock en Lima · "}Llega el ${p.llega ? fecha(p.llega) : "pronto"}`];
   return (
     <span className="flex items-center gap-2 text-sm text-white/70">
       <span className={`h-2 w-2 shrink-0 rounded-full ${color}`} aria-hidden="true" />
@@ -28,15 +35,26 @@ const Stock = ({ p, corto = false }: { p: Producto; corto?: boolean }) => {
   );
 };
 
-const Foto = ({ src, alt, className = "" }: { src: string | null; alt: string; className?: string }) => (
-  <div className={`grid place-items-center overflow-hidden bg-[#f2f2f2] ${className}`}>
-    {src ? (
+/** Foto del producto o, si Deltron no tiene, un recuadro con la marca (en miniatura, solo la inicial). */
+const Foto = ({ src, alt, p, mini = false, className = "" }: { src: string | null; alt: string; p: Producto; mini?: boolean; className?: string }) =>
+  src ? (
+    <div className={`overflow-hidden bg-[#f2f2f2] ${className}`}>
       <img src={src} alt={alt} loading="lazy" decoding="async" referrerPolicy="no-referrer" className="h-full w-full object-contain p-4 mix-blend-multiply" />
-    ) : (
-      <Cpu className="h-10 w-10 text-black/25" aria-hidden="true" />
-    )}
-  </div>
-);
+    </div>
+  ) : mini ? (
+    <div className={`grid place-items-center bg-white/[0.06] font-display text-2xl font-bold text-white/70 ${className}`} aria-hidden="true">
+      {(p.marca || p.categoria).charAt(0)}
+    </div>
+  ) : (
+    <div className={`flex flex-col justify-between bg-white/[0.06] p-4 ${className}`} role="img" aria-label={`${p.marca || p.categoria}: sin vista previa disponible`}>
+      <span className="text-xs text-white/50">{p.marca ? p.categoria : ""}</span>
+      <span className="break-words font-display text-2xl font-bold uppercase leading-none tracking-[-0.03em] text-white md:text-3xl">{p.marca || p.categoria}</span>
+      <span className="flex items-center gap-1.5 text-xs text-white/50">
+        <ImageOff className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+        Sin vista previa disponible
+      </span>
+    </div>
+  );
 
 /** Ventana modal nativa: Escape y foco los maneja el navegador. */
 function Modal({ open, onClose, label, children }: { open: boolean; onClose: () => void; label: string; children: React.ReactNode }) {
@@ -120,7 +138,7 @@ const ComponentesPage = () => {
     setCarrito((c) => {
       const i = c.findIndex((it) => it.sku === sku);
       if (i === -1) return [...c, { sku, cantidad, instalacion }];
-      return c.map((it, j) => (j === i ? { ...it, cantidad: it.cantidad + cantidad, instalacion: instalacion ?? it.instalacion } : it));
+      return c.map((it, j) => (j === i ? { ...it, cantidad: Math.min(maximo(porSku.get(sku)!), it.cantidad + cantidad), instalacion: instalacion ?? it.instalacion } : it));
     });
   };
   const cambiar = (sku: string, cambio: Partial<ItemPedido>) =>
@@ -208,8 +226,8 @@ const ComponentesPage = () => {
               {lista.slice(0, visibles).map((p) => (
                 <li key={p.sku} className="flex flex-col overflow-hidden rounded-3xl bg-white/[0.04]">
                   <button type="button" onClick={() => abrir(p.sku)} className="group text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary">
-                    <Foto src={p.imagen} alt={p.nombre} className="aspect-square transition-transform duration-500 ease-out [@media(hover:hover)]:group-hover:scale-[1.02]" />
-                    <span className="block px-4 pt-4 font-mono text-xs uppercase tracking-wide text-white/50">{p.marca} · {p.pn}</span>
+                    <Foto src={p.imagen} alt={p.nombre} p={p} className="aspect-square transition-transform duration-500 ease-out [@media(hover:hover)]:group-hover:scale-[1.02]" />
+                    <span className="block px-4 pt-4 font-mono text-xs uppercase tracking-wide text-white/50">{[p.marca, p.pn].filter(Boolean).join(" · ")}</span>
                     <span className="mt-1 line-clamp-3 px-4 leading-snug text-white">{p.nombre}</span>
                   </button>
                   <div className="mt-auto px-4 pb-4 pt-4">
@@ -270,7 +288,7 @@ const ComponentesPage = () => {
               const opciones = instalacionesPara(p);
               return (
                 <li key={it.sku} className="grid grid-cols-[64px_minmax(0,1fr)] gap-4 py-4">
-                  <Foto src={p.imagen} alt="" className="h-16 w-16 rounded-xl" />
+                  <Foto src={p.imagen} alt="" p={p} mini className="h-16 w-16 rounded-xl" />
                   <div>
                     <p className="leading-snug">{p.nombre}</p>
                     <p className="font-mono text-xs text-white/50">{p.pn}</p>
@@ -280,7 +298,7 @@ const ComponentesPage = () => {
                           {it.cantidad === 1 ? <Trash2 className="h-4 w-4" aria-hidden="true" /> : <Minus className="h-4 w-4" aria-hidden="true" />}
                         </button>
                         <span className="w-6 text-center tabular-nums" aria-label={`${it.cantidad} unidades`}>{it.cantidad}</span>
-                        <button type="button" aria-label="Agregar uno" onClick={() => cambiar(it.sku, { cantidad: it.cantidad + 1 })} className={`${PRESS} grid h-10 w-10 place-items-center rounded-full`}>
+                        <button type="button" aria-label="Agregar uno" onClick={() => cambiar(it.sku, { cantidad: Math.min(maximo(p), it.cantidad + 1) })} className={`${PRESS} grid h-10 w-10 place-items-center rounded-full`}>
                           <Plus className="h-4 w-4" aria-hidden="true" />
                         </button>
                       </div>
@@ -392,19 +410,19 @@ function Ficha({ p, onAgregar }: { p: Producto; onAgregar: (cantidad: number, in
   return (
     <div className="grid gap-6 p-6 md:grid-cols-2 md:p-10">
       <div>
-        <Foto src={fotos[foto] ?? null} alt={p.nombre} className="aspect-square rounded-2xl" />
+        <Foto src={fotos[foto] ?? null} alt={p.nombre} p={p} className="aspect-square rounded-2xl" />
         {fotos.length > 1 && (
           <div className="mt-3 flex gap-2 overflow-x-auto [scrollbar-width:none]">
             {fotos.map((f, i) => (
               <button key={i} type="button" onClick={() => setFoto(i)} aria-label={`Foto ${i + 1}`} aria-pressed={foto === i} className={`shrink-0 rounded-xl ${foto === i ? "ring-2 ring-primary" : ""}`}>
-                <Foto src={f} alt="" className="h-16 w-16 rounded-xl" />
+                <Foto src={f} alt="" p={p} mini className="h-16 w-16 rounded-xl" />
               </button>
             ))}
           </div>
         )}
       </div>
       <div>
-        <p className="font-mono text-xs uppercase tracking-wide text-white/50">{p.marca} · {p.pn}</p>
+        <p className="font-mono text-xs uppercase tracking-wide text-white/50">{[p.marca, p.pn].filter(Boolean).join(" · ")}</p>
         <h2 className="mt-2 pr-10 text-3xl font-bold leading-[1.05] tracking-[-0.03em]">{p.nombre}</h2>
         <p className="mt-4 font-display text-5xl font-bold tracking-[-0.03em] tabular-nums">{soles(p.precio)}</p>
         <div className="mt-2"><Stock p={p} /></div>
@@ -432,7 +450,7 @@ function Ficha({ p, onAgregar }: { p: Producto; onAgregar: (cantidad: number, in
               <Minus className="h-4 w-4" aria-hidden="true" />
             </button>
             <span className="w-6 text-center tabular-nums" aria-live="polite">{cantidad}</span>
-            <button type="button" aria-label="Más" onClick={() => setCantidad((c) => c + 1)} className={`${PRESS} grid h-12 w-12 place-items-center rounded-full`}>
+            <button type="button" aria-label="Más" onClick={() => setCantidad((c) => Math.min(maximo(p), c + 1))} className={`${PRESS} grid h-12 w-12 place-items-center rounded-full`}>
               <Plus className="h-4 w-4" aria-hidden="true" />
             </button>
           </div>

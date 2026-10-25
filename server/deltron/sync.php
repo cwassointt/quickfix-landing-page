@@ -156,6 +156,12 @@ function specsDeHtml(string $html, callable $texto, callable $frase): array {
     }
     return $out;
 }
+// Deltron agrega su línea comercial a la marca ("LENOVO - IDEA", "HP COMERCIAL", "AMD-ADVANCED MICRO DEVICE").
+function marca(string $m): string {
+    $m = preg_replace('~\s+(COMERCIAL|CONSUMO|CORP|ELECTRONICS|STORAGE)$~i', '', trim(preg_split('~\s*-\s*~', $m)[0]));
+    return stripos($m, 'OTRAS MARCAS') !== false ? '' : $m;
+}
+
 $productos = [];
 foreach ($items as $p) {
     // La subcategoría manda (las sillas gamer son una subcategoría dentro de accesorios).
@@ -191,12 +197,14 @@ foreach ($items as $p) {
         // El nombre de Deltron viene abreviado ("MEM 16G (2X8) TG..."); la 1.ª parte de la descripción es legible.
         'nombre' => $texto(explode('[@@@]', (string) $p['description_large'])[0]) ?: $texto($p['name']),
         'descripcion' => $texto(explode('[@@@]', (string) $p['description_large'], 2)[1] ?? ''),
-        'marca' => $p['brand_name'],
+        'marca' => marca((string) $p['brand_name']),
         'categoria' => $categoria,
         'subcategoria' => $p['subcategory_name'],
         'garantia' => $texto($p['warranty']),
         'precio' => precioVenta($usd * IGV * $tc),
         'stock' => $stock,
+        'cantidad' => $lima, // unidades en Lima; hayMas = Deltron tiene más de las que informa
+        'hayMas' => $hayMas,
         'llega' => $stock === 'transito' ? $llega : null,
         'imagen' => $img && !str_contains($img, 'blanco.jpg') ? $img : ($fotos[0] ?? null),
         'fotos' => $fotos,
