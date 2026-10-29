@@ -1,4 +1,4 @@
-import { diagnosis, maintenance, warranty } from "@/data/catalog";
+import { diagnosis, maintenance, repairs, warranty } from "@/data/catalog";
 
 /** Página de un servicio: su URL, lo que ve Google (title/description) y lo que ve el cliente. */
 export type ServicePage = {
@@ -23,6 +23,7 @@ const rog = laptops.find((s) => s.id === "asus-rog")!;
 /** Precio de referencia del paquete ROG (lo que cuesta por separado en el mercado), mostrado tachado. */
 export const rogSeparate = rog.regularPrice!;
 export const rogSaving = rogSeparate - rog.price;
+const consola = repairs.find((r) => r.id === "consola")!;
 
 export const servicePages: ServicePage[] = [
   {
@@ -141,16 +142,16 @@ export const servicePages: ServicePage[] = [
     slug: "reparacion-ps5-ps4",
     quote: "reparacion",
     title: "Reparación de PS5 y PS4 en Lima | Puerto HDMI, no enciende | QuickFix",
-    description: `Reparación de PlayStation 5 y PlayStation 4 en San Miguel, Lima: puerto HDMI, consolas que no encienden o se apagan, fugas de metal líquido y cortos en la placa. Diagnóstico electrónico de S/ ${diagnosis.find((d) => d.id === "diag-electronico")!.price}, descontable si reparas.`,
+    description: `Reparación de PlayStation 5 y PlayStation 4 en San Miguel, Lima, desde S/ ${consola.from} en ${consola.days}: puerto HDMI, consolas que no encienden o se apagan, fugas de metal líquido y cortos en la placa. Diagnóstico electrónico de S/ ${diagnosis.find((d) => d.id === "diag-electronico")!.price}, descontable si reparas.`,
     h1: "Reparación de PS5 y PS4 en Lima",
-    lead: `Puerto HDMI, consolas que no encienden o se apagan, fugas de metal líquido y cortos en la placa. Empieza con un diagnóstico electrónico de S/ ${diagnosis.find((d) => d.id === "diag-electronico")!.price} en 1 a 2 días, que se descuenta si reparas conmigo.`,
+    lead: `Puerto HDMI, consolas que no encienden o se apagan, fugas de metal líquido y cortos en la placa. Reparación desde S/ ${consola.from}, en ${consola.days}. Empieza con un diagnóstico electrónico de S/ ${diagnosis.find((d) => d.id === "diag-electronico")!.price}, que se descuenta si reparas conmigo.`,
     points: [
       { title: "Puerto HDMI", text: "Cambio del conector cuando la consola no da imagen, el puerto está flojo o se rompió al jalar el cable." },
       { title: "No enciende o se apaga sola", text: "Reviso la fuente, los cortos y el circuito de encendido a nivel de placa, con microsoldadura." },
       { title: "Fuga de metal líquido en PS5", text: "Si el metal líquido de fábrica se movió o se derramó, limpio la zona, reviso los daños y lo vuelvo a aplicar con aislamiento." },
     ],
     faq: ["¿Cuánto tarda una reparación de placa?", "¿Cómo puedo pagar?", "¿Por qué atienden solo con cita?"],
-    priceFrom: diagnosis.find((d) => d.id === "diag-electronico")!.price,
+    priceFrom: consola.from!,
     image: "console",
   },
 ];

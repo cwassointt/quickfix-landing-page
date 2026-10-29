@@ -142,7 +142,8 @@ export const repairs: Repair[] = [
     id: "consola",
     name: "Consolas PS5 y PS4",
     detail: "PlayStation 5 y PlayStation 4",
-    // shortcut: sin precio ni plazo propios todavía; agregar from y days cuando el dueño los confirme.
+    from: 299,
+    days: "2 a 3 días",
     work: ["Puerto HDMI dañado o sin imagen", "No enciende o se apaga sola", "Fuga de metal líquido en el procesador", "Cortos en la placa y la fuente"],
     page: "/reparacion-ps5-ps4/",
   },
