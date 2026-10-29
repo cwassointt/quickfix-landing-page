@@ -15,10 +15,10 @@ const LegalPage = ({ doc }: { doc: LegalDoc }) => (
       <nav aria-label="Ruta" className="mt-8 text-white/60">
         <a href="/" className="hover:text-white">Inicio</a> <span aria-hidden="true">/</span> <span className="text-white/80">{doc.title}</span>
       </nav>
-      <h1 className="mt-6 text-5xl font-bold leading-[0.95] tracking-[-0.04em] text-white md:text-7xl">{doc.title}</h1>
-      <p className="mt-6 text-xl leading-relaxed text-white/80">{doc.intro}</p>
+      <h1 className="mt-6 section-title">{doc.title}</h1>
+      <p className="section-lead">{doc.intro}</p>
 
-      <div className="mt-14 space-y-4">
+      <div className="section-body space-y-4">
         {doc.sections.map((s) => (
           <section key={s.title} className="rounded-3xl bg-white/[0.04] p-6 md:p-8">
             <h2 className="text-2xl font-bold tracking-[-0.02em] text-white md:text-3xl">{s.title}</h2>

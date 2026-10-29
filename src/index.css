@@ -2,6 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Escala única de la web: ritmo vertical y tipografía. Todas las secciones la usan, así quedan alineadas.
+   Texto: 14 (chico) · 16 (cuerpo) · 18–20 (entrada) · 24–36 (subtítulos) · 40–72 (títulos). */
+@layer components {
+  .section { @apply py-16 md:py-24 lg:py-28; }
+  .section-title { @apply text-[2.5rem] font-bold leading-[0.95] tracking-[-0.04em] text-white sm:text-5xl md:text-6xl lg:text-7xl; }
+  .section-lead { @apply mt-5 max-w-[60ch] text-lg leading-relaxed text-white/75 md:text-xl; }
+  /* Del encabezado de la sección a su contenido, y entre bloques grandes dentro de una sección. */
+  .section-body { @apply mt-10 md:mt-14; }
+  .subsection { @apply mt-16 md:mt-24; }
+  .subsection-title { @apply text-3xl font-bold tracking-[-0.03em] text-white md:text-4xl; }
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;

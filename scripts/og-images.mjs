@@ -27,6 +27,7 @@ const images = {
   "mantenimiento-macbook": "Mantenimiento de MacBook",
   "mantenimiento-ps5-ps4": "Mantenimiento de PS5 y PS4",
   "reparacion-placa-laptop": "Reparación de placa de laptop y GPU",
+  "reparacion-ps5-ps4": "Reparación de PS5 y PS4",
   componentes: "Componentes y upgrades",
   garantia: "Garantía",
   terminos: "Términos y condiciones",

@@ -28,7 +28,7 @@ const HeroSection = () => {
     <section className="relative bg-[#050505] pt-[72px]">
       <div className="mx-auto grid max-w-7xl lg:min-h-[calc(100svh-72px)] lg:grid-cols-[1.05fr_0.95fr]">
         <div className="flex flex-col justify-center px-5 pb-12 pt-10 md:px-8 lg:py-16">
-          <h1 className="text-[2.6rem] font-bold leading-[0.95] tracking-[-0.04em] text-white sm:text-6xl xl:text-[5.25rem]">
+          <h1 className="text-5xl font-bold leading-[0.95] tracking-[-0.04em] text-white sm:text-6xl lg:text-7xl xl:text-[5.25rem]">
             Especialista en ASUS&nbsp;ROG
           </h1>
 

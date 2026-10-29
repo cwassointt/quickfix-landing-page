@@ -4,11 +4,11 @@ const PRESS =
   "transition-[transform,background-color,color] duration-150 ease-out active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-[#050505]";
 
 const ContactSection = () => (
-  <section id="contacto" className="bg-[#0b0b0b] py-24 md:py-36">
+  <section id="contacto" className="bg-[#0b0b0b] section">
     <div className="mx-auto grid max-w-7xl gap-12 px-5 md:px-8 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16">
       <div>
-        <h2 className="text-5xl font-bold leading-[0.95] tracking-[-0.04em] text-white md:text-7xl">Agenda tu cita</h2>
-        <p className="mt-6 max-w-[42ch] text-lg text-white/80">Atiendo las 24 horas, todos los días, con cita previa. También voy a domicilio en Lima.</p>
+        <h2 className="section-title">Agenda tu cita</h2>
+        <p className="section-lead">Atiendo las 24 horas, todos los días, con cita previa. También voy a domicilio en Lima.</p>
 
         <dl className="mt-12 space-y-8">
           <div>

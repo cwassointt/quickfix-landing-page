@@ -16,7 +16,7 @@ export type Head = { path: string; title: string; description: string; jsonLd: o
  */
 export const ogImage = (path: string) => `${SITE}/og/${path === "/" ? "inicio" : path.split("/").join("")}.jpg?v=3`;
 
-const allPrices = [...maintenance.flatMap((c) => c.services.map((s) => s.price)), ...diagnosis.map((d) => d.price), ...repairs.map((r) => r.from)];
+const allPrices = [...maintenance.flatMap((c) => c.services.map((s) => s.price)), ...diagnosis.map((d) => d.price), ...repairs.flatMap((r) => (r.from ? [r.from] : []))];
 
 /** Datos del negocio. Deben coincidir con la ficha de Google (nombre, dirección, teléfono, ubicación). */
 export const business = {

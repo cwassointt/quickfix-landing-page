@@ -33,7 +33,7 @@ export const faq: { q: string; a: string[] }[] = [
     a: [
       `Sí. La visita cuesta S/ ${homeVisit.fee} más la movilidad según tu distrito:`,
       ...homeVisit.zones.map((z) => `S/ ${z.price}: ${z.districts.join(", ")}.`),
-      "También puedo solo recoger tu laptop, consola o componente y devolvértelo listo: pagas únicamente la movilidad (no aplica a PC de escritorio).",
+      "También puedo solo recoger tu laptop, consola o componente y devolvértelo listo: pagas únicamente la movilidad. La PC gamer se atiende solo en el taller, pero también la recojo.",
       "Para otros distritos, consúltame la movilidad por WhatsApp. En el cotizador puedes elegir tu distrito y ver el total.",
     ],
   },

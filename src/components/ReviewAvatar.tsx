@@ -13,8 +13,8 @@ const ReviewAvatar = ({ name, photo, size = 40 }: { name: string; photo?: string
   ) : (
     <span
       aria-hidden="true"
-      className="grid shrink-0 place-items-center rounded-full bg-white/[0.1] font-medium text-white/80"
-      style={{ width: size, height: size, fontSize: size * 0.38 }}
+      className="grid shrink-0 place-items-center rounded-full bg-white/[0.1] text-sm font-medium text-white/80"
+      style={{ width: size, height: size }}
     >
       {initials(name)}
     </span>

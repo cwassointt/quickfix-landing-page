@@ -35,8 +35,8 @@ const ServicePage = ({ page }: { page: Page }) => (
             <nav aria-label="Ruta" className="mt-8 text-white/60">
               <a href="/" className="hover:text-white">Inicio</a> <span aria-hidden="true">/</span> <span className="text-white/80">{page.h1}</span>
             </nav>
-            <h1 className="mt-6 text-[2.6rem] font-bold leading-[0.95] tracking-[-0.04em] text-white sm:text-6xl xl:text-7xl">{page.h1}</h1>
-            <p className="mt-6 max-w-[48ch] text-lg leading-relaxed text-white/80 md:text-xl">{page.lead}</p>
+            <h1 className="mt-6 section-title">{page.h1}</h1>
+            <p className="section-lead">{page.lead}</p>
             <p className="mt-8 text-white/60">
               desde <span className="font-display block text-5xl font-bold tracking-[-0.03em] text-white tabular-nums">S/ {page.priceFrom}</span>
             </p>
@@ -55,14 +55,14 @@ const ServicePage = ({ page }: { page: Page }) => (
         </div>
       </section>
 
-      <section className="bg-[#0b0b0b] py-24 md:py-32">
+      <section className="bg-[#0b0b0b] section">
         <div className="mx-auto max-w-7xl px-5 md:px-8">
-          <h2 className="text-4xl font-bold leading-[1] tracking-[-0.035em] text-white md:text-6xl">Qué hago en tu equipo</h2>
+          <h2 className="section-title">Qué hago en tu equipo</h2>
           <ul className="mt-12 grid gap-10 md:grid-cols-3">
             {page.points.map((p) => (
               <li key={p.title}>
                 <h3 className="text-2xl font-bold tracking-[-0.02em] text-white">{p.title}</h3>
-                <p className="mt-3 text-lg text-white/75">{p.text}</p>
+                <p className="mt-3 text-base text-white/75 md:text-lg">{p.text}</p>
               </li>
             ))}
           </ul>
@@ -73,9 +73,9 @@ const ServicePage = ({ page }: { page: Page }) => (
       <ReviewsSection />
       <FaqSection items={faq.filter((f) => page.faq.includes(f.q))} />
 
-      <section className="bg-[#050505] pt-24 md:pt-32">
+      <section className="bg-[#050505] pt-16 md:pt-24 lg:pt-28">
         <div className="mx-auto max-w-7xl px-5 md:px-8">
-          <h2 className="text-3xl font-bold tracking-[-0.03em] text-white md:text-4xl">Otros servicios</h2>
+          <h2 className="subsection-title">Otros servicios</h2>
           <ul className="mt-6 flex flex-wrap gap-2">
             {servicePages
               .filter((p) => p.slug !== page.slug)

@@ -82,7 +82,7 @@ const Navbar = () => {
                 href={l.href ?? `#${l.id}`}
                 onClick={l.href ? undefined : (e) => go(e, l.id)}
                 aria-current={active === l.id ? "true" : undefined}
-                className={`${PRESS} block rounded-full px-4 py-2 text-[15px] ${active === l.id ? "bg-white/10 text-white" : "text-white/70 hover:text-white hover:bg-white/[0.06]"}`}
+                className={`${PRESS} block rounded-full px-3 py-2 text-sm xl:px-4 xl:text-base ${active === l.id ? "bg-white/10 text-white" : "text-white/70 hover:text-white hover:bg-white/[0.06]"}`}
               >
                 {l.label}
               </a>
@@ -100,7 +100,7 @@ const Navbar = () => {
           >
             {WA_ICON}
           </a>
-          <a href="#cotizar" onClick={(e) => go(e, "cotizar")} className={`${PRESS} rounded-full bg-primary px-5 py-2.5 text-[15px] font-medium text-black hover:bg-[#ff7a1f]`}>
+          <a href="#cotizar" onClick={(e) => go(e, "cotizar")} className={`${PRESS} rounded-full bg-primary px-5 py-2.5 text-base font-medium text-black hover:bg-[#ff7a1f]`}>
             Cotizar
           </a>
           <button

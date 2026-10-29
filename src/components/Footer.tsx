@@ -19,7 +19,7 @@ const Footer = () => {
       <div className="mx-auto max-w-7xl px-5 pt-16 md:px-8 md:pt-24">
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
           <div>
-            <p className="max-w-[24ch] text-2xl font-medium leading-snug md:text-3xl">Mantenimiento y reparación de alta gama, 24/7 con cita.</p>
+            <p className="max-w-[30ch] text-2xl font-medium leading-snug md:text-3xl">Mantenimiento y reparación de alta gama, 24/7 con cita.</p>
             <a href={waLink()} target="_blank" rel="noopener noreferrer" className="mt-8 inline-flex rounded-full bg-black px-7 py-3.5 text-lg text-white transition-transform duration-150 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 focus-visible:ring-offset-primary">
               Escribir por WhatsApp
             </a>

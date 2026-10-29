@@ -1,4 +1,4 @@
-import { diagnosis, maintenance, warranty } from "@/data/catalog";
+import { diagnosis, maintenance, repairs, warranty } from "@/data/catalog";
 
 /** Página de un servicio: su URL, lo que ve Google (title/description) y lo que ve el cliente. */
 export type ServicePage = {
@@ -23,6 +23,7 @@ const rog = laptops.find((s) => s.id === "asus-rog")!;
 /** Precio de referencia del paquete ROG (lo que cuesta por separado en el mercado), mostrado tachado. */
 export const rogSeparate = rog.regularPrice!;
 export const rogSaving = rogSeparate - rog.price;
+const consola = repairs.find((r) => r.id === "consola")!;
 
 export const servicePages: ServicePage[] = [
   {
@@ -61,11 +62,11 @@ export const servicePages: ServicePage[] = [
     slug: "mantenimiento-pc-gamer",
     quote: "pcs",
     title: "Mantenimiento de PC gamer en Lima | QuickFix San Miguel",
-    description: `Mantenimiento de PC gamer y de oficina en San Miguel, Lima: lavado químico, pasta TF8 y gestión de cables. Desde S/ ${from("pcs")}. Tarjeta gráfica con 20% de descuento en combo.`,
+    description: `Mantenimiento de PC gamer y de oficina en San Miguel, Lima: lavado químico, pasta TF8 y gestión de cables. Desde S/ ${from("pcs")}. Tarjeta gráfica con 10% de descuento en combo.`,
     h1: "Mantenimiento de PC gamer en Lima",
-    lead: `Desarmo todos los componentes, los lavo y descontamino, cambio la pasta y ordeno los cables. Desde S/ ${from("pcs")}, y si traes la tarjeta gráfica, te sale 20% más barata.`,
+    lead: `Desarmo todos los componentes, los lavo y descontamino, cambio la pasta y ordeno los cables. Desde S/ ${from("pcs")}, y si traes la tarjeta gráfica, te sale 10% más barata.`,
     points: [
-      { title: "Combo PC + tarjeta gráfica", text: "Con tu PC gamer, la limpieza de la GPU tiene 20% de descuento (excepto gama alta RTX 3070 / 4070 / 5070 o superior)." },
+      { title: "Combo PC + tarjeta gráfica", text: "Con tu PC gamer, la limpieza de la GPU tiene 10% de descuento, sea cual sea su gama. La PC gamer se atiende en el taller, y puedo recogerla en tu casa." },
       { title: "Pads térmicos en VRM", text: "Opcional: cambio de pads de la placa madre para que las fases de poder no se sobrecalienten." },
       { title: "Gestión de cables y ventiladores", text: "Mejor flujo de aire, ventiladores lubricados y acabado con encerado mate." },
     ],
@@ -79,7 +80,7 @@ export const servicePages: ServicePage[] = [
     title: "Mantenimiento de tarjeta gráfica (GPU) en Lima | QuickFix",
     description: `Mantenimiento de tarjetas gráficas NVIDIA RTX y AMD en San Miguel, Lima: pasta TF8, ventiladores lubricados y lavado químico. Desde S/ ${from("gpus")}.`,
     h1: "Mantenimiento de tarjeta gráfica en Lima",
-    lead: `Desde S/ ${from("gpus")} según ventiladores y gama. Si la traes junto con tu PC gamer, tiene 20% de descuento.`,
+    lead: `Desde S/ ${from("gpus")} según ventiladores y gama. Si la traes junto con tu PC gamer, tiene 10% de descuento.`,
     points: [
       { title: "Precio por ventiladores y gama", text: "1 o 2 ventiladores, 3 ventiladores, o gama alta (RTX 3070 / 4070 / 5070 o superior). Masilla o pads térmicos en las VRAM como extra." },
       { title: "Lubricado de ventiladores", text: "Silencia los ruidos y recupera las RPM originales." },
@@ -136,5 +137,21 @@ export const servicePages: ServicePage[] = [
     faq: ["Derramé líquido en mi laptop, ¿qué hago?", "¿Cuánto tarda una reparación de placa?"],
     priceFrom: diagnosis.find((d) => d.id === "diag-general")!.price,
     image: "board",
+  },
+  {
+    slug: "reparacion-ps5-ps4",
+    quote: "reparacion",
+    title: "Reparación de PS5 y PS4 en Lima | Puerto HDMI, no enciende | QuickFix",
+    description: `Reparación de PlayStation 5 y PlayStation 4 en San Miguel, Lima, desde S/ ${consola.from} en ${consola.days}: puerto HDMI, consolas que no encienden o se apagan, fugas de metal líquido y cortos en la placa. Diagnóstico electrónico de S/ ${diagnosis.find((d) => d.id === "diag-electronico")!.price}, descontable si reparas.`,
+    h1: "Reparación de PS5 y PS4 en Lima",
+    lead: `Puerto HDMI, consolas que no encienden o se apagan, fugas de metal líquido y cortos en la placa. Reparación desde S/ ${consola.from}, en ${consola.days}. Empieza con un diagnóstico electrónico de S/ ${diagnosis.find((d) => d.id === "diag-electronico")!.price}, que se descuenta si reparas conmigo.`,
+    points: [
+      { title: "Puerto HDMI", text: "Cambio del conector cuando la consola no da imagen, el puerto está flojo o se rompió al jalar el cable." },
+      { title: "No enciende o se apaga sola", text: "Reviso la fuente, los cortos y el circuito de encendido a nivel de placa, con microsoldadura." },
+      { title: "Fuga de metal líquido en PS5", text: "Si el metal líquido de fábrica se movió o se derramó, limpio la zona, reviso los daños y lo vuelvo a aplicar con aislamiento." },
+    ],
+    faq: ["¿Cuánto tarda una reparación de placa?", "¿Cómo puedo pagar?", "¿Por qué atienden solo con cita?"],
+    priceFrom: consola.from!,
+    image: "console",
   },
 ];

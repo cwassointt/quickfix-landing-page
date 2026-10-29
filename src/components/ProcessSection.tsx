@@ -40,21 +40,21 @@ const ProcessSection = () => {
   });
 
   return (
-    <section id="proceso" className="bg-[#0b0b0b] py-24 md:py-36">
+    <section id="proceso" className="bg-[#0b0b0b] section">
       <div className="mx-auto max-w-7xl px-5 md:px-8">
         <div className="grid gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:gap-20">
           <div>
-            <motion.h2 {...rise()} className="text-5xl font-bold leading-[0.95] tracking-[-0.04em] text-white md:text-7xl">
+            <motion.h2 {...rise()} className="section-title">
               Ves cada paso por WhatsApp
             </motion.h2>
-            <motion.p {...rise(1)} className="mt-6 max-w-[48ch] text-lg text-white/80 md:text-xl">
+            <motion.p {...rise(1)} className="section-lead">
               Cada equipo lo trabajo yo, Gianluca. Mientras lo hago te mando fotos y videos, para que sepas exactamente qué se le hizo a tu máquina.
             </motion.p>
 
-            <ol className="mt-14 space-y-10">
+            <ol className="section-body space-y-10">
               {steps.map((s, i) => (
                 <motion.li key={s.title} {...rise(i)} className="max-w-[52ch]">
-                  <h3 className="text-3xl font-bold tracking-[-0.03em] text-white md:text-4xl">{s.title}</h3>
+                  <h3 className="subsection-title">{s.title}</h3>
                   <p className="mt-2 text-lg text-white/70">{s.desc}</p>
                 </motion.li>
               ))}
@@ -84,11 +84,11 @@ const ProcessSection = () => {
           </motion.div>
         </div>
 
-        <div className="mt-28 md:mt-36">
-          <motion.h3 {...rise()} className="text-3xl font-bold tracking-[-0.03em] text-white md:text-4xl">
+        <div className="subsection">
+          <motion.h3 {...rise()} className="subsection-title">
             Los materiales que uso
           </motion.h3>
-          <motion.p {...rise(1)} className="mt-3 max-w-[56ch] text-lg text-white/70">
+          <motion.p {...rise(1)} className="section-lead">
             Marcas reconocidas y la conductividad real de cada una.
           </motion.p>
           <ul className="mt-10 grid grid-cols-2 gap-x-3 gap-y-8 sm:grid-cols-3 lg:grid-cols-4">

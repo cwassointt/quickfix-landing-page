@@ -12,10 +12,10 @@ export type Service = {
   /** Precio tachado, para paquetes en promoción. */
   regularPrice?: number;
   extras?: Extra[];
-  /** Precio de la GPU cuando se hace junto con una PC gamer. */
-  comboPrice?: number;
-  /** PC que permite sumar la GPU con precio de combo. */
+  /** PC que permite sumar la GPU con descuento de combo. */
   gpuCombo?: boolean;
+  /** Solo en el taller (no a domicilio); sí se puede recoger. */
+  tallerOnly?: boolean;
 };
 
 export type Category = { id: string; name: string; services: Service[] };
@@ -23,6 +23,10 @@ export type Category = { id: string; name: string; services: Service[] };
 const pads = (price: number, name = "Pads térmicos"): Extra => ({ id: "pads", name, price });
 const putty = (price: number): Extra => ({ id: "pads", name: "Masilla térmica", price });
 const vram = (price: number): Extra => ({ id: "pads", name: "Masilla o pads térmicos en VRAM", price });
+const formateo: Extra = { id: "formateo", name: "Formateo e instalación de Windows", price: 50 };
+
+/** Descuento de la GPU cuando se hace junto con una PC gamer (en el mismo equipo o en el mismo ticket). */
+export const GPU_COMBO_DISCOUNT = 0.1;
 
 export const maintenance: Category[] = [
   {
@@ -35,15 +39,16 @@ export const maintenance: Category[] = [
         detail: "Limpieza profunda + masilla térmica + metal líquido",
         price: 329,
         regularPrice: 420,
+        extras: [formateo],
       },
-      { id: "laptop-oficina", name: "Laptop de oficina", detail: "Sin tarjeta gráfica", price: 70 },
-      { id: "laptop-gamer", name: "Laptop gamer", detail: "Gama de entrada y media, u oficina con tarjeta gráfica", price: 120, extras: [putty(79)] },
+      { id: "laptop-oficina", name: "Laptop de oficina", detail: "Sin tarjeta gráfica", price: 70, extras: [formateo] },
+      { id: "laptop-gamer", name: "Laptop gamer", detail: "Gama de entrada y media, u oficina con tarjeta gráfica", price: 120, extras: [putty(79), formateo] },
       {
         id: "laptop-gamer-pro",
         name: "Laptop gamer avanzada",
         detail: "Gama alta y toda la línea ROG Strix",
         price: 150,
-        extras: [putty(99), { id: "metal", name: "Metal líquido", price: 80 }],
+        extras: [putty(99), { id: "metal", name: "Metal líquido", price: 80 }, formateo],
       },
     ],
   },
@@ -51,17 +56,17 @@ export const maintenance: Category[] = [
     id: "pcs",
     name: "PC de escritorio",
     services: [
-      { id: "pc-oficina", name: "PC de oficina", detail: "Sin tarjeta gráfica", price: 70, extras: [pads(35, "Pads térmicos VRM")] },
-      { id: "pc-gamer", name: "PC gamer", detail: "Torre compacta o mediana", price: 120, extras: [pads(65, "Pads térmicos VRM")], gpuCombo: true },
-      { id: "pc-gamer-grande", name: "PC gamer grande", detail: "Full tower / alta gama", price: 220, extras: [pads(90, "Pads térmicos VRM")], gpuCombo: true },
+      { id: "pc-oficina", name: "PC de oficina", detail: "Sin tarjeta gráfica", price: 70, extras: [pads(35, "Pads térmicos VRM"), formateo] },
+      { id: "pc-gamer", name: "PC gamer", detail: "Torre compacta o mediana", price: 120, extras: [pads(65, "Pads térmicos VRM"), formateo], gpuCombo: true, tallerOnly: true },
+      { id: "pc-gamer-grande", name: "PC gamer grande", detail: "Full tower / alta gama", price: 220, extras: [pads(90, "Pads térmicos VRM"), formateo], gpuCombo: true, tallerOnly: true },
     ],
   },
   {
     id: "gpus",
     name: "Tarjetas gráficas",
     services: [
-      { id: "gpu-2fan", name: "Tarjeta gráfica", detail: "1 o 2 ventiladores · hasta RTX 3060 / 4060 / 5060", price: 60, comboPrice: 48, extras: [vram(35)] },
-      { id: "gpu-3fan", name: "Tarjeta gráfica", detail: "3 ventiladores · hasta RTX 3060 / 4060 / 5060", price: 90, comboPrice: 72, extras: [vram(55)] },
+      { id: "gpu-2fan", name: "Tarjeta gráfica", detail: "1 o 2 ventiladores · hasta RTX 3060 / 4060 / 5060", price: 60, extras: [vram(35)] },
+      { id: "gpu-3fan", name: "Tarjeta gráfica", detail: "3 ventiladores · hasta RTX 3060 / 4060 / 5060", price: 90, extras: [vram(55)] },
       { id: "gpu-alta", name: "Tarjeta gráfica de gama alta", detail: "RTX 3070 / 4070 / 5070 o superior", price: 135, extras: [vram(75)] },
     ],
   },
@@ -104,8 +109,11 @@ export const includes: Record<string, string[]> = {
   consolas: ["Desarmado completo", "Lavado químico y descontaminado", "Pasta térmica nueva", "Encerado mate"],
 };
 
-/** Reparación a nivel de placa: precio desde, después del diagnóstico electrónico. */
-export const repairs = [
+/** Reparación a nivel de placa: precio desde, después del diagnóstico electrónico.
+ *  Sin from/days se muestra "precio tras el diagnóstico". page: su página propia, si tiene. */
+export type Repair = { id: string; name: string; detail: string; from?: number; days?: string; work: string[]; page?: string };
+
+export const repairs: Repair[] = [
   {
     id: "gpu",
     name: "Tarjetas gráficas",
@@ -129,6 +137,15 @@ export const repairs = [
     from: 199,
     days: "2 a 4 días",
     work: ["Equipos que no encienden", "Salida de video y retroiluminación", "Puertos USB-C, USB y de carga", "Lavado químico por derrame"],
+  },
+  {
+    id: "consola",
+    name: "Consolas PS5 y PS4",
+    detail: "PlayStation 5 y PlayStation 4",
+    from: 299,
+    days: "2 a 3 días",
+    work: ["Puerto HDMI dañado o sin imagen", "No enciende o se apaga sola", "Fuga de metal líquido en el procesador", "Cortos en la placa y la fuente"],
+    page: "/reparacion-ps5-ps4/",
   },
 ];
 
