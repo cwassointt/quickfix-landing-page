@@ -3,8 +3,8 @@ import { createPortal } from "react-dom";
 import { AnimatePresence, motion, useInView, useReducedMotion } from "framer-motion";
 import { Check, MessageCircle, Plus, Search, X } from "lucide-react";
 import OptimizedImage from "@/components/OptimizedImage";
-import { diagnosis, homeVisit, maintenance, warranty, type Category, type Service } from "@/data/catalog";
-import { buildCart, findService, formatSoles, homeVisitAllowed, pickupAllowed, whatsappUrl, type CartItem, type Visit } from "@/lib/quote";
+import { GPU_COMBO_DISCOUNT, diagnosis, homeVisit, maintenance, warranty, type Category, type Service } from "@/data/catalog";
+import { buildCart, findService, formatSoles, gpuExtra, tallerReason, whatsappUrl, type CartItem, type Visit } from "@/lib/quote";
 import { laptopLabel, searchLaptops, type Laptop } from "@/lib/laptopSearch";
 import { QUOTE_EVENT } from "@/lib/site";
 import { track } from "@/lib/analytics";
@@ -231,10 +231,10 @@ const RogPackageCard = ({ picked, onPick }: { picked: boolean; onPick: () => voi
       </span>
       <span className="flex flex-col p-6">
         <span className="text-sm font-medium text-black/70">¿Tienes una ASUS ROG?</span>
-        <span className="font-display mt-1 text-[1.75rem] font-bold leading-[1.05] tracking-[-0.03em]">Paquete completo ASUS ROG</span>
+        <span className="font-display mt-1 text-3xl font-bold leading-[1.05] tracking-[-0.03em]">Paquete completo ASUS ROG</span>
         <span className="mt-4 space-y-1.5">
           {ROG_INCLUDES.map((i) => (
-            <span key={i} className="flex gap-2 text-[15px] leading-snug">
+            <span key={i} className="flex gap-2 text-base leading-snug">
               <Check className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={3} aria-hidden="true" />
               {i}
             </span>
@@ -407,9 +407,9 @@ const QuoteSection = ({ initial }: { initial?: string }) => {
   const isRog = !!model?.name.startsWith("ROG");
   const draft: CartItem = { title: modelName ?? category?.name ?? "Diagnóstico", serviceId, extraIds, gpuId, categoryId: category?.id };
   const quote = buildCart([...cart, draft], visit);
-  const canPickup = pickupAllowed([...cart, draft]);
-  const canHome = homeVisitAllowed([...cart, draft]);
-  // Si entra un diagnóstico al pedido, deja de ofrecerse "A domicilio".
+  const onlyTaller = tallerReason([...cart, draft]);
+  const canHome = onlyTaller === null;
+  // Si entra un diagnóstico o una PC gamer al pedido, deja de ofrecerse "A domicilio".
   useEffect(() => {
     if (!canHome && visit?.mode === "domicilio") setVisit(null);
   }, [canHome, visit?.mode]);
@@ -456,6 +456,12 @@ const QuoteSection = ({ initial }: { initial?: string }) => {
     setPhase(next);
   };
 
+  const pickGpu = (id: string | null) => {
+    setGpuId(id);
+    setExtraIds((ids) => ids.filter((x) => !x.startsWith("gpu:"))); // los extras de la GPU anterior no aplican
+  };
+  const gpu = findService(gpuId);
+
   const toggleExtra = (id: string, group?: string) => {
     const sameGroup = new Set(service?.extras?.filter((e) => group && e.group === group).map((e) => e.id));
     setExtraIds((ids) => (ids.includes(id) ? ids.filter((x) => x !== id) : [...ids.filter((x) => !sameGroup.has(x)), id]));
@@ -478,13 +484,13 @@ const QuoteSection = ({ initial }: { initial?: string }) => {
     <section
       id="cotizar"
       ref={sectionRef}
-      className="py-24 pb-36 md:py-36 bg-[#050505] text-white"
+      className="section pb-32 md:pb-24 lg:pb-28 bg-[#050505] text-white"
       style={{ fontFamily: "var(--font-visual-sans, sans-serif)" }}
     >
       <div className="mx-auto max-w-7xl px-5 md:px-8">
-        <div className="mb-12">
-          <h2 className="text-5xl md:text-7xl font-bold tracking-[-0.035em] leading-[0.95]">Arma tu ticket</h2>
-          <p className="mt-5 max-w-xl text-lg text-white/70">Suma uno o varios equipos, mira el total al instante y envíalo por WhatsApp para agendar.</p>
+        <div className="mb-10 md:mb-14">
+          <h2 className="section-title">Arma tu ticket</h2>
+          <p className="section-lead">Suma uno o varios equipos, mira el total al instante y envíalo por WhatsApp para agendar.</p>
         </div>
 
         <div className="grid lg:grid-cols-[minmax(0,1fr)_380px] gap-10 lg:gap-16 items-start">
@@ -580,27 +586,31 @@ const QuoteSection = ({ initial }: { initial?: string }) => {
                         {service.gpuCombo && (
                           <div className="space-y-2 mt-6">
                             <p className="text-white/80 mb-2">
-                              ¿También tu tarjeta gráfica? <span className="text-orange-400">20% menos en combo</span>
+                              ¿También tu tarjeta gráfica? <span className="text-orange-400">{GPU_COMBO_DISCOUNT * 100}% menos en combo</span>
                             </p>
-                            <Row active={!gpuId} onClick={() => setGpuId(null)} title="No, solo la PC" />
+                            <Row active={!gpuId} onClick={() => pickGpu(null)} title="No, solo la PC" />
                             {gpus.map((g) => (
                               <Row
                                 key={g.id}
                                 active={g.id === gpuId}
-                                onClick={() => setGpuId(g.id)}
+                                onClick={() => pickGpu(g.id)}
                                 title={g.name}
                                 detail={g.detail}
                                 price={
-                                  g.comboPrice ? (
-                                    <>
-                                      <s className="mr-2 text-white/55">{g.price}</s>+ S/ {g.comboPrice}
-                                    </>
-                                  ) : (
-                                    `+ S/ ${g.price}`
-                                  )
+                                  <>
+                                    <s className="mr-2 text-white/55">{g.price}</s>+ S/ {+(g.price * (1 - GPU_COMBO_DISCOUNT)).toFixed(2)}
+                                  </>
                                 }
                               />
                             ))}
+                            {gpu?.extras && (
+                              <div className="space-y-2 pt-4">
+                                <p className="mb-2 text-white/60">Extras para tu tarjeta gráfica:</p>
+                                {gpu.extras.map((e) => (
+                                  <Row key={e.id} multi active={extraIds.includes(gpuExtra(e.id))} onClick={() => toggleExtra(gpuExtra(e.id))} title={e.name} price={`+ S/ ${e.price}`} />
+                                ))}
+                              </div>
+                            )}
                           </div>
                         )}
                       </>
@@ -643,21 +653,19 @@ const QuoteSection = ({ initial }: { initial?: string }) => {
                     );
                   })}
                 </div>
-                {!canHome && <p className="mt-3 text-white/70">Los diagnósticos se hacen en el taller, así que no hay atención a domicilio.</p>}
+                {onlyTaller && (
+                  <p className="mt-3 text-white/70">
+                    {onlyTaller === "diagnostico" ? "Los diagnósticos se hacen en el taller" : "El mantenimiento de PC gamer se hace en el taller"}, así que no hay atención a domicilio. Puedo recogerlo en tu casa.
+                  </p>
+                )}
                 <Reveal show={!!visit}>
-                  {visit?.mode === "recojo" && !canPickup ? (
-                    <p className="mt-4 text-white/80">El recojo no aplica para PC de escritorio: tráela al taller o elige atención a domicilio.</p>
-                  ) : (
-                    <>
-                      <p className="mt-4 text-white/70">
-                        {visit?.mode === "domicilio"
-                          ? `Voy a tu casa: visita de S/ ${homeVisit.fee} más la movilidad de tu distrito.`
-                          : "Recojo tu laptop, consola o componente y te lo devuelvo listo. Solo pagas la movilidad."}{" "}
-                        Lo verás en el ticket.
-                      </p>
-                      <DistrictSearch value={visit?.district ?? ""} onPick={(d) => setVisit((v) => (v ? { ...v, district: d } : v))} />
-                    </>
-                  )}
+                  <p className="mt-4 text-white/70">
+                    {visit?.mode === "domicilio"
+                      ? `Voy a tu casa: visita de S/ ${homeVisit.fee} más la movilidad de tu distrito.`
+                      : "Recojo tu equipo, lo atiendo en el taller y te lo devuelvo listo. Solo pagas la movilidad."}{" "}
+                    Lo verás en el ticket.
+                  </p>
+                  <DistrictSearch value={visit?.district ?? ""} onPick={(d) => setVisit((v) => (v ? { ...v, district: d } : v))} />
                 </Reveal>
               </div>
             </Reveal>

@@ -61,11 +61,11 @@ export const servicePages: ServicePage[] = [
     slug: "mantenimiento-pc-gamer",
     quote: "pcs",
     title: "Mantenimiento de PC gamer en Lima | QuickFix San Miguel",
-    description: `Mantenimiento de PC gamer y de oficina en San Miguel, Lima: lavado químico, pasta TF8 y gestión de cables. Desde S/ ${from("pcs")}. Tarjeta gráfica con 20% de descuento en combo.`,
+    description: `Mantenimiento de PC gamer y de oficina en San Miguel, Lima: lavado químico, pasta TF8 y gestión de cables. Desde S/ ${from("pcs")}. Tarjeta gráfica con 10% de descuento en combo.`,
     h1: "Mantenimiento de PC gamer en Lima",
-    lead: `Desarmo todos los componentes, los lavo y descontamino, cambio la pasta y ordeno los cables. Desde S/ ${from("pcs")}, y si traes la tarjeta gráfica, te sale 20% más barata.`,
+    lead: `Desarmo todos los componentes, los lavo y descontamino, cambio la pasta y ordeno los cables. Desde S/ ${from("pcs")}, y si traes la tarjeta gráfica, te sale 10% más barata.`,
     points: [
-      { title: "Combo PC + tarjeta gráfica", text: "Con tu PC gamer, la limpieza de la GPU tiene 20% de descuento (excepto gama alta RTX 3070 / 4070 / 5070 o superior)." },
+      { title: "Combo PC + tarjeta gráfica", text: "Con tu PC gamer, la limpieza de la GPU tiene 10% de descuento, sea cual sea su gama. La PC gamer se atiende en el taller, y puedo recogerla en tu casa." },
       { title: "Pads térmicos en VRM", text: "Opcional: cambio de pads de la placa madre para que las fases de poder no se sobrecalienten." },
       { title: "Gestión de cables y ventiladores", text: "Mejor flujo de aire, ventiladores lubricados y acabado con encerado mate." },
     ],
@@ -79,7 +79,7 @@ export const servicePages: ServicePage[] = [
     title: "Mantenimiento de tarjeta gráfica (GPU) en Lima | QuickFix",
     description: `Mantenimiento de tarjetas gráficas NVIDIA RTX y AMD en San Miguel, Lima: pasta TF8, ventiladores lubricados y lavado químico. Desde S/ ${from("gpus")}.`,
     h1: "Mantenimiento de tarjeta gráfica en Lima",
-    lead: `Desde S/ ${from("gpus")} según ventiladores y gama. Si la traes junto con tu PC gamer, tiene 20% de descuento.`,
+    lead: `Desde S/ ${from("gpus")} según ventiladores y gama. Si la traes junto con tu PC gamer, tiene 10% de descuento.`,
     points: [
       { title: "Precio por ventiladores y gama", text: "1 o 2 ventiladores, 3 ventiladores, o gama alta (RTX 3070 / 4070 / 5070 o superior). Masilla o pads térmicos en las VRAM como extra." },
       { title: "Lubricado de ventiladores", text: "Silencia los ruidos y recupera las RPM originales." },

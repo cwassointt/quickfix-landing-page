@@ -24,7 +24,7 @@ const Photo = ({ src, label, caption }: { src: string; label: string; caption: s
 const Case = ({ r }: { r: Result }) => (
   <li className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-center lg:gap-16">
     <div>
-      <h3 className="text-3xl font-bold tracking-[-0.03em] text-white md:text-4xl">{r.model}</h3>
+      <h3 className="subsection-title">{r.model}</h3>
       <p className="mt-1 text-lg text-white/60">{r.service}</p>
       <dl className="mt-8 space-y-4">
         <Reading label="CPU" before={r.before.cpu} after={r.after.cpu} />
@@ -40,14 +40,14 @@ const Case = ({ r }: { r: Result }) => (
 
 /** Prueba medible: cuánto bajó la temperatura en equipos reales, con la misma prueba de estrés. */
 const ResultsSection = () => (
-  <section id="resultados" className="bg-[#0b0b0b] py-24 md:py-36">
+  <section id="resultados" className="bg-[#0b0b0b] section">
     <div className="mx-auto max-w-7xl px-5 md:px-8">
-      <h2 className="text-5xl font-bold leading-[0.95] tracking-[-0.04em] text-white md:text-7xl">Hasta {maxDrop} °C menos, medidos</h2>
-      <p className="mt-5 max-w-[56ch] text-lg text-white/80">
+      <h2 className="section-title">Hasta {maxDrop} °C menos, medidos</h2>
+      <p className="section-lead">
         Temperatura al terminar la prueba de estrés {STRESS_TEST}, antes y después del mantenimiento. Las fotos son del interior de cada equipo en mi mesa de trabajo.
       </p>
 
-      <ul className="mt-16 space-y-20 md:space-y-28">
+      <ul className="section-body space-y-16 md:space-y-24">
         {results.map((r) => (
           <Case key={r.model} r={r} />
         ))}

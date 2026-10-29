@@ -47,9 +47,9 @@ const Foto = ({ src, alt, p, mini = false, className = "" }: { src: string | nul
     </div>
   ) : (
     <div className={`flex flex-col justify-between bg-white/[0.06] p-4 ${className}`} role="img" aria-label={`${p.marca || p.categoria}: sin vista previa disponible`}>
-      <span className="text-xs text-white/50">{p.marca ? p.categoria : ""}</span>
+      <span className="text-sm text-white/50">{p.marca ? p.categoria : ""}</span>
       <span className="break-words font-display text-2xl font-bold uppercase leading-none tracking-[-0.03em] text-white md:text-3xl">{p.marca || p.categoria}</span>
-      <span className="flex items-center gap-1.5 text-xs text-white/50">
+      <span className="flex items-center gap-1.5 text-sm text-white/50">
         <ImageOff className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
         Sin vista previa disponible
       </span>
@@ -156,8 +156,8 @@ const ComponentesPage = () => {
         <nav aria-label="Ruta" className="text-white/60">
           <a href="/" className="hover:text-white">Inicio</a> <span aria-hidden="true">/</span> <span className="text-white/80">Componentes</span>
         </nav>
-        <h1 className="mt-6 text-5xl font-bold leading-[0.95] tracking-[-0.04em] text-white md:text-7xl">Componentes</h1>
-        <p className="mt-6 max-w-[56ch] text-xl leading-relaxed text-white/80">
+        <h1 className="mt-6 section-title">Componentes</h1>
+        <p className="section-lead">
           Upgrades para tu laptop o PC, laptops, monitores y periféricos. Si quieres, te lo instalo y lo pruebo antes de entregártelo.
         </p>
         <ul className="mt-8 flex flex-wrap gap-2 text-white/80">
@@ -166,7 +166,7 @@ const ComponentesPage = () => {
           ))}
         </ul>
 
-        <div className="sticky top-[72px] z-30 -mx-5 mt-14 bg-[#050505] px-5 pb-4 pt-2 md:-mx-8 md:px-8">
+        <div className="sticky top-[72px] z-30 -mx-5 section-body bg-[#050505] px-5 pb-4 pt-2 md:-mx-8 md:px-8">
           <div>
             <label className="relative block">
               <span className="sr-only">Buscar componentes</span>
@@ -227,7 +227,7 @@ const ComponentesPage = () => {
                 <li key={p.sku} className="flex flex-col overflow-hidden rounded-3xl bg-white/[0.04]">
                   <button type="button" onClick={() => abrir(p.sku)} className="group text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary">
                     <Foto src={p.imagen} alt={p.nombre} p={p} className="aspect-square transition-transform duration-500 ease-out [@media(hover:hover)]:group-hover:scale-[1.02]" />
-                    <span className="block px-4 pt-4 font-mono text-xs uppercase tracking-wide text-white/50">{[p.marca, p.pn].filter(Boolean).join(" · ")}</span>
+                    <span className="block truncate px-4 pt-4 text-sm text-white/50">{[p.marca, p.pn].filter(Boolean).join(" · ")}</span>
                     <span className="mt-1 line-clamp-3 px-4 leading-snug text-white">{p.nombre}</span>
                   </button>
                   <div className="mt-auto px-4 pb-4 pt-4">
@@ -253,7 +253,7 @@ const ComponentesPage = () => {
           </>
         )}
 
-        <p className="mt-16 max-w-[70ch] text-white/60">
+        <p className="subsection max-w-[60ch] text-white/60">
           Precios finales en soles. No emito boleta ni factura. Confirmo el stock antes de que pagues y compro el producto con tu pago; la garantía es la del fabricante y yo me encargo del trámite.
           {" "}<a href="/terminos/" className="text-white/80 underline underline-offset-4">Términos</a>
         </p>
@@ -291,7 +291,7 @@ const ComponentesPage = () => {
                   <Foto src={p.imagen} alt="" p={p} mini className="h-16 w-16 rounded-xl" />
                   <div>
                     <p className="leading-snug">{p.nombre}</p>
-                    <p className="font-mono text-xs text-white/50">{p.pn}</p>
+                    <p className="text-sm text-white/50">{p.pn}</p>
                     <div className="mt-3 flex flex-wrap items-center gap-3">
                       <div className="flex items-center rounded-full bg-white/[0.06]">
                         <button type="button" aria-label="Quitar uno" onClick={() => cambiar(it.sku, { cantidad: it.cantidad - 1 })} className={`${PRESS} grid h-10 w-10 place-items-center rounded-full`}>
@@ -422,7 +422,7 @@ function Ficha({ p, onAgregar }: { p: Producto; onAgregar: (cantidad: number, in
         )}
       </div>
       <div>
-        <p className="font-mono text-xs uppercase tracking-wide text-white/50">{[p.marca, p.pn].filter(Boolean).join(" · ")}</p>
+        <p className="text-sm text-white/50">{[p.marca, p.pn].filter(Boolean).join(" · ")}</p>
         <h2 className="mt-2 pr-10 text-3xl font-bold leading-[1.05] tracking-[-0.03em]">{p.nombre}</h2>
         <p className="mt-4 font-display text-5xl font-bold tracking-[-0.03em] tabular-nums">{soles(p.precio)}</p>
         <div className="mt-2"><Stock p={p} /></div>

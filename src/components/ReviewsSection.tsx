@@ -28,15 +28,15 @@ const ReviewsSection = () => {
   });
 
   return (
-    <section id="resenas" className="bg-[#0b0b0b] py-24 md:py-36">
+    <section id="resenas" className="bg-[#0b0b0b] section">
       <div className="mx-auto grid max-w-7xl gap-14 px-5 md:px-8 lg:grid-cols-[0.9fr_1.1fr] lg:gap-20">
         <div className="lg:sticky lg:top-28 lg:self-start">
-          <motion.h2 {...rise(0)} className="text-5xl font-bold leading-[0.95] tracking-[-0.04em] text-white md:text-7xl">
+          <motion.h2 {...rise(0)} className="section-title">
             {RATING.score} en Google, {RATING.count} reseñas
           </motion.h2>
           <motion.figure {...rise(1)} className="mt-10">
             <Stars />
-            <blockquote className="mt-5 text-2xl leading-snug text-white md:text-[2rem] md:leading-[1.2]">
+            <blockquote className="mt-5 text-2xl leading-snug text-white md:text-3xl md:leading-[1.2]">
               “En Gianluca confío ciegamente: profesional, detallista y con materiales de primera.”
             </blockquote>
             <figcaption className="mt-5 flex items-center gap-3 text-white/60">
@@ -63,7 +63,7 @@ const ReviewsSection = () => {
           {rest.map((r, i) => (
             <motion.li key={r.author} {...rise(i)} className="w-[85%] shrink-0 snap-start break-inside-avoid rounded-3xl bg-white/[0.04] p-6 sm:w-auto">
               <Stars />
-              <p className="mt-4 text-[17px] leading-relaxed text-white">“{r.text}”</p>
+              <p className="mt-4 text-base leading-relaxed text-white">“{r.text}”</p>
               <p className="mt-5 flex items-center gap-3 text-white/60">
                 <ReviewAvatar name={r.author} photo={r.photo} />
                 <span className="min-w-0">

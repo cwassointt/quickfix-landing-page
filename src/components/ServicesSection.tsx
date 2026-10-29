@@ -37,17 +37,17 @@ const ServicesSection = () => {
   });
 
   return (
-    <section id="servicios" className="bg-[#050505] py-24 md:py-36">
+    <section id="servicios" className="bg-[#050505] section">
       <div className="mx-auto max-w-7xl px-5 md:px-8">
-        <motion.h2 {...rise()} className="text-5xl font-bold leading-[0.95] tracking-[-0.04em] text-white md:text-7xl">
+        <motion.h2 {...rise()} className="section-title">
           Servicios y precios
         </motion.h2>
-        <motion.p {...rise(1)} className="mt-5 max-w-[52ch] text-lg text-white/80">
+        <motion.p {...rise(1)} className="section-lead">
           Precios fijos por tipo de equipo. Elige el tuyo y el cotizador te arma el total con los extras.
         </motion.p>
 
         {/* Oferta estrella: campo naranja, lo primero de la lista de precios. */}
-        <motion.div {...rise(2)} className="mt-14 grid gap-6 rounded-3xl bg-primary p-6 text-black md:p-10 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+        <motion.div {...rise(2)} className="section-body grid gap-6 rounded-3xl bg-primary p-6 text-black md:p-10 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
           <div>
             <h3 className="text-4xl font-bold leading-[1] tracking-[-0.035em] md:text-5xl">Paquete completo ASUS ROG</h3>
             <p className="mt-4 max-w-[52ch] text-lg">
@@ -60,16 +60,18 @@ const ServicesSection = () => {
               <s className="pb-1.5 text-2xl text-black/80">S/ {rogSeparate}</s>
             </p>
             <p className="font-medium">Ahorras S/ {rogSaving}</p>
+            <div className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-3 lg:justify-end">
             <button
               type="button"
               onClick={() => openQuote("laptops")}
-              className="mt-5 rounded-full bg-black px-7 py-4 text-lg text-white transition-transform duration-150 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 focus-visible:ring-offset-primary"
+              className="rounded-full bg-black px-7 py-4 text-lg text-white transition-transform duration-150 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 focus-visible:ring-offset-primary"
             >
               Cotizar mi ROG
             </button>
-            <a href="/mantenimiento-asus-rog/" className="ml-5 font-medium underline underline-offset-4">
+            <a href="/mantenimiento-asus-rog/" className="font-medium underline underline-offset-4">
               Ver qué incluye
             </a>
+            </div>
           </div>
         </motion.div>
 
@@ -123,17 +125,17 @@ const ServicesSection = () => {
             </p>
             <p className="mt-2 text-lg text-white">a domicilio en Lima</p>
             <p className="mt-1 text-white/60">
-              Movilidad de S/ {Math.min(...homeVisit.zones.map((z) => z.price))} a S/ {Math.max(...homeVisit.zones.map((z) => z.price))} según tu distrito. ¿Solo quieres que lo recoja? Pagas únicamente la movilidad (no aplica a PC de escritorio).
+              Movilidad de S/ {Math.min(...homeVisit.zones.map((z) => z.price))} a S/ {Math.max(...homeVisit.zones.map((z) => z.price))} según tu distrito. ¿Solo quieres que lo recoja? Pagas únicamente la movilidad. La PC gamer se atiende en el taller, pero también la recojo.
             </p>
           </div>
         </div>
 
-        <div className="mt-28 md:mt-36 grid gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
+        <div className="subsection grid gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
           <div>
-            <motion.h3 {...rise()} className="text-5xl font-bold leading-[0.95] tracking-[-0.04em] text-white md:text-7xl">
+            <motion.h3 {...rise()} className="section-title">
               Reparación a <span className="text-primary">nivel de placa</span>
             </motion.h3>
-            <motion.p {...rise(1)} className="mt-6 max-w-[46ch] text-xl text-white/80 md:text-2xl md:leading-snug">
+            <motion.p {...rise(1)} className="section-lead">
               Microsoldadura para equipos que no encienden, se apagan o recibieron líquido. Empieza con un diagnóstico electrónico de S/ {electronic.price} (1 a 2 días), que se descuenta si reparas conmigo, y luego te doy el precio exacto.
             </motion.p>
             <motion.button {...rise(2)} type="button" onClick={() => openQuote("reparacion")} className={`${PRESS} mt-8 rounded-full bg-white/[0.08] px-6 py-3.5 text-white hover:bg-white/[0.14]`}>
@@ -149,14 +151,12 @@ const ServicesSection = () => {
               <motion.li key={r.id} {...rise(i)} className="grid gap-5 sm:grid-cols-[220px_minmax(0,1fr)]">
                 <OptimizedImage src={REPAIR_IMG[r.id]} alt={`Reparación de ${r.name.toLowerCase()}`} width={360} height={270} sizes="(max-width: 640px) 92vw, 220px" className="aspect-[4/3] w-full rounded-2xl object-cover" />
                 <div>
-                  <div className="flex flex-wrap items-baseline justify-between gap-x-4">
-                    <h4 className="text-3xl font-bold tracking-[-0.03em] text-white md:text-4xl">{r.name}</h4>
-                    <p className="text-white/60">
-                      desde <span className="font-display text-3xl font-bold text-primary tabular-nums md:text-4xl">S/ {r.from}</span>
-                    </p>
-                  </div>
-                  <p className="mt-2 text-lg text-white/60">{r.detail} · {r.days}</p>
-                  <ul className="mt-3 space-y-1 text-lg text-white/80">
+                  <h4 className="subsection-title">{r.name}</h4>
+                  <p className="mt-1 text-white/60">
+                    desde <span className="font-display text-3xl font-bold text-primary tabular-nums">S/ {r.from}</span>
+                  </p>
+                  <p className="mt-2 text-white/60">{r.detail} · {r.days}</p>
+                  <ul className="mt-3 space-y-1 text-white/80 md:text-lg">
                     {r.work.map((w) => (
                       <li key={w}>{w}</li>
                     ))}
@@ -167,8 +167,8 @@ const ServicesSection = () => {
           </ul>
         </div>
 
-        <div className="mt-28 md:mt-36">
-          <motion.h3 {...rise()} className="text-3xl font-bold tracking-[-0.03em] text-white md:text-4xl">
+        <div className="subsection">
+          <motion.h3 {...rise()} className="subsection-title">
             También armo y configuro
           </motion.h3>
           <ul className="mt-8 grid gap-3 md:grid-cols-3">

@@ -1,14 +1,28 @@
 import { describe, it, expect } from "vitest";
-import { buildCart, buildQuote, whatsappUrl } from "@/lib/quote";
+import { buildCart, buildQuote, gpuExtra, homeVisitAllowed, whatsappUrl } from "@/lib/quote";
 
 describe("buildQuote", () => {
-  it("aplica el 20% a la GPU solo en combo con PC gamer", () => {
-    const q = buildQuote({ serviceId: "pc-gamer", extraIds: [], gpuId: "gpu-3fan" });
-    expect(q.total).toBe(120 + 72);
+  it("aplica el 10% a la GPU en combo con PC gamer, también en gama alta", () => {
+    expect(buildQuote({ serviceId: "pc-gamer", extraIds: [], gpuId: "gpu-3fan" }).total).toBe(120 + 81);
+    expect(buildQuote({ serviceId: "pc-gamer-grande", extraIds: [], gpuId: "gpu-alta" }).total).toBeCloseTo(220 + 121.5);
   });
 
-  it("no descuenta la GPU de gama alta", () => {
-    expect(buildQuote({ serviceId: "pc-gamer-grande", extraIds: [], gpuId: "gpu-alta" }).total).toBe(220 + 135);
+  it("en el combo se pueden sumar los extras de la GPU sin chocar con los de la PC", () => {
+    const q = buildQuote({ serviceId: "pc-gamer", extraIds: ["pads", gpuExtra("pads")], gpuId: "gpu-3fan" });
+    expect(q.total).toBe(120 + 65 + 81 + 55); // pads VRM de la PC + pads VRAM de la GPU
+  });
+
+  it("la GPU agregada como otro equipo junto a una PC gamer también lleva el descuento", () => {
+    const pc = { title: "PC", serviceId: "pc-gamer", extraIds: [], gpuId: null };
+    const gpu = { title: "GPU", serviceId: "gpu-2fan", extraIds: [], gpuId: null };
+    expect(buildCart([pc, gpu]).total).toBe(120 + 54);
+    expect(buildCart([gpu]).total).toBe(60);
+  });
+
+  it("formateo de S/ 50 como extra en laptops y PC", () => {
+    expect(buildQuote({ serviceId: "laptop-oficina", extraIds: ["formateo"], gpuId: null }).total).toBe(70 + 50);
+    expect(buildQuote({ serviceId: "pc-gamer", extraIds: ["formateo"], gpuId: null }).total).toBe(120 + 50);
+    expect(buildQuote({ serviceId: "ps5", extraIds: ["formateo"], gpuId: null }).total).toBe(140);
   });
 
   it("ignora la GPU si la PC no es gamer", () => {
@@ -24,7 +38,7 @@ describe("buildQuote", () => {
     expect(q.total).toBe(150 + 99 + 80);
   });
 
-  it("masilla térmica con precio fijo; laptop de oficina no tiene extras", () => {
+  it("masilla térmica con precio fijo; laptop de oficina no tiene masilla", () => {
     expect(buildQuote({ serviceId: "laptop-gamer", extraIds: ["pads"], gpuId: null }).total).toBe(120 + 79);
     expect(buildQuote({ serviceId: "laptop-oficina", extraIds: ["pads"], gpuId: null }).total).toBe(70);
   });
@@ -66,10 +80,12 @@ describe("buildQuote", () => {
     expect(buildCart([{ title: "GPU", serviceId: "gpu-alta", extraIds: ["pads"], gpuId: null }]).total).toBe(135 + 75);
   });
 
-  it("recojo cobra solo movilidad y no aplica a PC de escritorio", () => {
-    const gpu = { title: "GPU", serviceId: "gpu-3fan", extraIds: [], gpuId: null, categoryId: "gpus" };
+  it("PC gamer: solo en el taller, pero se puede recoger", () => {
     const pc = { title: "PC", serviceId: "pc-gamer", extraIds: [], gpuId: null, categoryId: "pcs" };
-    expect(buildCart([gpu], { mode: "recojo", district: "Breña" }).total).toBe(90 + 25);
-    expect(buildCart([gpu, pc], { mode: "recojo", district: "Breña" }).total).toBe(90 + 120);
+    const oficina = { title: "PC", serviceId: "pc-oficina", extraIds: [], gpuId: null, categoryId: "pcs" };
+    expect(homeVisitAllowed([pc])).toBe(false);
+    expect(homeVisitAllowed([oficina])).toBe(true);
+    expect(buildCart([pc], { mode: "domicilio", district: "Breña" }).total).toBe(120);
+    expect(buildCart([pc], { mode: "recojo", district: "Breña" }).total).toBe(120 + 25);
   });
 });
