@@ -137,4 +137,20 @@ export const servicePages: ServicePage[] = [
     priceFrom: diagnosis.find((d) => d.id === "diag-general")!.price,
     image: "board",
   },
+  {
+    slug: "reparacion-ps5-ps4",
+    quote: "reparacion",
+    title: "Reparación de PS5 y PS4 en Lima | Puerto HDMI, no enciende | QuickFix",
+    description: `Reparación de PlayStation 5 y PlayStation 4 en San Miguel, Lima: puerto HDMI, consolas que no encienden o se apagan, fugas de metal líquido y cortos en la placa. Diagnóstico electrónico de S/ ${diagnosis.find((d) => d.id === "diag-electronico")!.price}, descontable si reparas.`,
+    h1: "Reparación de PS5 y PS4 en Lima",
+    lead: `Puerto HDMI, consolas que no encienden o se apagan, fugas de metal líquido y cortos en la placa. Empieza con un diagnóstico electrónico de S/ ${diagnosis.find((d) => d.id === "diag-electronico")!.price} en 1 a 2 días, que se descuenta si reparas conmigo.`,
+    points: [
+      { title: "Puerto HDMI", text: "Cambio del conector cuando la consola no da imagen, el puerto está flojo o se rompió al jalar el cable." },
+      { title: "No enciende o se apaga sola", text: "Reviso la fuente, los cortos y el circuito de encendido a nivel de placa, con microsoldadura." },
+      { title: "Fuga de metal líquido en PS5", text: "Si el metal líquido de fábrica se movió o se derramó, limpio la zona, reviso los daños y lo vuelvo a aplicar con aislamiento." },
+    ],
+    faq: ["¿Cuánto tarda una reparación de placa?", "¿Cómo puedo pagar?", "¿Por qué atienden solo con cita?"],
+    priceFrom: diagnosis.find((d) => d.id === "diag-electronico")!.price,
+    image: "console",
+  },
 ];

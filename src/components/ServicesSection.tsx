@@ -20,7 +20,7 @@ import laptopGamerRepairImg from "../images/repair/laptopgamer-repair.webp";
 import laptopOfficeRepairImg from "../images/repair/laptopoffice-repair.webp";
 
 const IMG: Record<string, string> = { laptops: laptopImg, pcs: pcImg, gpus: gpuImg, macbook: macbookImg, consolas: consoleImg };
-const REPAIR_IMG: Record<string, string> = { gpu: gpuRepairImg, "laptop-gamer": laptopGamerRepairImg, "laptop-oficina": laptopOfficeRepairImg };
+const REPAIR_IMG: Record<string, string> = { consola: consoleImg, gpu: gpuRepairImg, "laptop-gamer": laptopGamerRepairImg, "laptop-oficina": laptopOfficeRepairImg };
 const PRESS =
   "transition-[transform,background-color,color] duration-150 ease-out active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-[#050505]";
 const electronic = diagnosis.find((d) => d.id === "diag-electronico")!;
@@ -136,7 +136,7 @@ const ServicesSection = () => {
               Reparación a <span className="text-primary">nivel de placa</span>
             </motion.h3>
             <motion.p {...rise(1)} className="section-lead">
-              Microsoldadura para equipos que no encienden, se apagan o recibieron líquido. Empieza con un diagnóstico electrónico de S/ {electronic.price} (1 a 2 días), que se descuenta si reparas conmigo, y luego te doy el precio exacto.
+              Microsoldadura para laptops, tarjetas gráficas y consolas que no encienden, se apagan o recibieron líquido. Empieza con un diagnóstico electrónico de S/ {electronic.price} (1 a 2 días), que se descuenta si reparas conmigo, y luego te doy el precio exacto.
             </motion.p>
             <motion.button {...rise(2)} type="button" onClick={() => openQuote("reparacion")} className={`${PRESS} mt-8 rounded-full bg-white/[0.08] px-6 py-3.5 text-white hover:bg-white/[0.14]`}>
               Cotizar un diagnóstico
@@ -151,11 +151,23 @@ const ServicesSection = () => {
               <motion.li key={r.id} {...rise(i)} className="grid gap-5 sm:grid-cols-[220px_minmax(0,1fr)]">
                 <OptimizedImage src={REPAIR_IMG[r.id]} alt={`Reparación de ${r.name.toLowerCase()}`} width={360} height={270} sizes="(max-width: 640px) 92vw, 220px" className="aspect-[4/3] w-full rounded-2xl object-cover" />
                 <div>
-                  <h4 className="subsection-title">{r.name}</h4>
+                  <h4 className="subsection-title">
+                    {r.page ? (
+                      <a href={r.page} className="rounded-sm underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+                        {r.name}
+                      </a>
+                    ) : (
+                      r.name
+                    )}
+                  </h4>
                   <p className="mt-1 text-white/60">
-                    desde <span className="font-display text-3xl font-bold text-primary tabular-nums">S/ {r.from}</span>
+                    {r.from ? (
+                      <>desde <span className="font-display text-3xl font-bold text-primary tabular-nums">S/ {r.from}</span></>
+                    ) : (
+                      <span className="font-display text-2xl font-bold text-primary">Precio tras el diagnóstico</span>
+                    )}
                   </p>
-                  <p className="mt-2 text-white/60">{r.detail} · {r.days}</p>
+                  <p className="mt-2 text-white/60">{[r.detail, r.days].filter(Boolean).join(" · ")}</p>
                   <ul className="mt-3 space-y-1 text-white/80 md:text-lg">
                     {r.work.map((w) => (
                       <li key={w}>{w}</li>

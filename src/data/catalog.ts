@@ -109,8 +109,11 @@ export const includes: Record<string, string[]> = {
   consolas: ["Desarmado completo", "Lavado químico y descontaminado", "Pasta térmica nueva", "Encerado mate"],
 };
 
-/** Reparación a nivel de placa: precio desde, después del diagnóstico electrónico. */
-export const repairs = [
+/** Reparación a nivel de placa: precio desde, después del diagnóstico electrónico.
+ *  Sin from/days se muestra "precio tras el diagnóstico". page: su página propia, si tiene. */
+export type Repair = { id: string; name: string; detail: string; from?: number; days?: string; work: string[]; page?: string };
+
+export const repairs: Repair[] = [
   {
     id: "gpu",
     name: "Tarjetas gráficas",
@@ -134,6 +137,14 @@ export const repairs = [
     from: 199,
     days: "2 a 4 días",
     work: ["Equipos que no encienden", "Salida de video y retroiluminación", "Puertos USB-C, USB y de carga", "Lavado químico por derrame"],
+  },
+  {
+    id: "consola",
+    name: "Consolas PS5 y PS4",
+    detail: "PlayStation 5 y PlayStation 4",
+    // shortcut: sin precio ni plazo propios todavía; agregar from y days cuando el dueño los confirme.
+    work: ["Puerto HDMI dañado o sin imagen", "No enciende o se apaga sola", "Fuga de metal líquido en el procesador", "Cortos en la placa y la fuente"],
+    page: "/reparacion-ps5-ps4/",
   },
 ];
 
