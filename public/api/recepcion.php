@@ -3,7 +3,7 @@
 // Los datos viven fuera de public_html, en /home/quickfix/recepcion/ (config.php y recepcion.sqlite),
 // así nadie puede descargarlos desde internet y nunca pasan por GitHub.
 //
-// Acciones (?accion=):  crear (público) · sesion · entrar · salir · lista · recibir · foto · csv
+// Acciones (?accion=):  crear (público) · sesion · entrar · salir · lista · recibir · foto · leer · csv
 
 declare(strict_types=1);
 date_default_timezone_set('America/Lima');
@@ -122,16 +122,90 @@ function exigir(string ...$roles): string
 }
 
 /** Foto de la etiqueta: llega como data URL JPEG (el navegador ya la reduce); se guarda fuera de public_html. */
+/** JPEG real de hasta 3 MB, o null. */
+function jpegDe(string $dataUrl): ?string
+{
+    if (!preg_match('#^data:image/jpeg;base64,#', $dataUrl)) return null;
+    $bin = base64_decode(substr($dataUrl, 23), true);
+    if ($bin === false || strlen($bin) > 3 * 1024 * 1024) return null;
+    $info = @getimagesizefromstring($bin);
+    return $info && $info['mime'] === 'image/jpeg' ? $bin : null;
+}
+
 function guardarFoto(int $id, string $dataUrl): bool
 {
     global $DIR;
-    if (!preg_match('#^data:image/jpeg;base64,#', $dataUrl)) return false;
-    $bin = base64_decode(substr($dataUrl, 23), true);
-    if ($bin === false || strlen($bin) > 3 * 1024 * 1024) return false;
-    $info = @getimagesizefromstring($bin);
-    if (!$info || $info['mime'] !== 'image/jpeg') return false;
+    $bin = jpegDe($dataUrl);
+    if ($bin === null) return false;
     if (!is_dir("$DIR/fotos")) mkdir("$DIR/fotos", 0700, true);
     return file_put_contents("$DIR/fotos/$id.jpg", $bin) !== false;
+}
+
+/**
+ * Lee la etiqueta con Claude (visión) y devuelve tipo, marca, modelo y S/N.
+ * curl directo, como sync.php: el hosting no tiene Composer para instalar el SDK.
+ */
+function leerEtiqueta(string $jpeg, string $clave): array
+{
+    $esquema = [
+        'type' => 'object',
+        'properties' => [
+            'legible' => ['type' => 'boolean'],
+            'tipo' => ['type' => 'string', 'enum' => ['Laptop', 'PC', 'Tarjeta gráfica', 'Consola', 'Otro', '']],
+            'marca' => ['type' => 'string'],
+            'modelo' => ['type' => 'string'],
+            'serie' => ['type' => 'string'],
+        ],
+        'required' => ['legible', 'tipo', 'marca', 'modelo', 'serie'],
+        'additionalProperties' => false,
+    ];
+    $instrucciones = 'Es la foto de la etiqueta de un equipo que un cliente deja en un taller de reparación (laptop, consola, tarjeta gráfica o PC). '
+        . 'Extrae: tipo de equipo; marca (ASUS, Lenovo, HP, Sony, MSI…); modelo tal como aparece en "Model", "Modelo" o "Model Name" '
+        . '(por ejemplo G614JV o CFI-1215A; no uses el P/N si hay un modelo); y el número de serie de "S/N", "SN" o "Serial No.", '
+        . 'copiado exactamente, sin espacios. Si un dato no se lee con seguridad, déjalo vacío: no lo adivines. '
+        . 'legible es false si la foto no muestra una etiqueta de equipo.';
+    $cuerpo = [
+        'model' => 'claude-opus-5-5',
+        'max_tokens' => 4000,
+        'output_config' => ['effort' => 'low', 'format' => ['type' => 'json_schema', 'schema' => $esquema]],
+        'fallbacks' => 'default',
+        'messages' => [[
+            'role' => 'user',
+            'content' => [
+                ['type' => 'image', 'source' => ['type' => 'base64', 'media_type' => 'image/jpeg', 'data' => base64_encode($jpeg)]],
+                ['type' => 'text', 'text' => $instrucciones],
+            ],
+        ]],
+    ];
+    $ch = curl_init('https://api.anthropic.com/v1/messages');
+    curl_setopt_array($ch, [
+        CURLOPT_POST => true,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => 45,
+        CURLOPT_HTTPHEADER => [
+            'content-type: application/json',
+            'x-api-key: ' . $clave,
+            'anthropic-version: 2023-06-01',
+            'anthropic-beta: server-side-fallback-2026-07-01',
+        ],
+        CURLOPT_POSTFIELDS => json_encode($cuerpo, JSON_UNESCAPED_UNICODE),
+    ]);
+    $res = curl_exec($ch);
+    $codigo = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    $json = is_string($res) ? json_decode($res, true) : null;
+    if ($codigo !== 200 || !is_array($json)) {
+        error_log("recepcion leer: HTTP $codigo " . substr((string) $res, 0, 300));
+        throw new RuntimeException('lectura');
+    }
+    if (($json['stop_reason'] ?? '') !== 'end_turn') return ['legible' => false];
+    foreach ($json['content'] ?? [] as $bloque) {
+        if (($bloque['type'] ?? '') === 'text') {
+            $datos = json_decode($bloque['text'], true);
+            if (is_array($datos)) return $datos;
+        }
+    }
+    return ['legible' => false];
 }
 
 function numero(int $id): string
@@ -182,6 +256,25 @@ try {
                 @mail($CFG['correo'], '=?UTF-8?B?' . base64_encode('Nuevo equipo ' . numero($id) . ' · ' . $fila['nombre']) . '?=', $texto, "Content-Type: text/plain; charset=UTF-8\r\nFrom: QuickFix <no-reply@quickfix.pe>");
             }
             responder(['numero' => numero($id)]);
+
+        case 'POST leer':
+            if (empty($CFG['anthropic_key'])) fallo('La lectura automática no está activada.', 503);
+            if (demasiados('leer', 15, 3600)) fallo('Leíste muchas etiquetas seguidas. Completa los datos a mano.', 429);
+            $jpeg = jpegDe((string) (cuerpo()['foto'] ?? ''));
+            if ($jpeg === null) fallo('No pude abrir esa foto. Prueba con otra.');
+            anotar('leer');
+            try {
+                $l = leerEtiqueta($jpeg, (string) $CFG['anthropic_key']);
+            } catch (RuntimeException $e) {
+                fallo('No pude leer la etiqueta ahora. Completa los datos a mano.', 502);
+            }
+            responder([
+                'legible' => !empty($l['legible']),
+                'tipo' => limpiar($l['tipo'] ?? '', 30),
+                'marca' => limpiar($l['marca'] ?? '', 40),
+                'modelo' => limpiar($l['modelo'] ?? '', 80),
+                'serie' => mb_strtoupper(preg_replace('/[^A-Za-z0-9-]/', '', (string) ($l['serie'] ?? '')) ?? ''),
+            ]);
 
         case 'GET sesion':
             responder(['rol' => rol()]);

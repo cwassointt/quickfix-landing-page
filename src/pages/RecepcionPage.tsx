@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { AlertCircle, ArrowLeft, Camera, Check, Loader2, Search, Sparkles, X } from "lucide-react";
+import { AlertCircle, ArrowLeft, Camera, Check, Loader2, ScanLine, Search, Sparkles, X } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import AsistenteFalla, { type Resultado } from "@/components/AsistenteFalla";
 import { laptopLabel, searchLaptops, type Laptop } from "@/lib/laptopSearch";
-import { FICHAS, OPCIONES, api, avisoCliente, diaLima, validar, type Campo as CampoId, type Registro } from "@/lib/recepcion";
+import { FICHAS, OPCIONES, api, avisoCliente, diaLima, sugerirCorreo, sugerirDistrito, validar, type Campo as CampoId, type Registro } from "@/lib/recepcion";
 
 const PRESS = "transition-[transform,background-color,color] duration-150 ease-out active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-[#050505]";
 const INPUT = "mt-2 h-12 w-full rounded-xl bg-white/[0.06] px-4 text-base text-white placeholder:text-white/35 focus:outline-none focus:ring-2 focus:ring-primary";
@@ -37,7 +37,8 @@ const Campo = ({ id, label, hint, error, children }: { id: string; label: string
 function Opciones({ id, label, opciones, valor, onChange, multi = false, error, children }: {
   id?: string; label: string; opciones: string[]; valor: string; onChange: (v: string) => void; multi?: boolean; error?: string; children?: ReactNode;
 }) {
-  const elegidas = valor ? valor.split(", ") : [];
+  // Solo las de selección múltiple se guardan separadas por coma; una opción puede llevar comas ("IA (ChatGPT, Gemini…)").
+  const elegidas = !valor ? [] : multi ? valor.split(", ") : [valor];
   const toggle = (o: string) => {
     if (!multi) return onChange(valor === o ? "" : o);
     const next = elegidas.includes(o) ? elegidas.filter((x) => x !== o) : [...elegidas, o];
@@ -69,6 +70,35 @@ const SiNo = ({ label, valor, onChange }: { label: string; valor: boolean | null
     </div>
   </fieldset>
 );
+
+/** Input con lista de sugerencias debajo (distritos, correos). Se cierra al elegir una. */
+function ConSugerencias({ input, sugerir, onElegir }: {
+  input: React.InputHTMLAttributes<HTMLInputElement> & { value: string; onChange: (e: { target: { value: string } }) => void };
+  sugerir: (v: string) => string[];
+  onElegir: (v: string) => void;
+}) {
+  const [abierto, setAbierto] = useState(false);
+  const lista = abierto ? sugerir(input.value) : [];
+  return (
+    <>
+      <input {...input} autoComplete="off"
+        onChange={(e) => { input.onChange(e); setAbierto(true); }}
+        onKeyDown={(e) => { if (e.key === "Enter" && lista[0]) { e.preventDefault(); onElegir(lista[0]); setAbierto(false); } }} />
+      {lista.length > 0 && (
+        <ul className="mt-2 flex flex-wrap gap-1.5">
+          {lista.map((s) => (
+            <li key={s}>
+              <button type="button" onClick={() => { onElegir(s); setAbierto(false); }}
+                className={`${PRESS} rounded-full bg-white/[0.08] px-3.5 py-2 text-sm text-white hover:bg-white/[0.16]`}>
+                {s}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </>
+  );
+}
 
 /** Modelo de laptop con la misma lista del cotizador: al elegir uno se completan marca y modelo. */
 function ModeloLaptop({ valor, error, onEscribir, onElegir, onBlur }: {
@@ -116,40 +146,83 @@ async function reducirFoto(file: File): Promise<string> {
   return canvas.toDataURL("image/jpeg", 0.8);
 }
 
-function FotoEtiqueta({ valor, onChange }: { valor: string; onChange: (v: string) => void }) {
+export type DatosEtiqueta = { tipo: string; marca: string; modelo: string; serie: string };
+
+/** Pasa el código del modelo ("G614JV") al nombre de la lista del cotizador ("ROG Strix G16 G614JV") si lo encuentra. */
+async function nombreDeLista(d: DatosEtiqueta): Promise<DatosEtiqueta> {
+  if (!d.modelo || (d.tipo && d.tipo !== "Laptop")) return d;
+  const lista: Laptop[] = (await import("@/data/laptops.json")).default;
+  const hit = searchLaptops(lista, d.modelo, 1)[0];
+  const sinEspacios = (s: string) => s.replace(/[\s-]/g, "").toLowerCase();
+  if (!hit || !sinEspacios(laptopLabel(hit)).includes(sinEspacios(d.modelo))) return d;
+  return { ...d, tipo: "Laptop", marca: hit.brand, modelo: [hit.name, hit.code].filter(Boolean).join(" ") };
+}
+
+type Lectura = { estado: "nada" | "leyendo" | "listo" | "aviso"; msg?: string };
+
+/** Función principal de la ficha 02: foto de la etiqueta → marca, modelo y S/N completados solos. */
+function EscanerEtiqueta({ foto, onFoto, onDatos }: { foto: string; onFoto: (v: string) => void; onDatos: (d: DatosEtiqueta) => void }) {
   const input = useRef<HTMLInputElement>(null);
-  const [error, setError] = useState("");
-  const [cargando, setCargando] = useState(false);
+  const [lectura, setLectura] = useState<Lectura>({ estado: "nada" });
+
+  async function procesar(file: File) {
+    let dataUrl: string;
+    try { dataUrl = await reducirFoto(file); }
+    catch { return setLectura({ estado: "aviso", msg: "No pude abrir esa foto. Prueba con otra." }); }
+    onFoto(dataUrl);
+    setLectura({ estado: "leyendo" });
+    try {
+      const d = await api<DatosEtiqueta & { legible: boolean }>("leer", { foto: dataUrl });
+      if (!d.legible || !(d.marca || d.modelo || d.serie)) {
+        return setLectura({ estado: "aviso", msg: "No se lee bien la etiqueta. Toma otra foto más cerca y con luz, o escribe los datos abajo." });
+      }
+      onDatos(await nombreDeLista(d));
+      const faltan = [!d.marca && "marca", !d.modelo && "modelo", !d.serie && "número de serie"].filter(Boolean);
+      setLectura({ estado: "listo", msg: faltan.length ? `Completé lo que se lee. Falta: ${faltan.join(", ")}.` : "Completé marca, modelo y número de serie. Revisa que estén bien." });
+    } catch (err) {
+      // Sin lectura automática (no configurada o falló): la foto igual queda guardada.
+      setLectura({ estado: "aviso", msg: `${(err as Error).message} La foto queda guardada.` });
+    }
+  }
+
   return (
-    <div>
-      <p className="text-base font-medium text-white">Foto de la etiqueta <span className="ml-1 text-sm font-normal text-white/50">opcional</span></p>
-      <p className="mt-1 text-sm text-white/55">La etiqueta de abajo del equipo, con el número de serie. Si la subes, no hace falta escribirlo.</p>
+    <div className="rounded-2xl bg-gradient-to-br from-primary/[0.16] to-primary/[0.04] p-5 ring-1 ring-primary/30">
       <input ref={input} type="file" accept="image/*" capture="environment" className="sr-only" tabIndex={-1}
-        onChange={async (e) => {
-          const file = e.target.files?.[0];
-          e.target.value = "";
-          if (!file) return;
-          setCargando(true);
-          try { onChange(await reducirFoto(file)); setError(""); }
-          catch { setError("No pude leer esa foto. Prueba con otra."); }
-          setCargando(false);
-        }} />
-      {valor ? (
-        <div className="mt-3 flex items-center gap-4">
-          <img src={valor} alt="Foto de la etiqueta" className="h-20 w-28 rounded-xl object-cover" />
-          <button type="button" onClick={() => input.current?.click()} className={`${PRESS} rounded-full bg-white/[0.08] px-4 py-2.5 text-base text-white hover:bg-white/[0.14]`}>Cambiar</button>
-          <button type="button" onClick={() => onChange("")} aria-label="Quitar foto" className={`${PRESS} rounded-full p-2.5 text-white/60 hover:bg-white/[0.08]`}>
-            <X className="h-5 w-5" aria-hidden="true" />
-          </button>
+        onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) procesar(f); }} />
+      <div className="flex items-start gap-4">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary text-black"><ScanLine className="h-5 w-5" aria-hidden="true" /></span>
+        <div>
+          <p className="text-lg font-bold text-white">Escanea la etiqueta</p>
+          <p className="mt-1 text-sm leading-relaxed text-white/70">Tómale foto a la etiqueta de abajo del equipo y completo marca, modelo y número de serie por ti.</p>
+        </div>
+      </div>
+
+      {foto ? (
+        <div className="mt-4 flex items-center gap-4">
+          <img src={foto} alt="Foto de la etiqueta" className="h-20 w-28 shrink-0 rounded-xl object-cover" />
+          <div className="min-w-0 flex-1">
+            <p role="status" className={`flex items-start gap-1.5 text-sm ${lectura.estado === "aviso" ? "text-[#ff9b80]" : "text-white/85"}`}>
+              {lectura.estado === "leyendo" && <><Loader2 className="mt-0.5 h-4 w-4 shrink-0 animate-spin" aria-hidden="true" /> Leyendo la etiqueta…</>}
+              {lectura.estado === "listo" && <><Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden="true" /> {lectura.msg}</>}
+              {lectura.estado === "aviso" && <><AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" /> {lectura.msg}</>}
+            </p>
+            <div className="mt-2 flex gap-2">
+              <button type="button" onClick={() => input.current?.click()} disabled={lectura.estado === "leyendo"}
+                className={`${PRESS} rounded-full bg-white/[0.1] px-4 py-2 text-sm text-white hover:bg-white/[0.16] disabled:opacity-50`}>Otra foto</button>
+              <button type="button" onClick={() => { onFoto(""); setLectura({ estado: "nada" }); }} aria-label="Quitar foto"
+                className={`${PRESS} rounded-full p-2 text-white/60 hover:bg-white/[0.08]`}><X className="h-4 w-4" aria-hidden="true" /></button>
+            </div>
+          </div>
         </div>
       ) : (
-        <button type="button" onClick={() => input.current?.click()} disabled={cargando}
-          className={`${PRESS} mt-3 inline-flex items-center gap-2 rounded-full bg-white/[0.08] px-5 py-3 text-base text-white hover:bg-white/[0.14]`}>
-          {cargando ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" /> : <Camera className="h-5 w-5" aria-hidden="true" />}
-          Tomar foto
-        </button>
+        <>
+          <button type="button" onClick={() => input.current?.click()}
+            className={`${PRESS} mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-primary px-6 py-3.5 text-base font-medium text-black hover:bg-[#ff7a1f]`}>
+            <Camera className="h-5 w-5" aria-hidden="true" /> Tomar foto a la etiqueta
+          </button>
+          {lectura.estado === "aviso" && <Aviso id="foto" msg={lectura.msg} />}
+        </>
       )}
-      <Aviso id="foto" msg={error} />
     </div>
   );
 }
@@ -308,8 +381,12 @@ const RecepcionPage = () => {
                   <div className="grid gap-5 sm:grid-cols-2">
                     <Campo id="whatsapp" label="WhatsApp" error={ver("whatsapp")}><input type="tel" inputMode="tel" autoComplete="tel" placeholder="987 654 321" {...campo("whatsapp")} /></Campo>
                     <Campo id="dni" label="DNI o CE" hint="opcional" error={ver("dni")}><input inputMode="numeric" maxLength={12} {...campo("dni")} /></Campo>
-                    <Campo id="correo" label="Correo" hint="opcional" error={ver("correo")}><input type="email" autoComplete="email" {...campo("correo")} /></Campo>
-                    <Campo id="distrito" label="Distrito" hint="opcional" error={ver("distrito")}><input {...campo("distrito")} /></Campo>
+                    <Campo id="correo" label="Correo" hint="opcional" error={ver("correo")}>
+                      <ConSugerencias input={{ type: "email", inputMode: "email", placeholder: "nombre@gmail.com", ...campo("correo") }} sugerir={sugerirCorreo} onElegir={set("correo")} />
+                    </Campo>
+                    <Campo id="distrito" label="Distrito" hint="opcional" error={ver("distrito")}>
+                      <ConSugerencias input={{ placeholder: "San Miguel, Surco…", ...campo("distrito") }} sugerir={sugerirDistrito} onElegir={set("distrito")} />
+                    </Campo>
                   </div>
                   <Opciones label="¿Cómo nos conociste?" opciones={OPCIONES.como} valor={r.como} onChange={set("como")} />
                 </Bloque>
@@ -317,6 +394,13 @@ const RecepcionPage = () => {
 
               <div ref={(el) => (fichas.current[1] = el)} className="w-full shrink-0" aria-hidden={paso !== 1}>
                 <Bloque n="02" title="Tu equipo">
+                  <EscanerEtiqueta foto={r.foto} onFoto={set("foto")} onDatos={(d) => {
+                    setR((x) => ({ ...x, tipo: d.tipo || x.tipo, marca: d.marca || x.marca, modelo: d.modelo || x.modelo, serie: d.serie || x.serie }));
+                    tocar(...(["tipo", "marca", "modelo", "serie"] as const).filter((k) => d[k]));
+                  }} />
+                  <p className="flex items-center gap-3 text-sm text-white/45" aria-hidden="true">
+                    <span className="h-px flex-1 bg-white/10" /> o complétalo a mano <span className="h-px flex-1 bg-white/10" />
+                  </p>
                   <Opciones id="tipo" label="Tipo de equipo" opciones={OPCIONES.tipo} valor={r.tipo} error={ver("tipo")} onChange={(v) => { set("tipo")(v); tocar("tipo"); }} />
                   {r.tipo === "Laptop" ? (
                     <>
@@ -333,7 +417,6 @@ const RecepcionPage = () => {
                   <Campo id="serie" label="Número de serie (S/N)" hint="en la etiqueta de abajo del equipo" error={ver("serie")}>
                     <input autoCapitalize="characters" placeholder="Si no lo encuentras, déjalo vacío" {...campo("serie")} className={`${campo("serie").className} font-mono uppercase`} />
                   </Campo>
-                  <FotoEtiqueta valor={r.foto} onChange={set("foto")} />
                   <Campo id="pin" label="Contraseña o PIN de inicio" hint="opcional, para probarlo">
                     <input id="campo-pin" autoComplete="off" value={r.pin} onChange={(e) => set("pin")(e.target.value)} className={INPUT} />
                   </Campo>
@@ -425,12 +508,14 @@ const RecepcionPage = () => {
                 <ArrowLeft className="h-5 w-5" aria-hidden="true" />
               </button>
             )}
+            {/* Keys distintas: sin ellas React reutiliza el mismo botón y, al pasar a la ficha 03,
+                el clic de "Siguiente" termina como "submit" y envía el formulario. */}
             {paso < 2 ? (
-              <button type="button" onClick={avanzar} className={`${PRESS} flex-1 rounded-full bg-white px-8 py-4 text-lg font-medium text-black hover:bg-white/90`}>
+              <button key="siguiente" type="button" onClick={avanzar} className={`${PRESS} flex-1 rounded-full bg-white px-8 py-4 text-lg font-medium text-black hover:bg-white/90`}>
                 Siguiente
               </button>
             ) : (
-              <button type="submit" disabled={estado === "enviando"}
+              <button key="enviar" type="submit" disabled={estado === "enviando"}
                 className={`${PRESS} flex flex-1 items-center justify-center gap-2 rounded-full bg-primary px-8 py-4 text-lg font-medium text-black hover:bg-[#ff7a1f] disabled:opacity-60`}>
                 {estado === "enviando" && <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />}
                 Registrar mi equipo
