@@ -119,7 +119,7 @@ export const repairs: Repair[] = [
     name: "Tarjetas gráficas",
     detail: "RTX 3060 en adelante",
     from: 299,
-    days: "3 a 4 días",
+    days: "2 a 4 días",
     work: ["Reballing y cambio de memorias VRAM", "Cortos en fases de poder (MOSFET / VRM)", "BIOS y pistas dañadas", "Puertos HDMI y DisplayPort"],
   },
   {
