@@ -141,11 +141,65 @@ function guardarFoto(int $id, string $dataUrl): bool
     return file_put_contents("$DIR/fotos/$id.jpg", $bin) !== false;
 }
 
-/**
- * Lee la etiqueta con Claude (visión) y devuelve tipo, marca, modelo y S/N.
- * curl directo, como sync.php: el hosting no tiene Composer para instalar el SDK.
- */
+const LEER_INSTRUCCIONES = 'Es la foto de la etiqueta de un equipo que un cliente deja en un taller de reparación (laptop, consola, tarjeta gráfica o PC). '
+    . 'Extrae: tipo de equipo (Laptop, PC, Tarjeta gráfica, Consola u Otro); marca (ASUS, Lenovo, HP, Sony, MSI…); modelo tal como aparece en "Model", "Modelo" o "Model Name" '
+    . '(por ejemplo G614JV o CFI-1215A; no uses el P/N si hay un modelo); y el número de serie de "S/N", "SN" o "Serial No.", '
+    . 'copiado exactamente, sin espacios. Si un dato no se lee con seguridad, déjalo vacío: no lo adivines. '
+    . 'legible es false si la foto no muestra una etiqueta de equipo.';
+
+/** POST JSON con curl (el hosting no tiene Composer para instalar SDKs). Lanza RuntimeException si no responde 200. */
+function postJson(string $url, array $cabeceras, array $cuerpo): array
+{
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [
+        CURLOPT_POST => true,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => 45,
+        CURLOPT_HTTPHEADER => array_merge(['content-type: application/json'], $cabeceras),
+        CURLOPT_POSTFIELDS => json_encode($cuerpo, JSON_UNESCAPED_UNICODE),
+    ]);
+    $res = curl_exec($ch);
+    $codigo = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    $json = is_string($res) ? json_decode($res, true) : null;
+    if ($codigo !== 200 || !is_array($json)) {
+        error_log("recepcion leer: $url HTTP $codigo " . substr((string) $res, 0, 300));
+        throw new RuntimeException('lectura');
+    }
+    return $json;
+}
+
+/** Elige el proveedor por la clave: las de Claude empiezan con "sk-ant-", las demás se tratan como DeepSeek. */
 function leerEtiqueta(string $jpeg, string $clave): array
+{
+    return strpos($clave, 'sk-ant-') === 0 ? leerConClaude($jpeg, $clave) : leerConDeepSeek($jpeg, $clave);
+}
+
+/** DeepSeek (deepseek-flash lee imágenes): formato Chat Completions, JSON y sin "pensar" para que sea más barato. */
+function leerConDeepSeek(string $jpeg, string $clave): array
+{
+    $json = postJson('https://api.deepseek.com/chat/completions', ['Authorization: Bearer ' . $clave], [
+        'model' => 'deepseek-flash',
+        'thinking' => ['type' => 'disabled'],
+        'response_format' => ['type' => 'json_object'],
+        'max_tokens' => 800,
+        'messages' => [[
+            'role' => 'user',
+            'content' => [
+                ['type' => 'text', 'text' => LEER_INSTRUCCIONES
+                    . ' Responde solo con un objeto json como este: {"legible": true, "tipo": "Laptop", "marca": "ASUS", "modelo": "G614JV", "serie": "N3NRKD0099123AB"}'],
+                ['type' => 'image_url', 'image_url' => ['url' => 'data:image/jpeg;base64,' . base64_encode($jpeg), 'detail' => 'high']],
+            ],
+        ]],
+    ]);
+    $choice = $json['choices'][0] ?? [];
+    if (($choice['finish_reason'] ?? '') !== 'stop') return ['legible' => false];
+    $datos = json_decode(trim((string) ($choice['message']['content'] ?? '')), true);
+    return is_array($datos) ? $datos : ['legible' => false];
+}
+
+/** Claude (visión) con salida estructurada. */
+function leerConClaude(string $jpeg, string $clave): array
 {
     $esquema = [
         'type' => 'object',
@@ -159,12 +213,7 @@ function leerEtiqueta(string $jpeg, string $clave): array
         'required' => ['legible', 'tipo', 'marca', 'modelo', 'serie'],
         'additionalProperties' => false,
     ];
-    $instrucciones = 'Es la foto de la etiqueta de un equipo que un cliente deja en un taller de reparación (laptop, consola, tarjeta gráfica o PC). '
-        . 'Extrae: tipo de equipo; marca (ASUS, Lenovo, HP, Sony, MSI…); modelo tal como aparece en "Model", "Modelo" o "Model Name" '
-        . '(por ejemplo G614JV o CFI-1215A; no uses el P/N si hay un modelo); y el número de serie de "S/N", "SN" o "Serial No.", '
-        . 'copiado exactamente, sin espacios. Si un dato no se lee con seguridad, déjalo vacío: no lo adivines. '
-        . 'legible es false si la foto no muestra una etiqueta de equipo.';
-    $cuerpo = [
+    $json = postJson('https://api.anthropic.com/v1/messages', ['x-api-key: ' . $clave, 'anthropic-version: 2023-06-01', 'anthropic-beta: server-side-fallback-2026-07-01'], [
         'model' => 'claude-opus-5-5',
         'max_tokens' => 4000,
         'output_config' => ['effort' => 'low', 'format' => ['type' => 'json_schema', 'schema' => $esquema]],
@@ -173,31 +222,10 @@ function leerEtiqueta(string $jpeg, string $clave): array
             'role' => 'user',
             'content' => [
                 ['type' => 'image', 'source' => ['type' => 'base64', 'media_type' => 'image/jpeg', 'data' => base64_encode($jpeg)]],
-                ['type' => 'text', 'text' => $instrucciones],
+                ['type' => 'text', 'text' => LEER_INSTRUCCIONES],
             ],
         ]],
-    ];
-    $ch = curl_init('https://api.anthropic.com/v1/messages');
-    curl_setopt_array($ch, [
-        CURLOPT_POST => true,
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_TIMEOUT => 45,
-        CURLOPT_HTTPHEADER => [
-            'content-type: application/json',
-            'x-api-key: ' . $clave,
-            'anthropic-version: 2023-06-01',
-            'anthropic-beta: server-side-fallback-2026-07-01',
-        ],
-        CURLOPT_POSTFIELDS => json_encode($cuerpo, JSON_UNESCAPED_UNICODE),
     ]);
-    $res = curl_exec($ch);
-    $codigo = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-    $json = is_string($res) ? json_decode($res, true) : null;
-    if ($codigo !== 200 || !is_array($json)) {
-        error_log("recepcion leer: HTTP $codigo " . substr((string) $res, 0, 300));
-        throw new RuntimeException('lectura');
-    }
     if (($json['stop_reason'] ?? '') !== 'end_turn') return ['legible' => false];
     foreach ($json['content'] ?? [] as $bloque) {
         if (($bloque['type'] ?? '') === 'text') {
@@ -258,19 +286,24 @@ try {
             responder(['numero' => numero($id)]);
 
         case 'POST leer':
-            if (empty($CFG['anthropic_key'])) fallo('La lectura automática no está activada.', 503);
+            // Una sola clave basta: DeepSeek o Claude, en cualquiera de las dos líneas de config.php.
+            $claveIA = trim((string) (($CFG['deepseek_key'] ?? '') ?: ($CFG['anthropic_key'] ?? '')));
+            if ($claveIA === '') fallo('La lectura automática no está activada.', 503);
             if (demasiados('leer', 15, 3600)) fallo('Leíste muchas etiquetas seguidas. Completa los datos a mano.', 429);
             $jpeg = jpegDe((string) (cuerpo()['foto'] ?? ''));
             if ($jpeg === null) fallo('No pude abrir esa foto. Prueba con otra.');
             anotar('leer');
             try {
-                $l = leerEtiqueta($jpeg, (string) $CFG['anthropic_key']);
+                $l = leerEtiqueta($jpeg, $claveIA);
             } catch (RuntimeException $e) {
                 fallo('No pude leer la etiqueta ahora. Completa los datos a mano.', 502);
             }
             responder([
                 'legible' => !empty($l['legible']),
-                'tipo' => limpiar($l['tipo'] ?? '', 30),
+                // Solo un tipo de la lista del formulario, sin importar mayúsculas; si no, vacío.
+                'tipo' => array_values(array_filter(['Laptop', 'PC', 'Tarjeta gráfica', 'Consola', 'Otro'], function ($t) use ($l) {
+                    return mb_strtolower($t) === mb_strtolower(trim((string) ($l['tipo'] ?? '')));
+                }))[0] ?? '',
                 'marca' => limpiar($l['marca'] ?? '', 40),
                 'modelo' => limpiar($l['modelo'] ?? '', 80),
                 'serie' => mb_strtoupper(preg_replace('/[^A-Za-z0-9-]/', '', (string) ($l['serie'] ?? '')) ?? ''),
