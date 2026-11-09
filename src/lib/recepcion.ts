@@ -132,6 +132,49 @@ export async function api<T>(accion: string, body?: unknown, query = ""): Promis
 
 export const equipo = (o: Pick<Registro, "tipo" | "marca" | "modelo">) => [o.marca, o.modelo].filter(Boolean).join(" ") || o.tipo;
 
+// ---------- Etiquetas (navegador y OpenLabel+) ----------
+
+/** Resumen de la falla para 2 líneas de la etiqueta: suma frases mientras quepan y corta en palabra completa. */
+export function fallaCorta(falla: string, max = 64) {
+  const partes = falla.replace(/\s+/g, " ").trim().split(/(?<=[.;!?])\s/);
+  let texto = partes[0];
+  for (const p of partes.slice(1)) {
+    if (texto.length + 1 + p.length > max) break;
+    texto += ` ${p}`;
+  }
+  texto = texto.replace(/[.;]$/, "");
+  if (texto.length <= max) return texto;
+  const corte = texto.lastIndexOf(" ", max - 1);
+  return texto.slice(0, corte > 20 ? corte : max - 1) + "…";
+}
+
+export type Etiqueta = { PARTE: string; QF: string; FECHA: string; SERVICIO: string; AVISO: string; CLIENTE: string; EQUIPO: string; SN: string; FALLA: string };
+
+/** Datos de cada etiqueta: la del equipo y, si dejó cargador, la del cargador. Las claves son las columnas del CSV. */
+export function etiquetas(o: Orden): Etiqueta[] {
+  const base = {
+    QF: o.numero,
+    // en-GB da siempre dd/mm con dos dígitos (es-PE a veces quita el cero).
+    FECHA: new Date(o.recibido ?? o.creado).toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit", timeZone: "America/Lima" }),
+    SERVICIO: (o.servicio || "Revisión").toUpperCase(),
+    AVISO: [o.liquido === 1 && "LÍQUIDO/GOLPE", o.abierto === 1 && "ABIERTO"].filter(Boolean).join(" · "),
+    CLIENTE: o.nombre,
+    EQUIPO: equipo(o),
+    SN: `S/N ${o.serie || "—"}`,
+  };
+  const lista: Etiqueta[] = [{ PARTE: "EQUIPO", ...base, FALLA: fallaCorta(o.falla) }];
+  if (/cargador/i.test(o.accesorios ?? "")) lista.push({ PARTE: "CARGADOR", ...base, FALLA: `Cargador de ${equipo(o)}` });
+  return lista;
+}
+
+/** CSV con encabezados (sin BOM: OpenLabel+ lee UTF-8). Comillas solo donde hace falta. */
+export function aCsv(filas: Record<string, string>[]) {
+  if (!filas.length) return "";
+  const celda = (v: string) => (/[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
+  const cols = Object.keys(filas[0]);
+  return [cols, ...filas.map((f) => cols.map((c) => f[c] ?? ""))].map((r) => r.map(celda).join(",")).join("\r\n") + "\r\n";
+}
+
 /** Mensaje que el cliente te manda al terminar: así tienes su contacto en WhatsApp sí o sí. */
 export const avisoCliente = (numero: string, r: Pick<Registro, "nombre" | "tipo" | "marca" | "modelo" | "falla"> & Partial<Pick<Registro, "modo" | "direccion">>) =>
   waLink(`Hola QuickFix, soy ${r.nombre}. Registré mi ${r.tipo.toLowerCase()} ${equipo(r)} con el N° ${numero}.\nFalla: ${r.falla}${r.modo === "recojo" ? `\nQuiero que lo recojan en: ${r.direccion}` : ""}`);

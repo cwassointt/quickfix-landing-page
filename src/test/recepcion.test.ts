@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  avisoCliente, chatCliente, diaLima, equipo, preguntas, resumirFalla, sugerirCorreo, sugerirDistrito, validar, validarWhatsapp, type Registro,
+  aCsv, avisoCliente, chatCliente, diaLima, equipo, etiquetas, fallaCorta, preguntas, resumirFalla, sugerirCorreo, sugerirDistrito, validar, validarWhatsapp, type Registro,
 } from "@/lib/recepcion";
 
 describe("recepción", () => {
@@ -30,6 +30,33 @@ describe("recepción", () => {
   it("la pregunta de la luz solo aparece si no enciende, y las de laptop solo en laptops", () => {
     expect(preguntas("Laptop").find((p) => p.id === "luz")!.si!({ enciende: ["Enciende normal"] })).toBe(false);
     expect(preguntas("Consola").find((p) => p.id === "sintomas")!.opciones).not.toContain("No carga la batería");
+  });
+});
+
+describe("etiquetas", () => {
+  const orden = {
+    id: 7, numero: "QF-0007", creado: "2026-11-09T10:00:00-05:00", origen: "cliente", nombre: "Ana Torres", dni: "", whatsapp: "", correo: "", distrito: "",
+    como: "", tipo: "Laptop", marca: "ASUS", modelo: "ROG Strix G16 G614JV", serie: "N3NRKD0099", pin: "", accesorios: "Cargador, Mouse", servicio: "Reparación",
+    falla: "No enciende para nada; al conectarlo no prende ninguna luz. Además: olor a quemado.", liquido: 1, abierto: 0, estado: "recibido",
+    recibido: null, recibido_por: null, llega: null, modo: "taller", direccion: "", autoriza: 0, foto: null,
+  } as const;
+
+  it("resume la falla en su primera frase y corta en palabra completa", () => {
+    expect(fallaCorta(orden.falla)).toBe("No enciende para nada; al conectarlo no prende ninguna luz");
+    const larga = fallaCorta("Se apaga cuando juego más de diez minutos y los ventiladores suenan como turbina de avión");
+    expect(larga.length).toBeLessThanOrEqual(64);
+    expect(larga.endsWith("…")).toBe(true);
+  });
+
+  it("arma la etiqueta del equipo con aviso y la del cargador solo si lo dejó", () => {
+    const [eq, cargador] = etiquetas(orden);
+    expect(eq).toMatchObject({ PARTE: "EQUIPO", QF: "QF-0007", SERVICIO: "REPARACIÓN", AVISO: "LÍQUIDO/GOLPE", SN: "S/N N3NRKD0099", FECHA: "09/11" });
+    expect(cargador.PARTE).toBe("CARGADOR");
+    expect(etiquetas({ ...orden, accesorios: "" })).toHaveLength(1);
+  });
+
+  it("el CSV escapa comas y comillas", () => {
+    expect(aCsv([{ A: "x, y", B: 'dijo "hola"' }])).toBe('A,B\r\n"x, y","dijo ""hola"""\r\n');
   });
 });
 

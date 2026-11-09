@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { Download, Loader2, LogOut, Plus, Printer, RefreshCw } from "lucide-react";
-import { API, ESTADOS, api, chatCliente, diaLima, equipo, fecha, type Orden, type Rol } from "@/lib/recepcion";
+import { Check, Download, Loader2, LogOut, Plus, Printer, RefreshCw } from "lucide-react";
+import { API, ESTADOS, aCsv, api, chatCliente, diaLima, equipo, etiquetas, fecha, type Orden, type Rol } from "@/lib/recepcion";
 
 const PRESS = "transition-[transform,background-color,color] duration-150 ease-out active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-[#050505]";
 const BTN = `${PRESS} inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-base`;
@@ -16,21 +16,44 @@ const ETIQUETA_CSS = `
   .qf-etiqueta { width: 50mm; height: 30mm; padding: 2mm 2.5mm; box-sizing: border-box; overflow: hidden; break-after: page; }
 }`;
 
+const linea = { whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } as const;
+
+/** Diseño 50 × 30 mm: servicio y fecha, N° grande con aviso en negro, cliente, equipo, S/N y la falla en 2 líneas. */
 const Etiquetas = ({ o }: { o: Orden }) => (
   <div className="qf-etiquetas hidden" aria-hidden="true">
-    {["EQUIPO", "CARGADOR"].map((parte) => (
-      <div key={parte} className="qf-etiqueta" style={{ fontSize: "7pt", lineHeight: 1.2 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 700 }}>
-          <span>QUICKFIX</span><span>{parte}</span>
+    {etiquetas(o).map((e) => (
+      <div key={e.PARTE} className="qf-etiqueta" style={{ fontSize: "6.5pt", lineHeight: 1.18, display: "flex", flexDirection: "column" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", gap: "1mm", fontWeight: 700, fontSize: "5.5pt", letterSpacing: "0.02em" }}>
+          <span>QUICKFIX · {e.PARTE === "CARGADOR" ? "CARGADOR" : e.SERVICIO}</span><span>{e.FECHA}</span>
         </div>
-        <div style={{ fontSize: "17pt", fontWeight: 700, lineHeight: 1.1, margin: "0.8mm 0" }}>{o.numero}</div>
-        <div style={{ fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden" }}>{o.nombre}</div>
-        <div style={{ whiteSpace: "nowrap", overflow: "hidden" }}>{equipo(o)}</div>
-        <div style={{ whiteSpace: "nowrap", overflow: "hidden" }}>S/N {o.serie || "—"} · {new Date(o.creado).toLocaleDateString("es-PE", { day: "2-digit", month: "2-digit" })}</div>
+        <div style={{ display: "flex", alignItems: "center", gap: "1.2mm", margin: "0.4mm 0 0.6mm" }}>
+          {/* El N° nunca se parte; el aviso usa el espacio que queda (hasta 2 líneas). */}
+          <span style={{ fontSize: "16pt", fontWeight: 800, lineHeight: 1, letterSpacing: "-0.02em", whiteSpace: "nowrap", flexShrink: 0 }}>{e.QF}</span>
+          {e.AVISO && (
+            <span style={{ background: "#000", color: "#fff", fontWeight: 700, fontSize: "5pt", lineHeight: 1.15, padding: "0.5mm 0.8mm", borderRadius: "0.6mm", minWidth: 0 }}>
+              ⚠ {e.AVISO}
+            </span>
+          )}
+        </div>
+        <div style={{ ...linea, fontWeight: 700, fontSize: "7pt" }}>{e.CLIENTE}</div>
+        <div style={linea}>{e.EQUIPO}</div>
+        <div style={{ ...linea, fontFamily: "Consolas, monospace" }}>{e.SN}</div>
+        <div style={{ marginTop: "auto", borderTop: "0.2mm solid #000", paddingTop: "0.5mm", fontSize: "5.5pt", lineHeight: 1.15,
+          display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+          {e.FALLA}
+        </div>
       </div>
     ))}
   </div>
 );
+
+/** Baja las etiquetas como CSV para imprimirlas desde OpenLabel+ (plantilla "QuickFix"). */
+function descargarCsv(o: Orden) {
+  const url = URL.createObjectURL(new Blob([aCsv(etiquetas(o))], { type: "text/csv;charset=utf-8" }));
+  const a = Object.assign(document.createElement("a"), { href: url, download: `etiqueta-${o.numero}.csv` });
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
 
 function Login({ onEntrar }: { onEntrar: (r: Rol) => void }) {
   const [clave, setClave] = useState("");
@@ -95,15 +118,20 @@ function Tarjeta({ o, rol, onRecibir, onImprimir }: { o: Orden; rol: Rol; onReci
       <p className="mt-4 whitespace-pre-line rounded-2xl bg-black/30 p-4 text-base text-white/85">{o.falla}</p>
       {o.recibido && <p className="mt-3 text-sm text-white/50">Recibido {fecha(o.recibido)} · {o.recibido_por === "mostrador" ? "mostrador" : "tú"}</p>}
       <div className="mt-5 flex flex-wrap gap-2">
+        {/* La impresora térmica imprime desde OpenLabel+: "Recibido" baja el CSV de las etiquetas para importarlo allí. */}
         {pendiente ? (
-          <button onClick={onRecibir} className={`${BTN} bg-primary font-medium text-black hover:bg-[#ff7a1f]`}>
-            <Printer className="h-5 w-5" aria-hidden="true" /> Recibido · imprimir etiquetas
+          <button onClick={() => { onRecibir(); descargarCsv(o); }} className={`${BTN} bg-primary font-medium text-black hover:bg-[#ff7a1f]`}>
+            <Check className="h-5 w-5" aria-hidden="true" /> Recibido · bajar etiquetas
           </button>
         ) : (
-          <button onClick={onImprimir} className={`${BTN} bg-white/[0.08] text-white hover:bg-white/[0.14]`}>
-            <Printer className="h-5 w-5" aria-hidden="true" /> Etiquetas
+          <button onClick={() => descargarCsv(o)} className={`${BTN} bg-white/[0.08] text-white hover:bg-white/[0.14]`}>
+            <Download className="h-5 w-5" aria-hidden="true" /> Etiquetas OpenLabel+
           </button>
         )}
+        <button onClick={onImprimir} aria-label="Imprimir etiquetas desde el navegador" title="Imprimir desde el navegador"
+          className={`${BTN} bg-white/[0.08] px-4 text-white hover:bg-white/[0.14]`}>
+          <Printer className="h-5 w-5" aria-hidden="true" />
+        </button>
         {rol === "admin" && o.whatsapp && (
           <a href={chatCliente(o.whatsapp, `Hola ${o.nombre.split(" ")[0]}, te escribo de QuickFix por tu ${equipo(o)} (${o.numero}).`)} target="_blank" rel="noopener noreferrer"
             className={`${BTN} bg-white/[0.08] text-white hover:bg-white/[0.14]`}>
@@ -154,7 +182,6 @@ const TallerPage = () => {
   const recibir = async (o: Orden) => {
     try {
       await api("recibir", { id: o.id });
-      setImprimir({ ...o });
       cargar();
     } catch (err) { setError((err as Error).message); }
   };
