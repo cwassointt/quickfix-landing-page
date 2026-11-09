@@ -75,7 +75,6 @@ function Tarjeta({ o, rol, onRecibir, onImprimir }: { o: Orden; rol: Rol; onReci
       {avisos.length > 0 && <p className="mt-2 text-base font-medium text-red-300">{avisos.join(" · ")}</p>}
       <dl className="mt-4 grid gap-3 sm:grid-cols-2">
         <Dato k="N° de serie" v={o.serie} />
-        <Dato k="Color o señas" v={o.color} />
         <Dato k="Deja también" v={o.accesorios} />
         <Dato k="Servicio" v={o.servicio} />
         {rol === "admin" && <><Dato k="WhatsApp" v={o.whatsapp} /><Dato k="DNI" v={o.dni} /><Dato k="Correo" v={o.correo} /><Dato k="Distrito" v={o.distrito} /><Dato k="Clave del equipo" v={o.pin} /><Dato k="Nos conoció por" v={o.como} /></>}

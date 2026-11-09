@@ -1,13 +1,15 @@
-import { useState, type ReactNode } from "react";
-import { Check, Loader2 } from "lucide-react";
+import { useEffect, useState, type ReactNode } from "react";
+import { Check, Loader2, Search, Sparkles } from "lucide-react";
 import Navbar from "@/components/Navbar";
+import AsistenteFalla, { type Resultado } from "@/components/AsistenteFalla";
+import { laptopLabel, searchLaptops, type Laptop } from "@/lib/laptopSearch";
 import { OPCIONES, api, avisoCliente, type Registro } from "@/lib/recepcion";
 
 const PRESS = "transition-[transform,background-color,color] duration-150 ease-out active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-[#050505]";
 const INPUT = "mt-2 h-12 w-full rounded-xl bg-white/[0.06] px-4 text-base text-white placeholder:text-white/35 focus:outline-none focus:ring-2 focus:ring-primary";
 
 const VACIO: Registro = {
-  nombre: "", dni: "", whatsapp: "", correo: "", distrito: "", como: "", tipo: "", marca: "", modelo: "", serie: "", color: "", pin: "",
+  nombre: "", dni: "", whatsapp: "", correo: "", distrito: "", como: "", tipo: "", marca: "", modelo: "", serie: "", pin: "",
   accesorios: "", servicio: "", falla: "", liquido: null, abierto: null, acepta: false, web: "",
 };
 
@@ -20,7 +22,7 @@ const Campo = ({ label, hint, children }: { label: string; hint?: string; childr
 );
 
 /** Botones tipo píldora: una opción (o varias con `multi`). */
-function Opciones({ label, opciones, valor, onChange, multi = false }: { label: string; opciones: string[]; valor: string; onChange: (v: string) => void; multi?: boolean }) {
+function Opciones({ label, opciones, valor, onChange, multi = false, children }: { label: string; opciones: string[]; valor: string; onChange: (v: string) => void; multi?: boolean; children?: ReactNode }) {
   const elegidas = valor ? valor.split(", ") : [];
   const toggle = (o: string) => {
     if (!multi) return onChange(valor === o ? "" : o);
@@ -40,6 +42,7 @@ function Opciones({ label, opciones, valor, onChange, multi = false }: { label: 
             </button>
           );
         })}
+        {children}
       </div>
     </fieldset>
   );
@@ -59,6 +62,42 @@ const SiNo = ({ label, valor, onChange }: { label: string; valor: boolean | null
   </fieldset>
 );
 
+/** Modelo de laptop con la misma lista del cotizador: al elegir uno se completan marca y modelo. */
+function ModeloLaptop({ valor, onEscribir, onElegir }: { valor: string; onEscribir: (v: string) => void; onElegir: (l: Laptop) => void }) {
+  const [laptops, setLaptops] = useState<Laptop[]>([]);
+  const [abierto, setAbierto] = useState(false);
+  useEffect(() => { import("@/data/laptops.json").then((m) => setLaptops(m.default)); }, []);
+  const resultados = abierto && valor.trim().length >= 2 ? searchLaptops(laptops, valor, 5) : [];
+  return (
+    <div>
+      <label className="block">
+        <span className="text-base font-medium text-white">Modelo</span>
+        <span className="ml-2 text-sm text-white/50">escríbelo y elígelo de la lista</span>
+        <span className="relative mt-2 block">
+          <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-white/45" aria-hidden="true" />
+          <input required value={valor} placeholder="Strix G614JV, Legion 5, TUF F15…" autoComplete="off"
+            onChange={(e) => { onEscribir(e.target.value); setAbierto(true); }}
+            onKeyDown={(e) => { if (e.key === "Enter" && resultados[0]) { e.preventDefault(); onElegir(resultados[0]); setAbierto(false); } }}
+            className={`${INPUT} mt-0 pl-12`} />
+        </span>
+      </label>
+      {resultados.length > 0 && (
+        <ul className="mt-2 space-y-1.5">
+          {resultados.map((l) => (
+            <li key={laptopLabel(l)}>
+              <button type="button" onClick={() => { onElegir(l); setAbierto(false); }}
+                className={`${PRESS} w-full rounded-xl bg-white/[0.04] px-4 py-3 text-left hover:bg-white/[0.1]`}>
+                <span className="block text-sm text-white/55">{l.brand}</span>
+                <span className="block truncate text-base text-white">{[l.name, l.code].filter(Boolean).join(" ")}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 const Bloque = ({ n, title, sub, children }: { n: string; title: string; sub?: string; children: ReactNode }) => (
   <section className="rounded-3xl bg-white/[0.04] p-5 md:p-8">
     <p className="font-mono text-sm text-primary">{n}</p>
@@ -74,6 +113,18 @@ const RecepcionPage = () => {
   const [estado, setEstado] = useState<"form" | "enviando" | "listo">("form");
   const [error, setError] = useState("");
   const [numero, setNumero] = useState("");
+  const [asistente, setAsistente] = useState(false);
+  const usarResumen = (res: Resultado) => {
+    setR((x) => ({
+      ...x,
+      servicio: res.servicio,
+      falla: x.falla.trim() ? `${res.texto}
+${x.falla.trim()}` : res.texto,
+      liquido: res.liquido ?? x.liquido,
+      abierto: res.abierto ?? x.abierto,
+    }));
+    setAsistente(false);
+  };
   const set = <K extends keyof Registro>(k: K) => (v: Registro[K]) => setR((x) => ({ ...x, [k]: v }));
   const txt = (k: keyof Registro) => ({ value: r[k] as string, onChange: (e: { target: { value: string } }) => set(k)(e.target.value) });
 
@@ -141,14 +192,21 @@ const RecepcionPage = () => {
 
           <Bloque n="02" title="Tu equipo">
             <Opciones label="Tipo de equipo" opciones={OPCIONES.tipo} valor={r.tipo} onChange={set("tipo")} />
-            <div className="grid gap-5 sm:grid-cols-2">
-              <Campo label="Marca"><input required placeholder="ASUS, Lenovo, Sony…" className={INPUT} {...txt("marca")} /></Campo>
-              <Campo label="Modelo"><input required placeholder="ROG Strix G15 G513QM" className={INPUT} {...txt("modelo")} /></Campo>
-            </div>
+            {r.tipo === "Laptop" ? (
+              <>
+                <ModeloLaptop valor={r.modelo} onEscribir={set("modelo")}
+                  onElegir={(l) => setR((x) => ({ ...x, marca: l.brand, modelo: [l.name, l.code].filter(Boolean).join(" ") }))} />
+                <Campo label="Marca"><input required placeholder="Se completa sola al elegir el modelo" className={INPUT} {...txt("marca")} /></Campo>
+              </>
+            ) : (
+              <div className="grid gap-5 sm:grid-cols-2">
+                <Campo label="Marca"><input required placeholder="ASUS, Lenovo, Sony…" className={INPUT} {...txt("marca")} /></Campo>
+                <Campo label="Modelo"><input required placeholder={r.tipo === "Consola" ? "PS5 Slim, PS4 Pro…" : "Modelo"} className={INPUT} {...txt("modelo")} /></Campo>
+              </div>
+            )}
             <Campo label="Número de serie (S/N)" hint="en la etiqueta de abajo del equipo">
               <input autoCapitalize="characters" placeholder="Si no lo encuentras, déjalo vacío" className={`${INPUT} font-mono uppercase`} {...txt("serie")} />
             </Campo>
-            <Campo label="Color o señas" hint="stickers, golpes, rayones"><input className={INPUT} {...txt("color")} /></Campo>
             <Campo label="Contraseña o PIN de inicio" hint="opcional, para probarlo">
               <input autoComplete="off" className={INPUT} {...txt("pin")} />
             </Campo>
@@ -156,7 +214,12 @@ const RecepcionPage = () => {
           </Bloque>
 
           <Bloque n="03" title="¿Qué le pasa?">
-            <Opciones label="Servicio" opciones={OPCIONES.servicio} valor={r.servicio} onChange={set("servicio")} />
+            <Opciones label="Servicio" opciones={OPCIONES.servicio} valor={r.servicio} onChange={set("servicio")}>
+              <button type="button" onClick={() => setAsistente(true)}
+                className={`${PRESS} inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-base text-primary ring-1 ring-inset ring-primary/60 hover:bg-primary/10`}>
+                <Sparkles className="h-4 w-4" aria-hidden="true" /> No sé, ayúdame
+              </button>
+            </Opciones>
             <Campo label="Cuéntame la falla">
               <textarea required rows={4} placeholder="Se apaga al jugar, no carga, no da imagen…" className={`${INPUT} h-auto py-3 leading-relaxed`} {...txt("falla")} />
             </Campo>
@@ -185,6 +248,7 @@ const RecepcionPage = () => {
           </button>
         </form>
       </main>
+      {asistente && <AsistenteFalla tipo={r.tipo} onCerrar={() => setAsistente(false)} onUsar={usarResumen} />}
     </div>
   );
 };

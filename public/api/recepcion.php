@@ -14,7 +14,7 @@ const CAMPOS = [
     // campo => [obligatorio, largo máximo]
     'nombre' => [true, 100], 'dni' => [false, 12], 'whatsapp' => [true, 20], 'correo' => [false, 120], 'distrito' => [false, 60],
     'como' => [false, 40], 'tipo' => [true, 30], 'marca' => [true, 40], 'modelo' => [true, 80], 'serie' => [false, 40],
-    'color' => [false, 120], 'pin' => [false, 40], 'accesorios' => [false, 120], 'servicio' => [false, 40], 'falla' => [true, 1000],
+    'pin' => [false, 40], 'accesorios' => [false, 120], 'servicio' => [false, 40], 'falla' => [true, 1000],
 ];
 
 header('Content-Type: application/json; charset=utf-8');
@@ -181,7 +181,7 @@ try {
         case 'GET lista':
             $r = exigir('admin', 'mostrador');
             // Mostrador ve lo necesario para recibir el equipo; ni la clave del equipo ni montos.
-            $cols = $r === 'admin' ? '*' : 'id, creado, origen, nombre, whatsapp, tipo, marca, modelo, serie, color, accesorios, servicio, falla, liquido, abierto, estado, recibido, recibido_por';
+            $cols = $r === 'admin' ? '*' : 'id, creado, origen, nombre, whatsapp, tipo, marca, modelo, serie, accesorios, servicio, falla, liquido, abierto, estado, recibido, recibido_por';
             $where = ($_GET['filtro'] ?? '') === 'pendientes' ? "WHERE estado = 'registrado'" : '';
             $filas = db()->query("SELECT $cols FROM ordenes $where ORDER BY id DESC LIMIT 200")->fetchAll();
             foreach ($filas as &$f) $f['numero'] = numero((int) $f['id']);
