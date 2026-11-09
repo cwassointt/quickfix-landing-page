@@ -5,13 +5,20 @@ export type Registro = {
   nombre: string; dni: string; whatsapp: string; correo: string; distrito: string; como: string;
   tipo: string; marca: string; modelo: string; serie: string; pin: string; accesorios: string;
   servicio: string; falla: string; liquido: boolean | null; abierto: boolean | null; acepta: boolean;
+  /** Cuándo llega el equipo: opción elegida y la fecha (AAAA-MM-DD) que se guarda. */
+  cuando: string; llega: string;
+  modo: "taller" | "recojo"; direccion: string;
+  /** Monto hasta el que se puede reparar sin consultar (0 = consultar siempre). */
+  autoriza: number;
+  /** Foto de la etiqueta como data URL JPEG, ya reducida en el navegador. */
+  foto: string;
   /** Campo trampa: oculto para personas, los robots lo llenan. */
   web: string;
 };
 
-export type Orden = Omit<Registro, "acepta" | "web" | "liquido" | "abierto"> & {
+export type Orden = Omit<Registro, "acepta" | "web" | "liquido" | "abierto" | "cuando" | "foto" | "llega" | "autoriza"> & {
   id: number; numero: string; creado: string; origen: "cliente" | "taller";
-  liquido: 0 | 1 | null; abierto: 0 | 1 | null;
+  liquido: 0 | 1 | null; abierto: 0 | 1 | null; llega: string | null; autoriza: number | null; foto: 0 | 1 | null;
   estado: string; recibido: string | null; recibido_por: string | null;
 };
 export type Rol = "admin" | "mostrador";
@@ -21,7 +28,57 @@ export const OPCIONES = {
   como: ["Google", "TikTok", "IA (ChatGPT, Gemini, Claude…)", "Recomendación", "Ya soy cliente", "Otro"],
   servicio: ["Mantenimiento", "Reparación"],
   accesorios: ["Cargador", "Funda o mochila", "Mouse", "Control", "Cables"],
+  cuando: ["Ya estoy en el taller", "Hoy", "Mañana", "Otro día"],
+  autoriza: [["Consúltame siempre", 0], ["Hasta S/ 150", 150], ["Hasta S/ 300", 300], ["Hasta S/ 500", 500]] as [string, number][],
 };
+
+/** Fecha de hoy en Lima (AAAA-MM-DD), más `dias`. */
+export function diaLima(dias = 0) {
+  const d = new Date(Date.now() + dias * 86_400_000);
+  return d.toLocaleDateString("en-CA", { timeZone: "America/Lima" });
+}
+
+// ---------- Validación: mismas reglas que public/api/recepcion.php ----------
+
+export type Campo = "nombre" | "whatsapp" | "dni" | "correo" | "distrito" | "tipo" | "marca" | "modelo" | "serie" | "llega" | "direccion" | "falla" | "acepta";
+export type Errores = Partial<Record<Campo, string>>;
+/** Campos de cada ficha del carrusel. */
+export const FICHAS: Campo[][] = [
+  ["nombre", "whatsapp", "dni", "correo", "distrito"],
+  ["tipo", "marca", "modelo", "serie"],
+  ["llega", "direccion", "falla", "acepta"],
+];
+
+const LETRAS = /^[\p{L}' .-]+$/u;
+
+export function validarWhatsapp(v: string) {
+  const d = v.replace(/\D/g, "");
+  const extranjero = v.trim().startsWith("+") && !d.startsWith("51") && d.length >= 8 && d.length <= 15;
+  return /^(51)?9\d{8}$/.test(d) || extranjero;
+}
+
+export function validar(r: Registro): Errores {
+  const e: Errores = {};
+  const t = (v: string) => v.trim();
+  if (!t(r.nombre)) e.nombre = "Escribe tu nombre.";
+  else if (!LETRAS.test(t(r.nombre))) e.nombre = "Usa solo letras.";
+  else if (t(r.nombre).split(/\s+/).length < 2) e.nombre = "Escribe tu nombre y apellido.";
+  if (!t(r.whatsapp)) e.whatsapp = "Escribe tu WhatsApp.";
+  else if (!validarWhatsapp(r.whatsapp)) e.whatsapp = "Debe tener 9 dígitos y empezar con 9. Si es extranjero, empieza con +.";
+  if (t(r.dni) && !/^(\d{8}|[A-Za-z0-9]{9,12})$/.test(t(r.dni))) e.dni = "El DNI tiene 8 dígitos; el CE, de 9 a 12 caracteres.";
+  if (t(r.correo) && !/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(t(r.correo))) e.correo = "Revisa tu correo, por ejemplo nombre@gmail.com.";
+  if (t(r.distrito) && (!LETRAS.test(t(r.distrito)) || t(r.distrito).length < 3)) e.distrito = "Escribe un distrito válido.";
+  if (!r.tipo) e.tipo = "Elige el tipo de equipo.";
+  if (t(r.marca).length < 2) e.marca = "Escribe la marca.";
+  if (t(r.modelo).length < 2) e.modelo = "Escribe el modelo.";
+  if (t(r.serie) && !/^[A-Za-z0-9-]{5,30}$/.test(t(r.serie))) e.serie = "Solo letras y números, sin espacios (5 a 30).";
+  if (!r.cuando) e.llega = "Elige cuándo traes el equipo.";
+  else if (r.cuando === "Otro día" && (!r.llega || r.llega < diaLima() || r.llega > diaLima(60))) e.llega = "Elige una fecha desde hoy y dentro de 60 días.";
+  if (r.modo === "recojo" && t(r.direccion).length < 8) e.direccion = "Escribe la dirección completa para recogerlo.";
+  if (t(r.falla).length < 10) e.falla = "Cuéntame un poco más (mínimo 10 letras), o usa «No sé, ayúdame».";
+  if (!r.acepta) e.acepta = "Debes aceptar las condiciones para registrar.";
+  return e;
+}
 
 export const ESTADOS: Record<string, string> = {
   registrado: "Por recibir", recibido: "Recibido", diagnostico: "En diagnóstico", aprobacion: "Esperando aprobación",
@@ -45,8 +102,8 @@ export async function api<T>(accion: string, body?: unknown, query = ""): Promis
 export const equipo = (o: Pick<Registro, "tipo" | "marca" | "modelo">) => [o.marca, o.modelo].filter(Boolean).join(" ") || o.tipo;
 
 /** Mensaje que el cliente te manda al terminar: así tienes su contacto en WhatsApp sí o sí. */
-export const avisoCliente = (numero: string, r: Pick<Registro, "nombre" | "tipo" | "marca" | "modelo" | "falla">) =>
-  waLink(`Hola QuickFix, soy ${r.nombre}. Registré mi ${r.tipo.toLowerCase()} ${equipo(r)} con el N° ${numero}.\nFalla: ${r.falla}`);
+export const avisoCliente = (numero: string, r: Pick<Registro, "nombre" | "tipo" | "marca" | "modelo" | "falla"> & Partial<Pick<Registro, "modo" | "direccion">>) =>
+  waLink(`Hola QuickFix, soy ${r.nombre}. Registré mi ${r.tipo.toLowerCase()} ${equipo(r)} con el N° ${numero}.\nFalla: ${r.falla}${r.modo === "recojo" ? `\nQuiero que lo recojan en: ${r.direccion}` : ""}`);
 
 /** Chat con el cliente (números peruanos de 9 dígitos o con código de país). */
 export function chatCliente(whatsapp: string, texto: string) {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { avisoCliente, chatCliente, equipo, preguntas, resumirFalla } from "@/lib/recepcion";
+import { avisoCliente, chatCliente, diaLima, equipo, preguntas, resumirFalla, validar, validarWhatsapp, type Registro } from "@/lib/recepcion";
 
 describe("recepción", () => {
   it("arma el chat con números peruanos o con código de país", () => {
@@ -28,5 +28,37 @@ describe("recepción", () => {
   it("la pregunta de la luz solo aparece si no enciende, y las de laptop solo en laptops", () => {
     expect(preguntas("Laptop").find((p) => p.id === "luz")!.si!({ enciende: ["Enciende normal"] })).toBe(false);
     expect(preguntas("Consola").find((p) => p.id === "sintomas")!.opciones).not.toContain("No carga la batería");
+  });
+});
+
+describe("validación del formulario", () => {
+  const ok: Registro = {
+    nombre: "Ana Torres", dni: "", whatsapp: "987 654 321", correo: "", distrito: "", como: "", tipo: "Laptop", marca: "ASUS", modelo: "ROG Strix G15",
+    serie: "", pin: "", accesorios: "", servicio: "", falla: "Se apaga al jugar", liquido: null, abierto: null, acepta: true, web: "",
+    cuando: "Hoy", llega: diaLima(), modo: "taller", direccion: "", autoriza: 0, foto: "",
+  };
+
+  it("un registro completo no tiene errores", () => {
+    expect(validar(ok)).toEqual({});
+  });
+
+  it("marca cada dato mal ingresado", () => {
+    const e = validar({ ...ok, nombre: "Ana", whatsapp: "12345", dni: "123", correo: "ana@", serie: "ab", falla: "mal", acepta: false, tipo: "" });
+    expect(Object.keys(e).sort()).toEqual(["acepta", "dni", "falla", "nombre", "serie", "tipo", "whatsapp", "correo"].sort());
+  });
+
+  it("acepta celulares con 51 y números extranjeros con +, y DNI o CE", () => {
+    expect(validarWhatsapp("+51 987 654 321")).toBe(true);
+    expect(validarWhatsapp("+34 612 345 678")).toBe(true);
+    expect(validarWhatsapp("812345678")).toBe(false);
+    expect(validar({ ...ok, dni: "70123456" }).dni).toBeUndefined();
+    expect(validar({ ...ok, dni: "001234567" }).dni).toBeUndefined();
+  });
+
+  it("pide dirección si es recojo y una fecha válida si es otro día", () => {
+    expect(validar({ ...ok, modo: "recojo", direccion: "" }).direccion).toBeDefined();
+    expect(validar({ ...ok, cuando: "Otro día", llega: "" }).llega).toBeDefined();
+    expect(validar({ ...ok, cuando: "Otro día", llega: diaLima(3) }).llega).toBeUndefined();
+    expect(validar({ ...ok, cuando: "Otro día", llega: diaLima(90) }).llega).toBeDefined();
   });
 });
