@@ -29,3 +29,4 @@ vite.config.ts.timestamp-*
 
 # Credenciales de Deltron: solo en el servidor
 server/deltron/config.php
+server/recepcion/config.php

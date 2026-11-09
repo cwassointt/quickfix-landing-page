@@ -5,6 +5,8 @@ import NotFound from "./pages/NotFound";
 import ServicePage from "./pages/ServicePage";
 import LegalPage from "./pages/LegalPage";
 import ComponentesPage from "./pages/ComponentesPage";
+import RecepcionPage from "./pages/RecepcionPage";
+import TallerPage from "./pages/TallerPage";
 import { legalDocs } from "./data/legal";
 import { servicePages } from "./data/pages";
 import { heads } from "./lib/seo";
@@ -29,6 +31,8 @@ const App = () => {
         <Route key={d.slug} path={`/${d.slug}`} element={<LegalPage doc={d} />} />
       ))}
       <Route path="/componentes" element={<ComponentesPage />} />
+      <Route path="/recepcion" element={<RecepcionPage />} />
+      <Route path="/taller" element={<TallerPage />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

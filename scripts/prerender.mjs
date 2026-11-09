@@ -35,6 +35,17 @@ for (const head of heads) {
   console.log(`prerender ${head.path}`);
 }
 
+// Páginas de uso interno (registro de equipos y taller): fuera de Google y del sitemap.
+for (const head of [
+  { path: "/recepcion/", title: "Registra tu equipo | QuickFix", description: "Registra el equipo que dejas en QuickFix y recibe tu número de orden.", jsonLd: [] },
+  { path: "/taller/", title: "Taller | QuickFix", description: "Uso interno.", jsonLd: [] },
+]) {
+  const file = path.join(dist, head.path, "index.html");
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, page(head, render(head.path), { noindex: true }));
+  console.log(`prerender ${head.path} (noindex)`);
+}
+
 // 404 para Apache (ErrorDocument 404 /404.html): fuera del índice de Google.
 fs.writeFileSync(
   path.join(dist, "404.html"),
