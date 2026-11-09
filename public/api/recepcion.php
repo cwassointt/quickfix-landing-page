@@ -3,7 +3,7 @@
 // Los datos viven fuera de public_html, en /home/quickfix/recepcion/ (config.php y recepcion.sqlite),
 // así nadie puede descargarlos desde internet y nunca pasan por GitHub.
 //
-// Acciones (?accion=):  crear (público) · sesion · entrar · salir · lista · recibir · foto · leer · csv
+// Acciones (?accion=):  crear (público) · sesion · entrar · salir · lista · orden · actualizar · recibir · foto · leer · csv
 
 declare(strict_types=1);
 date_default_timezone_set('America/Lima');
@@ -236,6 +236,12 @@ function leerConClaude(string $jpeg, string $clave): array
     return ['legible' => false];
 }
 
+/** Mostrador (tus padres) ve lo necesario para recibir y ubicar el equipo; ni la clave del equipo ni montos. */
+function columnas(string $rol): string
+{
+    return $rol === 'admin' ? '*' : 'id, creado, origen, nombre, whatsapp, tipo, marca, modelo, serie, accesorios, servicio, falla, liquido, abierto, estado, recibido, recibido_por, distrito, llega, modo, direccion, foto';
+}
+
 function numero(int $id): string
 {
     return 'QF-' . str_pad((string) $id, 4, '0', STR_PAD_LEFT);
@@ -336,12 +342,35 @@ try {
 
         case 'GET lista':
             $r = exigir('admin', 'mostrador');
-            // Mostrador ve lo necesario para recibir el equipo; ni la clave del equipo ni montos.
-            $cols = $r === 'admin' ? '*' : 'id, creado, origen, nombre, whatsapp, tipo, marca, modelo, serie, accesorios, servicio, falla, liquido, abierto, estado, recibido, recibido_por, distrito, llega, modo, direccion, foto';
             $where = ($_GET['filtro'] ?? '') === 'pendientes' ? "WHERE estado = 'registrado'" : '';
-            $filas = db()->query("SELECT $cols FROM ordenes $where ORDER BY id DESC LIMIT 200")->fetchAll();
+            $filas = db()->query('SELECT ' . columnas($r) . " FROM ordenes $where ORDER BY id DESC LIMIT 200")->fetchAll();
             foreach ($filas as &$f) $f['numero'] = numero((int) $f['id']);
             responder(['rol' => $r, 'ordenes' => $filas]);
+
+        case 'GET orden':
+            // Lo que abre el QR de la etiqueta.
+            $r = exigir('admin', 'mostrador');
+            $q = db()->prepare('SELECT ' . columnas($r) . ' FROM ordenes WHERE id = ?');
+            $q->execute([(int) ($_GET['id'] ?? 0)]);
+            $o = $q->fetch();
+            if (!$o) fallo('No existe esa orden.', 404);
+            $o['numero'] = numero((int) $o['id']);
+            responder(['rol' => $r, 'orden' => $o]);
+
+        case 'POST actualizar':
+            // Solo tú: estado del equipo y presupuesto.
+            exigir('admin');
+            $d = cuerpo();
+            $id = (int) ($d['id'] ?? 0);
+            if (isset($d['estado'])) {
+                if (!in_array($d['estado'], ESTADOS, true)) fallo('Estado inválido.');
+                db()->prepare('UPDATE ordenes SET estado = ? WHERE id = ?')->execute([$d['estado'], $id]);
+            }
+            if (array_key_exists('presupuesto', $d)) {
+                $monto = $d['presupuesto'] === null || $d['presupuesto'] === '' ? null : round(max(0, min(99999, (float) $d['presupuesto'])), 2);
+                db()->prepare('UPDATE ordenes SET presupuesto = ? WHERE id = ?')->execute([$monto, $id]);
+            }
+            responder(['ok' => true]);
 
         case 'POST recibir':
             $r = exigir('admin', 'mostrador');

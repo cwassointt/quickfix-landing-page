@@ -1,59 +1,26 @@
 import { useCallback, useEffect, useState } from "react";
-import { Check, Download, Loader2, LogOut, Plus, Printer, RefreshCw } from "lucide-react";
-import { API, ESTADOS, aCsv, api, chatCliente, diaLima, equipo, etiquetas, fecha, type Orden, type Rol } from "@/lib/recepcion";
+import { ArrowLeft, Check, Download, Loader2, LogOut, MessageCircle, Phone, Plus, RefreshCw } from "lucide-react";
+import {
+  API, ESTADOS, aCsv, api, chatCliente, diaLima, equipo, etiquetas, fecha, mensajesCliente, saludo, telefono, type Orden, type Rol,
+} from "@/lib/recepcion";
 
 const PRESS = "transition-[transform,background-color,color] duration-150 ease-out active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-[#050505]";
 const BTN = `${PRESS} inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-base`;
+const SUAVE = `${BTN} bg-white/[0.08] text-white hover:bg-white/[0.14]`;
 
-/** Etiquetas de 50 × 30 mm (una para el equipo, otra para el cargador). Solo se ven al imprimir. */
-const ETIQUETA_CSS = `
-@media print {
-  @page { size: 50mm 30mm; margin: 0; }
-  html, body { background: #fff !important; }
-  body * { visibility: hidden; }
-  .qf-etiquetas, .qf-etiquetas * { visibility: visible; color: #000 !important; font-family: Arial, sans-serif !important; }
-  .qf-etiquetas { position: absolute; left: 0; top: 0; display: block !important; }
-  .qf-etiqueta { width: 50mm; height: 30mm; padding: 2mm 2.5mm; box-sizing: border-box; overflow: hidden; break-after: page; }
-}`;
-
-const linea = { whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } as const;
-
-/** Diseño 50 × 30 mm: servicio y fecha, N° grande con aviso en negro, cliente, equipo, S/N y la falla en 2 líneas. */
-const Etiquetas = ({ o }: { o: Orden }) => (
-  <div className="qf-etiquetas hidden" aria-hidden="true">
-    {etiquetas(o).map((e) => (
-      <div key={e.PARTE} className="qf-etiqueta" style={{ fontSize: "6.5pt", lineHeight: 1.18, display: "flex", flexDirection: "column" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", gap: "1mm", fontWeight: 700, fontSize: "5.5pt", letterSpacing: "0.02em" }}>
-          <span>QUICKFIX · {e.PARTE === "CARGADOR" ? "CARGADOR" : e.SERVICIO}</span><span>{e.FECHA}</span>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "1.2mm", margin: "0.4mm 0 0.6mm" }}>
-          {/* El N° nunca se parte; el aviso usa el espacio que queda (hasta 2 líneas). */}
-          <span style={{ fontSize: "16pt", fontWeight: 800, lineHeight: 1, letterSpacing: "-0.02em", whiteSpace: "nowrap", flexShrink: 0 }}>{e.QF}</span>
-          {e.AVISO && (
-            <span style={{ background: "#000", color: "#fff", fontWeight: 700, fontSize: "5pt", lineHeight: 1.15, padding: "0.5mm 0.8mm", borderRadius: "0.6mm", minWidth: 0 }}>
-              ⚠ {e.AVISO}
-            </span>
-          )}
-        </div>
-        <div style={{ ...linea, fontWeight: 700, fontSize: "7pt" }}>{e.CLIENTE}</div>
-        <div style={linea}>{e.EQUIPO}</div>
-        <div style={{ ...linea, fontFamily: "Consolas, monospace" }}>{e.SN}</div>
-        <div style={{ marginTop: "auto", borderTop: "0.2mm solid #000", paddingTop: "0.5mm", fontSize: "5.5pt", lineHeight: 1.15,
-          display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
-          {e.FALLA}
-        </div>
-      </div>
-    ))}
-  </div>
-);
-
-/** Baja las etiquetas como CSV para imprimirlas desde OpenLabel+ (plantilla "QuickFix"). */
+/** Baja las etiquetas como CSV para imprimirlas desde OpenLabel+ (plantilla "QuickFix", con QR a la columna URL). */
 function descargarCsv(o: Orden) {
   const url = URL.createObjectURL(new Blob([aCsv(etiquetas(o))], { type: "text/csv;charset=utf-8" }));
   const a = Object.assign(document.createElement("a"), { href: url, download: `etiqueta-${o.numero}.csv` });
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
+
+/** tel: con código de país para celulares peruanos. */
+const enlaceLlamada = (v: string) => {
+  const d = v.replace(/\D/g, "");
+  return `tel:+${d.length === 9 ? `51${d}` : d}`;
+};
 
 function Login({ onEntrar }: { onEntrar: (r: Rol) => void }) {
   const [clave, setClave] = useState("");
@@ -84,19 +51,19 @@ function Login({ onEntrar }: { onEntrar: (r: Rol) => void }) {
 const Dato = ({ k, v }: { k: string; v: string | null | undefined }) =>
   v ? <div><dt className="text-sm text-white/50">{k}</dt><dd className="text-base text-white">{v}</dd></div> : null;
 
-function Tarjeta({ o, rol, onRecibir, onImprimir }: { o: Orden; rol: Rol; onRecibir: () => void; onImprimir: () => void }) {
+function Tarjeta({ o, rol, onRecibir }: { o: Orden; rol: Rol; onRecibir: () => void }) {
   const pendiente = o.estado === "registrado";
   const hoy = diaLima();
-  const avisos = [o.liquido === 1 && "Recibió líquido o golpe", o.abierto === 1 && "Lo abrió otro técnico"].filter(Boolean) as string[];
+  const avisos = [o.liquido === 1 && "Se mojó o se cayó", o.abierto === 1 && "Otro técnico ya lo abrió"].filter(Boolean) as string[];
   return (
     <article className={`rounded-3xl p-5 md:p-6 ${pendiente ? "bg-primary/[0.12] ring-1 ring-primary/40" : "bg-white/[0.04]"}`}>
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <p className="font-mono text-3xl font-bold text-primary">{o.numero}</p>
+        <a href={`/taller/?qf=${o.id}`} className="font-mono text-3xl font-bold text-primary hover:underline">{o.numero}</a>
         <p className="text-sm text-white/60">{ESTADOS[o.estado] ?? o.estado} · {fecha(o.creado)}{o.origen === "taller" ? " · registrado en el taller" : ""}</p>
       </div>
       <p className="mt-2 text-xl font-bold text-white">{o.nombre}</p>
       <p className="text-lg text-white/85">{o.tipo} · {equipo(o)}</p>
-      {avisos.length > 0 && <p className="mt-2 text-base font-medium text-red-300">{avisos.join(" · ")}</p>}
+      {avisos.length > 0 && <p className="mt-2 text-base font-medium text-[#ff9b80]">⚠ {avisos.join(" · ")}</p>}
       {pendiente && (o.llega || o.modo === "recojo") && (
         <p className="mt-3 rounded-2xl bg-black/30 px-4 py-3 text-base text-white">
           {o.modo === "recojo" ? <><span className="font-medium text-primary">Recojo en casa</span> · {o.direccion}{o.distrito ? `, ${o.distrito}` : ""}</> : "Lo trae al taller"}
@@ -104,11 +71,13 @@ function Tarjeta({ o, rol, onRecibir, onImprimir }: { o: Orden; rol: Rol; onReci
         </p>
       )}
       <dl className="mt-4 grid gap-3 sm:grid-cols-2">
+        <Dato k="WhatsApp" v={o.whatsapp && telefono(o.whatsapp)} />
         <Dato k="N° de serie" v={o.serie} />
         <Dato k="Deja también" v={o.accesorios} />
         <Dato k="Servicio" v={o.servicio} />
-        {rol === "admin" && <><Dato k="WhatsApp" v={o.whatsapp} /><Dato k="DNI" v={o.dni} /><Dato k="Correo" v={o.correo} /><Dato k="Distrito" v={o.distrito} /><Dato k="Clave del equipo" v={o.pin} /><Dato k="Nos conoció por" v={o.como} />
-          <Dato k="Reparar sin consultar" v={o.autoriza ? `Hasta S/ ${o.autoriza}` : "No, consultar antes"} /></>}
+        {rol === "admin" && <><Dato k="DNI" v={o.dni} /><Dato k="Correo" v={o.correo} /><Dato k="Distrito" v={o.distrito} /><Dato k="Clave del equipo" v={o.pin} /><Dato k="Nos conoció por" v={o.como} />
+          <Dato k="Reparar sin consultar" v={o.autoriza ? `Hasta S/ ${o.autoriza}` : "No, consultar antes"} />
+          <Dato k="Presupuesto" v={o.presupuesto != null ? `S/ ${o.presupuesto}` : null} /></>}
       </dl>
       {o.foto === 1 && (
         <a href={`${API}?accion=foto&id=${o.id}`} target="_blank" rel="noopener noreferrer" className="mt-4 inline-block">
@@ -124,31 +93,115 @@ function Tarjeta({ o, rol, onRecibir, onImprimir }: { o: Orden; rol: Rol; onReci
             <Check className="h-5 w-5" aria-hidden="true" /> Recibido · bajar etiquetas
           </button>
         ) : (
-          <button onClick={() => descargarCsv(o)} className={`${BTN} bg-white/[0.08] text-white hover:bg-white/[0.14]`}>
+          <button onClick={() => descargarCsv(o)} className={SUAVE}>
             <Download className="h-5 w-5" aria-hidden="true" /> Etiquetas OpenLabel+
           </button>
         )}
-        <button onClick={onImprimir} aria-label="Imprimir etiquetas desde el navegador" title="Imprimir desde el navegador"
-          className={`${BTN} bg-white/[0.08] px-4 text-white hover:bg-white/[0.14]`}>
-          <Printer className="h-5 w-5" aria-hidden="true" />
-        </button>
         {rol === "admin" && o.whatsapp && (
-          <a href={chatCliente(o.whatsapp, `Hola ${o.nombre.split(" ")[0]}, te escribo de QuickFix por tu ${equipo(o)} (${o.numero}).`)} target="_blank" rel="noopener noreferrer"
-            className={`${BTN} bg-white/[0.08] text-white hover:bg-white/[0.14]`}>
-            WhatsApp
-          </a>
+          <>
+            <a href={chatCliente(o.whatsapp, saludo(o))} target="_blank" rel="noopener noreferrer" className={SUAVE}>
+              <MessageCircle className="h-5 w-5" aria-hidden="true" /> WhatsApp
+            </a>
+            <a href={enlaceLlamada(o.whatsapp)} className={SUAVE}><Phone className="h-5 w-5" aria-hidden="true" /> Llamar</a>
+          </>
         )}
       </div>
     </article>
   );
 }
 
-/** Pantalla del taller: tus padres reciben equipos e imprimen etiquetas; tú ves todo. */
+/** Solo admin: estado, presupuesto y mensajes de WhatsApp ya escritos para el seguimiento. */
+function Seguimiento({ o, onCambio }: { o: Orden; onCambio: () => void }) {
+  const [monto, setMonto] = useState(o.presupuesto != null ? String(o.presupuesto) : "");
+  const [guardando, setGuardando] = useState(false);
+  const [error, setError] = useState("");
+  const guardar = async (cambios: { estado?: string; presupuesto?: string }) => {
+    setGuardando(true);
+    try { await api("actualizar", { id: o.id, ...cambios }); setError(""); onCambio(); }
+    catch (err) { setError((err as Error).message); }
+    setGuardando(false);
+  };
+  const presupuesto = monto.trim() ? Number(monto) : (o.presupuesto ?? null);
+  return (
+    <section className="mt-4 space-y-6 rounded-3xl bg-white/[0.04] p-5 md:p-6">
+      <div>
+        <h2 className="text-lg font-bold text-white">Estado</h2>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {Object.entries(ESTADOS).map(([id, nombre]) => (
+            <button key={id} disabled={guardando} aria-pressed={o.estado === id} onClick={() => guardar({ estado: id })}
+              className={`${PRESS} rounded-full px-4 py-2.5 text-base disabled:opacity-60 ${o.estado === id ? "bg-primary text-black" : "bg-white/[0.06] text-white hover:bg-white/[0.12]"}`}>
+              {nombre}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div>
+        <h2 className="text-lg font-bold text-white">Presupuesto</h2>
+        <form className="mt-3 flex gap-2" onSubmit={(e) => { e.preventDefault(); guardar({ presupuesto: monto }); }}>
+          <span className="relative flex-1">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/50">S/</span>
+            <input inputMode="decimal" value={monto} onChange={(e) => setMonto(e.target.value.replace(/[^\d.]/g, ""))} aria-label="Presupuesto en soles"
+              className="h-12 w-full rounded-xl bg-white/[0.06] pl-11 pr-4 text-base text-white focus:outline-none focus:ring-2 focus:ring-primary" />
+          </span>
+          <button disabled={guardando} className={`${BTN} bg-white text-black hover:bg-white/90 disabled:opacity-60`}>Guardar</button>
+        </form>
+      </div>
+      {o.whatsapp && (
+        <div>
+          <h2 className="text-lg font-bold text-white">Escribirle por WhatsApp</h2>
+          <p className="mt-1 text-sm text-white/55">Se abre el chat con el mensaje listo; lo revisas y lo envías.</p>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            {mensajesCliente(o, presupuesto).map((m) => (
+              <a key={m.id} href={chatCliente(o.whatsapp, m.texto)} target="_blank" rel="noopener noreferrer"
+                className={`${PRESS} rounded-2xl bg-white/[0.06] px-4 py-3 text-left hover:bg-white/[0.12]`}>
+                <span className="flex items-center gap-2 text-base font-medium text-white"><MessageCircle className="h-4 w-4 text-primary" aria-hidden="true" /> {m.titulo}</span>
+                <span className="mt-1 line-clamp-2 block text-sm text-white/55">{m.texto}</span>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+      {error && <p role="alert" className="text-[#ff9b80]">{error}</p>}
+    </section>
+  );
+}
+
+/** Lo que abre el QR de la etiqueta: un solo equipo, con el seguimiento si eres admin. */
+function Caso({ id, rol, onSalida }: { id: number; rol: Rol; onSalida: () => void }) {
+  const [o, setO] = useState<Orden | null>(null);
+  const [error, setError] = useState("");
+  const cargar = useCallback(async () => {
+    try { setO((await api<{ orden: Orden }>("orden", undefined, `&id=${id}`)).orden); setError(""); }
+    catch (err) {
+      if ((err as { status?: number }).status === 401) onSalida();
+      else setError((err as Error).message);
+    }
+  }, [id, onSalida]);
+  useEffect(() => { cargar(); }, [cargar]);
+
+  return (
+    <div className="mt-8">
+      <a href="/taller/" className="inline-flex items-center gap-2 text-base text-white/60 hover:text-white">
+        <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Todos los equipos
+      </a>
+      {error && <p role="alert" className="mt-6 rounded-2xl bg-red-500/15 px-5 py-4 text-red-200">{error}</p>}
+      {!o && !error && <Loader2 className="mx-auto mt-16 h-8 w-8 animate-spin text-white/50" aria-label="Cargando" />}
+      {o && (
+        <div className="mt-4">
+          <Tarjeta o={o} rol={rol} onRecibir={async () => { await api("recibir", { id: o.id }); cargar(); }} />
+          {rol === "admin" && <Seguimiento key={`${o.estado}-${o.presupuesto}`} o={o} onCambio={cargar} />}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Pantalla del taller: tus padres reciben equipos y bajan las etiquetas; tú ves todo y haces el seguimiento. */
 const TallerPage = () => {
   const [rol, setRol] = useState<Rol | null | undefined>(undefined);
+  const [caso, setCaso] = useState<number | null>(null);
   const [ordenes, setOrdenes] = useState<Orden[]>([]);
   const [filtro, setFiltro] = useState<"pendientes" | "todos">("pendientes");
-  const [imprimir, setImprimir] = useState<Orden | null>(null);
   const [error, setError] = useState("");
   const [cargando, setCargando] = useState(false);
 
@@ -164,20 +217,21 @@ const TallerPage = () => {
     }
     setCargando(false);
   }, [filtro]);
+  const salida = useCallback(() => setRol(null), []);
 
-  useEffect(() => { api<{ rol: Rol | null }>("sesion").then((r) => setRol(r.rol)).catch((e) => { setRol(null); setError(e.message); }); }, []);
-  // Se actualiza solo cada 30 s: un cliente puede registrarse en el mostrador mientras la pantalla está abierta.
   useEffect(() => {
-    if (!rol) return;
+    // ?qf=7 viene del QR de la etiqueta (se lee aquí porque la página se pregenera sin la URL).
+    const qf = Number(new URLSearchParams(window.location.search).get("qf"));
+    if (qf > 0) setCaso(qf);
+    api<{ rol: Rol | null }>("sesion").then((r) => setRol(r.rol)).catch((e) => { setRol(null); setError(e.message); });
+  }, []);
+  // La lista se actualiza sola cada 30 s: un cliente puede registrarse en el mostrador mientras la pantalla está abierta.
+  useEffect(() => {
+    if (!rol || caso) return;
     cargar();
     const t = setInterval(cargar, 30_000);
     return () => clearInterval(t);
-  }, [rol, cargar]);
-  useEffect(() => {
-    if (!imprimir) return;
-    const t = setTimeout(() => window.print(), 50);
-    return () => clearTimeout(t);
-  }, [imprimir]);
+  }, [rol, caso, cargar]);
 
   const recibir = async (o: Orden) => {
     try {
@@ -188,10 +242,9 @@ const TallerPage = () => {
 
   return (
     <div className="min-h-[100svh] bg-[#050505]">
-      <style>{ETIQUETA_CSS}</style>
       <main className="mx-auto max-w-3xl px-5 pb-24 pt-8 md:px-8 md:pt-12">
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <p className="text-2xl font-bold text-white">QUICK<span className="text-primary">FIX</span> <span className="font-normal text-white/50">· Taller</span></p>
+          <a href="/taller/" className="text-2xl font-bold text-white">QUICK<span className="text-primary">FIX</span> <span className="font-normal text-white/50">· Taller</span></a>
           {rol && (
             <button onClick={async () => { await api("salir", {}); setRol(null); }} className={`${BTN} bg-white/[0.06] text-white/70 hover:bg-white/[0.12]`}>
               <LogOut className="h-5 w-5" aria-hidden="true" /> Salir
@@ -202,7 +255,9 @@ const TallerPage = () => {
         {rol === undefined && <Loader2 className="mx-auto mt-16 h-8 w-8 animate-spin text-white/50" aria-label="Cargando" />}
         {rol === null && <Login onEntrar={setRol} />}
 
-        {rol && (
+        {rol && caso && <Caso id={caso} rol={rol} onSalida={salida} />}
+
+        {rol && !caso && (
           <>
             <div className="mt-8 flex flex-wrap gap-2">
               {(["pendientes", "todos"] as const).map((f) => (
@@ -232,13 +287,12 @@ const TallerPage = () => {
                 </p>
               )}
               {ordenes.map((o) => (
-                <Tarjeta key={o.id} o={o} rol={rol} onRecibir={() => recibir(o)} onImprimir={() => setImprimir({ ...o })} />
+                <Tarjeta key={o.id} o={o} rol={rol} onRecibir={() => recibir(o)} />
               ))}
             </div>
           </>
         )}
       </main>
-      {imprimir && <Etiquetas o={imprimir} />}
     </div>
   );
 };

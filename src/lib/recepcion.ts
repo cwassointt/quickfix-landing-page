@@ -19,6 +19,8 @@ export type Registro = {
 export type Orden = Omit<Registro, "acepta" | "web" | "liquido" | "abierto" | "cuando" | "foto" | "llega" | "autoriza"> & {
   id: number; numero: string; creado: string; origen: "cliente" | "taller";
   liquido: 0 | 1 | null; abierto: 0 | 1 | null; llega: string | null; autoriza: number | null; foto: 0 | 1 | null;
+  /** Solo llega con sesión de admin. */
+  presupuesto?: number | null;
   estado: string; recibido: string | null; recibido_por: string | null;
 };
 export type Rol = "admin" | "mostrador";
@@ -148,7 +150,18 @@ export function fallaCorta(falla: string, max = 64) {
   return texto.slice(0, corte > 20 ? corte : max - 1) + "…";
 }
 
-export type Etiqueta = { PARTE: string; QF: string; FECHA: string; SERVICIO: string; AVISO: string; CLIENTE: string; EQUIPO: string; SN: string; FALLA: string };
+export type Etiqueta = {
+  PARTE: string; QF: string; FECHA: string; SERVICIO: string; AVISO: string; CLIENTE: string; WHATSAPP: string; EQUIPO: string; SN: string; FALLA: string; URL: string;
+};
+
+/** Página del caso que abre el QR (pide la clave del taller si no hay sesión). */
+export const urlCaso = (id: number) => `https://quickfix.pe/taller/?qf=${id}`;
+
+/** 987654321 → "987 654 321"; otros formatos se dejan como los escribió el cliente. */
+export const telefono = (v: string) => {
+  const d = v.replace(/\D/g, "").replace(/^51(?=9\d{8}$)/, "");
+  return /^9\d{8}$/.test(d) ? d.replace(/(\d{3})(\d{3})(\d{3})/, "$1 $2 $3") : v.trim();
+};
 
 /** Datos de cada etiqueta: la del equipo y, si dejó cargador, la del cargador. Las claves son las columnas del CSV. */
 export function etiquetas(o: Orden): Etiqueta[] {
@@ -157,14 +170,31 @@ export function etiquetas(o: Orden): Etiqueta[] {
     // en-GB da siempre dd/mm con dos dígitos (es-PE a veces quita el cero).
     FECHA: new Date(o.recibido ?? o.creado).toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit", timeZone: "America/Lima" }),
     SERVICIO: (o.servicio || "Revisión").toUpperCase(),
-    AVISO: [o.liquido === 1 && "LÍQUIDO/GOLPE", o.abierto === 1 && "ABIERTO"].filter(Boolean).join(" · "),
+    // Riesgos que declaró el cliente, en palabras simples: equipos delicados de manipular.
+    AVISO: [o.liquido === 1 && "⚠ SE MOJÓ O CAYÓ", o.abierto === 1 && "⚠ YA LO ABRIERON"].filter(Boolean).join("  "),
     CLIENTE: o.nombre,
+    WHATSAPP: o.whatsapp ? `WhatsApp ${telefono(o.whatsapp)}` : "",
     EQUIPO: equipo(o),
     SN: `S/N ${o.serie || "—"}`,
+    URL: urlCaso(o.id),
   };
   const lista: Etiqueta[] = [{ PARTE: "EQUIPO", ...base, FALLA: fallaCorta(o.falla) }];
   if (/cargador/i.test(o.accesorios ?? "")) lista.push({ PARTE: "CARGADOR", ...base, FALLA: `Cargador de ${equipo(o)}` });
   return lista;
+}
+
+type DatosMensaje = Pick<Orden, "nombre" | "numero" | "tipo" | "marca" | "modelo">;
+export const saludo = (o: DatosMensaje) => `Hola ${o.nombre.split(" ")[0]}, te escribo de QuickFix por tu ${equipo(o)} (${o.numero}).`;
+
+/** Mensajes de seguimiento ya redactados para el WhatsApp del cliente, según el momento del caso. */
+export function mensajesCliente(o: DatosMensaje, presupuesto?: number | null) {
+  const hola = saludo(o);
+  return [
+    { id: "recibido", titulo: "Recibido", texto: `${hola} Ya lo recibí y empiezo con la revisión. Te aviso apenas tenga el diagnóstico.` },
+    { id: "presupuesto", titulo: "Presupuesto", texto: `${hola} Ya tengo el diagnóstico. La reparación cuesta S/ ${presupuesto ?? "___"}. ¿Te parece si avanzo?` },
+    { id: "avance", titulo: "Avance", texto: `${hola} Te cuento cómo va: ` },
+    { id: "listo", titulo: "Listo", texto: `${hola} ¡Ya está listo para recoger! Talambo 135, San Miguel. Avísame a qué hora vienes.` },
+  ];
 }
 
 /** CSV con encabezados (sin BOM: OpenLabel+ lee UTF-8). Comillas solo donde hace falta. */

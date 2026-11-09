@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  aCsv, avisoCliente, chatCliente, diaLima, equipo, etiquetas, fallaCorta, preguntas, resumirFalla, sugerirCorreo, sugerirDistrito, validar, validarWhatsapp, type Registro,
+  aCsv, avisoCliente, chatCliente, diaLima, equipo, etiquetas, fallaCorta, mensajesCliente, preguntas, resumirFalla, sugerirCorreo, sugerirDistrito, validar, validarWhatsapp, type Registro,
 } from "@/lib/recepcion";
 
 describe("recepción", () => {
@@ -50,9 +50,20 @@ describe("etiquetas", () => {
 
   it("arma la etiqueta del equipo con aviso y la del cargador solo si lo dejó", () => {
     const [eq, cargador] = etiquetas(orden);
-    expect(eq).toMatchObject({ PARTE: "EQUIPO", QF: "QF-0007", SERVICIO: "REPARACIÓN", AVISO: "LÍQUIDO/GOLPE", SN: "S/N N3NRKD0099", FECHA: "09/11" });
+    expect(eq).toMatchObject({ PARTE: "EQUIPO", QF: "QF-0007", SERVICIO: "REPARACIÓN", AVISO: "⚠ SE MOJÓ O CAYÓ", SN: "S/N N3NRKD0099", FECHA: "09/11" });
+    expect(eq.URL).toBe("https://quickfix.pe/taller/?qf=7");
+    expect(etiquetas({ ...orden, whatsapp: "+51 987654321" })[0].WHATSAPP).toBe("WhatsApp 987 654 321");
+    expect(etiquetas({ ...orden, abierto: 1 })[0].AVISO).toBe("⚠ SE MOJÓ O CAYÓ  ⚠ YA LO ABRIERON");
     expect(cargador.PARTE).toBe("CARGADOR");
     expect(etiquetas({ ...orden, accesorios: "" })).toHaveLength(1);
+  });
+
+  it("los mensajes de seguimiento llevan el N° y el presupuesto", () => {
+    const m = mensajesCliente(orden, 250);
+    expect(m.map((x) => x.id)).toEqual(["recibido", "presupuesto", "avance", "listo"]);
+    expect(m[1].texto).toContain("QF-0007");
+    expect(m[1].texto).toContain("S/ 250");
+    expect(mensajesCliente(orden)[1].texto).toContain("S/ ___");
   });
 
   it("el CSV escapa comas y comillas", () => {
