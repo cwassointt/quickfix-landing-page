@@ -1,5 +1,5 @@
-import { useEffect, useState, type ReactNode } from "react";
-import { Check, Loader2, Search, Sparkles } from "lucide-react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { ArrowLeft, Check, Loader2, Search, Sparkles } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import AsistenteFalla, { type Resultado } from "@/components/AsistenteFalla";
 import { laptopLabel, searchLaptops, type Laptop } from "@/lib/laptopSearch";
@@ -100,7 +100,7 @@ function ModeloLaptop({ valor, onEscribir, onElegir }: { valor: string; onEscrib
 
 const Bloque = ({ n, title, sub, children }: { n: string; title: string; sub?: string; children: ReactNode }) => (
   <section className="rounded-3xl bg-white/[0.04] p-5 md:p-8">
-    <p className="font-mono text-sm text-primary">{n}</p>
+    <p className="font-mono text-sm text-primary">{n} <span className="text-white/35">/ 03</span></p>
     <h2 className="mt-1 text-2xl font-bold tracking-[-0.02em] text-white md:text-3xl">{title}</h2>
     {sub && <p className="mt-2 text-white/60">{sub}</p>}
     <div className="mt-6 space-y-5">{children}</div>
@@ -114,6 +114,32 @@ const RecepcionPage = () => {
   const [error, setError] = useState("");
   const [numero, setNumero] = useState("");
   const [asistente, setAsistente] = useState(false);
+  // Carrusel de fichas: 0 datos, 1 equipo, 2 falla. Las fichas se deslizan y la altura sigue a la ficha visible.
+  const [paso, setPaso] = useState(0);
+  const [alto, setAlto] = useState<number>();
+  const fichas = useRef<(HTMLDivElement | null)[]>([]);
+  const formRef = useRef<HTMLFormElement>(null);
+  useEffect(() => {
+    fichas.current.forEach((el, i) => { if (el) el.inert = i !== paso; });
+    const el = fichas.current[paso];
+    if (!el) return;
+    const ro = new ResizeObserver(() => setAlto(el.offsetHeight));
+    ro.observe(el);
+    const top = formRef.current?.getBoundingClientRect().top ?? 0;
+    if (top < 80) formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    return () => ro.disconnect();
+  }, [paso, estado]);
+
+  /** Revisa la ficha visible: campos obligatorios y, en la 02, el tipo de equipo. */
+  const fichaCompleta = () => {
+    const campos = [...(fichas.current[paso]?.querySelectorAll<HTMLInputElement>("input, textarea") ?? [])];
+    const invalido = campos.find((el) => !el.checkValidity());
+    if (invalido) { invalido.reportValidity(); return false; }
+    if (paso === 1 && !r.tipo) { setError("Elige el tipo de equipo."); return false; }
+    setError("");
+    return true;
+  };
+  const avanzar = () => { if (fichaCompleta()) setPaso(paso + 1); };
   const usarResumen = (res: Resultado) => {
     setR((x) => ({
       ...x,
@@ -130,8 +156,9 @@ ${x.falla.trim()}` : res.texto,
 
   async function enviar(e: React.FormEvent) {
     e.preventDefault();
-    const falta = !r.tipo ? "el tipo de equipo" : !r.acepta ? "aceptar las condiciones" : "";
-    if (falta) return setError(`Falta ${falta}.`);
+    if (paso < 2) return avanzar(); // Enter en las primeras fichas avanza en vez de enviar
+    if (!fichaCompleta()) return;
+    if (!r.acepta) return setError("Falta aceptar las condiciones.");
     setError("");
     setEstado("enviando");
     try {
@@ -163,7 +190,7 @@ ${x.falla.trim()}` : res.texto,
             </a>
             <p className="mt-3 text-sm text-white/50">Así te aviso por ahí cuando tu equipo esté listo.</p>
           </div>
-          <button type="button" onClick={() => { setR(VACIO); setEstado("form"); }} className={`${PRESS} mt-6 w-full rounded-full bg-white/[0.08] px-6 py-4 text-base text-white hover:bg-white/[0.14]`}>
+          <button type="button" onClick={() => { setR(VACIO); setPaso(0); setEstado("form"); }} className={`${PRESS} mt-6 w-full rounded-full bg-white/[0.08] px-6 py-4 text-base text-white hover:bg-white/[0.14]`}>
             Registrar otro equipo
           </button>
         </main>
@@ -178,7 +205,11 @@ ${x.falla.trim()}` : res.texto,
         <h1 className="section-title">Registra tu equipo</h1>
         <p className="section-lead">Toma 2 minutos. Al terminar te doy un número de orden para seguir tu reparación.</p>
 
-        <form onSubmit={enviar} className="section-body space-y-4">
+        <form ref={formRef} onSubmit={enviar} noValidate className="section-body scroll-mt-28">
+          <div className="overflow-hidden transition-[height] duration-300 ease-out motion-reduce:transition-none" style={{ height: alto }}>
+            <div className="flex items-start gap-4 transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none"
+              style={{ transform: `translateX(calc(${-paso} * (100% + 1rem)))` }}>
+          <div ref={(el) => (fichas.current[0] = el)} className="w-full shrink-0" aria-hidden={paso !== 0}>
           <Bloque n="01" title="Tus datos" sub="Para avisarte cuando tu equipo esté listo.">
             <Campo label="Nombres y apellidos"><input required autoComplete="name" className={INPUT} {...txt("nombre")} /></Campo>
             <div className="grid gap-5 sm:grid-cols-2">
@@ -189,7 +220,9 @@ ${x.falla.trim()}` : res.texto,
             </div>
             <Opciones label="¿Cómo nos conociste?" opciones={OPCIONES.como} valor={r.como} onChange={set("como")} />
           </Bloque>
+          </div>
 
+          <div ref={(el) => (fichas.current[1] = el)} className="w-full shrink-0" aria-hidden={paso !== 1}>
           <Bloque n="02" title="Tu equipo">
             <Opciones label="Tipo de equipo" opciones={OPCIONES.tipo} valor={r.tipo} onChange={set("tipo")} />
             {r.tipo === "Laptop" ? (
@@ -212,7 +245,9 @@ ${x.falla.trim()}` : res.texto,
             </Campo>
             <Opciones label="¿Qué más dejas?" opciones={OPCIONES.accesorios} valor={r.accesorios} onChange={set("accesorios")} multi />
           </Bloque>
+          </div>
 
+          <div ref={(el) => (fichas.current[2] = el)} className="w-full shrink-0" aria-hidden={paso !== 2}>
           <Bloque n="03" title="¿Qué le pasa?">
             <Opciones label="Servicio" opciones={OPCIONES.servicio} valor={r.servicio} onChange={set("servicio")}>
               <button type="button" onClick={() => setAsistente(true)}
@@ -225,12 +260,7 @@ ${x.falla.trim()}` : res.texto,
             </Campo>
             <SiNo label="¿Le cayó líquido o recibió un golpe?" valor={r.liquido} onChange={set("liquido")} />
             <SiNo label="¿Lo abrió otro técnico antes?" valor={r.abierto} onChange={set("abierto")} />
-          </Bloque>
-
-          {/* Trampa para robots: fuera de la vista y del teclado. */}
-          <input tabIndex={-1} autoComplete="off" aria-hidden="true" className="absolute left-[-9999px]" {...txt("web")} />
-
-          <label className="flex items-start gap-3 rounded-3xl bg-white/[0.04] p-5 text-base text-white/80 md:p-8">
+            <label className="flex items-start gap-3 border-t border-white/10 pt-5 text-base text-white/80">
             <input type="checkbox" checked={r.acepta} onChange={(e) => set("acepta")(e.target.checked)} className="mt-1 h-5 w-5 shrink-0 accent-[#FF6600]" />
             <span>
               Acepto los <a href="/terminos/" target="_blank" className="text-primary underline underline-offset-4">términos</a> y la{" "}
@@ -238,14 +268,44 @@ ${x.falla.trim()}` : res.texto,
               WhatsApp sobre este equipo. Hice una copia de mis datos.
             </span>
           </label>
+          </Bloque>
+          </div>
+            </div>
+          </div>
 
-          {error && <p role="alert" className="rounded-2xl bg-red-500/15 px-5 py-4 text-base text-red-200">{error}</p>}
+          {/* Trampa para robots: fuera de la vista y del teclado. */}
+          <input tabIndex={-1} autoComplete="off" aria-hidden="true" className="absolute left-[-9999px]" {...txt("web")} />
 
-          <button type="submit" disabled={estado === "enviando"}
-            className={`${PRESS} flex w-full items-center justify-center gap-2 rounded-full bg-primary px-8 py-4 text-lg font-medium text-black hover:bg-[#ff7a1f] disabled:opacity-60`}>
-            {estado === "enviando" && <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />}
-            Registrar mi equipo
-          </button>
+          {/* Progreso: 3 puntitos; tocando uno anterior se vuelve a esa ficha. */}
+          <div className="mt-6 flex justify-center gap-2">
+            {[0, 1, 2].map((i) => (
+              <button key={i} type="button" disabled={i > paso} onClick={() => setPaso(i)} aria-label={`Ficha ${i + 1} de 3`} aria-current={i === paso ? "step" : undefined}
+                className={`h-2.5 rounded-full transition-all duration-300 ${i === paso ? "w-8 bg-primary" : i < paso ? "w-2.5 bg-white/60 hover:bg-white" : "w-2.5 bg-white/20"}`} />
+            ))}
+          </div>
+
+          {error && <p role="alert" className="mt-6 rounded-2xl bg-red-500/15 px-5 py-4 text-base text-red-200">{error}</p>}
+
+          <div className="mt-6 flex gap-3">
+            {paso > 0 && (
+              <button type="button" onClick={() => { setError(""); setPaso(paso - 1); }} aria-label="Ficha anterior"
+                className={`${PRESS} flex items-center justify-center rounded-full bg-white/[0.08] px-6 py-4 text-white hover:bg-white/[0.14]`}>
+                <ArrowLeft className="h-5 w-5" aria-hidden="true" />
+              </button>
+            )}
+            {paso < 2 ? (
+              <button type="button" onClick={avanzar}
+                className={`${PRESS} flex-1 rounded-full bg-white px-8 py-4 text-lg font-medium text-black hover:bg-white/90`}>
+                Siguiente
+              </button>
+            ) : (
+              <button type="submit" disabled={estado === "enviando"}
+                className={`${PRESS} flex flex-1 items-center justify-center gap-2 rounded-full bg-primary px-8 py-4 text-lg font-medium text-black hover:bg-[#ff7a1f] disabled:opacity-60`}>
+                {estado === "enviando" && <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />}
+                Registrar mi equipo
+              </button>
+            )}
+          </div>
         </form>
       </main>
       {asistente && <AsistenteFalla tipo={r.tipo} onCerrar={() => setAsistente(false)} onUsar={usarResumen} />}
