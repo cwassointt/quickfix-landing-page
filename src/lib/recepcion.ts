@@ -38,6 +38,37 @@ export function diaLima(dias = 0) {
   return d.toLocaleDateString("en-CA", { timeZone: "America/Lima" });
 }
 
+// ---------- Autocompletar: distritos de Lima y Callao, dominios de correo ----------
+
+export const DISTRITOS_LIMA = [
+  "Ancón", "Ate", "Barranco", "Bellavista", "Breña", "Callao", "Carabayllo", "Carmen de la Legua Reynoso", "Chaclacayo", "Chorrillos",
+  "Cieneguilla", "Comas", "El Agustino", "Independencia", "Jesús María", "La Molina", "La Perla", "La Punta", "La Victoria", "Lima",
+  "Lince", "Los Olivos", "Lurigancho", "Lurín", "Magdalena del Mar", "Mi Perú", "Miraflores", "Pachacámac", "Pucusana", "Pueblo Libre",
+  "Puente Piedra", "Punta Hermosa", "Punta Negra", "Rímac", "San Bartolo", "San Borja", "San Isidro", "San Juan de Lurigancho",
+  "San Juan de Miraflores", "San Luis", "San Martín de Porres", "San Miguel", "Santa Anita", "Santa María del Mar", "Santa Rosa",
+  "Santiago de Surco", "Surquillo", "Ventanilla", "Villa El Salvador", "Villa María del Triunfo",
+];
+const DOMINIOS = ["gmail.com", "hotmail.com", "outlook.com", "yahoo.com", "icloud.com", "live.com"];
+
+/** Sin tildes ni mayúsculas, para comparar lo que escribe el cliente. */
+const plano = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
+
+/** Distritos que empiezan con lo escrito (o lo contienen en alguna palabra); vacío si ya está escrito tal cual. */
+export function sugerirDistrito(v: string, max = 5) {
+  const q = plano(v);
+  if (q.length < 2 || DISTRITOS_LIMA.includes(v.trim())) return [];
+  const empieza = DISTRITOS_LIMA.filter((d) => plano(d).startsWith(q));
+  const palabra = DISTRITOS_LIMA.filter((d) => !empieza.includes(d) && plano(d).split(" ").some((w) => w.startsWith(q)));
+  return [...empieza, ...palabra].slice(0, max);
+}
+
+/** "ana" o "ana@g" → ana@gmail.com, ana@hotmail.com…; vacío si el correo ya está completo. */
+export function sugerirCorreo(v: string) {
+  const [usuario, dominio = ""] = v.trim().split("@");
+  if (!usuario || v.includes(" ") || DOMINIOS.includes(dominio.toLowerCase())) return [];
+  return DOMINIOS.filter((d) => d.startsWith(dominio.toLowerCase())).map((d) => `${usuario}@${d}`);
+}
+
 // ---------- Validación: mismas reglas que public/api/recepcion.php ----------
 
 export type Campo = "nombre" | "whatsapp" | "dni" | "correo" | "distrito" | "tipo" | "marca" | "modelo" | "serie" | "llega" | "direccion" | "falla" | "acepta";

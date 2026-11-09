@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { avisoCliente, chatCliente, diaLima, equipo, preguntas, resumirFalla, validar, validarWhatsapp, type Registro } from "@/lib/recepcion";
+import {
+  avisoCliente, chatCliente, diaLima, equipo, preguntas, resumirFalla, sugerirCorreo, sugerirDistrito, validar, validarWhatsapp, type Registro,
+} from "@/lib/recepcion";
 
 describe("recepción", () => {
   it("arma el chat con números peruanos o con código de país", () => {
@@ -28,6 +30,21 @@ describe("recepción", () => {
   it("la pregunta de la luz solo aparece si no enciende, y las de laptop solo en laptops", () => {
     expect(preguntas("Laptop").find((p) => p.id === "luz")!.si!({ enciende: ["Enciende normal"] })).toBe(false);
     expect(preguntas("Consola").find((p) => p.id === "sintomas")!.opciones).not.toContain("No carga la batería");
+  });
+});
+
+describe("autocompletar", () => {
+  it("sugiere distritos sin importar tildes ni mayúsculas", () => {
+    expect(sugerirDistrito("san mi")).toEqual(["San Miguel"]);
+    expect(sugerirDistrito("rimac")).toEqual(["Rímac"]);
+    expect(sugerirDistrito("surco")).toEqual(["Santiago de Surco"]);
+    expect(sugerirDistrito("San Miguel")).toEqual([]);
+  });
+
+  it("completa el dominio del correo", () => {
+    expect(sugerirCorreo("ana")[0]).toBe("ana@gmail.com");
+    expect(sugerirCorreo("ana@ho")).toEqual(["ana@hotmail.com"]);
+    expect(sugerirCorreo("ana@gmail.com")).toEqual([]);
   });
 });
 
