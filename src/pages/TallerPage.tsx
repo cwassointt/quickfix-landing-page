@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Download, Loader2, LogOut, Plus, Printer, RefreshCw } from "lucide-react";
-import { ESTADOS, api, chatCliente, equipo, fecha, type Orden, type Rol } from "@/lib/recepcion";
+import { API, ESTADOS, api, chatCliente, diaLima, equipo, fecha, type Orden, type Rol } from "@/lib/recepcion";
 
 const PRESS = "transition-[transform,background-color,color] duration-150 ease-out active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-[#050505]";
 const BTN = `${PRESS} inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-base`;
@@ -63,6 +63,7 @@ const Dato = ({ k, v }: { k: string; v: string | null | undefined }) =>
 
 function Tarjeta({ o, rol, onRecibir, onImprimir }: { o: Orden; rol: Rol; onRecibir: () => void; onImprimir: () => void }) {
   const pendiente = o.estado === "registrado";
+  const hoy = diaLima();
   const avisos = [o.liquido === 1 && "Recibió líquido o golpe", o.abierto === 1 && "Lo abrió otro técnico"].filter(Boolean) as string[];
   return (
     <article className={`rounded-3xl p-5 md:p-6 ${pendiente ? "bg-primary/[0.12] ring-1 ring-primary/40" : "bg-white/[0.04]"}`}>
@@ -73,13 +74,24 @@ function Tarjeta({ o, rol, onRecibir, onImprimir }: { o: Orden; rol: Rol; onReci
       <p className="mt-2 text-xl font-bold text-white">{o.nombre}</p>
       <p className="text-lg text-white/85">{o.tipo} · {equipo(o)}</p>
       {avisos.length > 0 && <p className="mt-2 text-base font-medium text-red-300">{avisos.join(" · ")}</p>}
+      {pendiente && (o.llega || o.modo === "recojo") && (
+        <p className="mt-3 rounded-2xl bg-black/30 px-4 py-3 text-base text-white">
+          {o.modo === "recojo" ? <><span className="font-medium text-primary">Recojo en casa</span> · {o.direccion}{o.distrito ? `, ${o.distrito}` : ""}</> : "Lo trae al taller"}
+          {o.llega && ` · ${o.llega === hoy ? "hoy" : new Date(`${o.llega}T12:00`).toLocaleDateString("es-PE", { weekday: "long", day: "numeric", month: "short" })}`}
+        </p>
+      )}
       <dl className="mt-4 grid gap-3 sm:grid-cols-2">
         <Dato k="N° de serie" v={o.serie} />
-        <Dato k="Color o señas" v={o.color} />
         <Dato k="Deja también" v={o.accesorios} />
         <Dato k="Servicio" v={o.servicio} />
-        {rol === "admin" && <><Dato k="WhatsApp" v={o.whatsapp} /><Dato k="DNI" v={o.dni} /><Dato k="Correo" v={o.correo} /><Dato k="Distrito" v={o.distrito} /><Dato k="Clave del equipo" v={o.pin} /><Dato k="Nos conoció por" v={o.como} /></>}
+        {rol === "admin" && <><Dato k="WhatsApp" v={o.whatsapp} /><Dato k="DNI" v={o.dni} /><Dato k="Correo" v={o.correo} /><Dato k="Distrito" v={o.distrito} /><Dato k="Clave del equipo" v={o.pin} /><Dato k="Nos conoció por" v={o.como} />
+          <Dato k="Reparar sin consultar" v={o.autoriza ? `Hasta S/ ${o.autoriza}` : "No, consultar antes"} /></>}
       </dl>
+      {o.foto === 1 && (
+        <a href={`${API}?accion=foto&id=${o.id}`} target="_blank" rel="noopener noreferrer" className="mt-4 inline-block">
+          <img src={`${API}?accion=foto&id=${o.id}`} alt={`Etiqueta de ${o.numero}`} loading="lazy" className="h-24 rounded-xl object-cover" />
+        </a>
+      )}
       <p className="mt-4 whitespace-pre-line rounded-2xl bg-black/30 p-4 text-base text-white/85">{o.falla}</p>
       {o.recibido && <p className="mt-3 text-sm text-white/50">Recibido {fecha(o.recibido)} · {o.recibido_por === "mostrador" ? "mostrador" : "tú"}</p>}
       <div className="mt-5 flex flex-wrap gap-2">

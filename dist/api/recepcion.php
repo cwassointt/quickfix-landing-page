@@ -3,7 +3,7 @@
 // Los datos viven fuera de public_html, en /home/quickfix/recepcion/ (config.php y recepcion.sqlite),
 // así nadie puede descargarlos desde internet y nunca pasan por GitHub.
 //
-// Acciones (?accion=):  crear (público) · sesion · entrar · salir · lista · recibir · csv
+// Acciones (?accion=):  crear (público) · sesion · entrar · salir · lista · recibir · foto · csv
 
 declare(strict_types=1);
 date_default_timezone_set('America/Lima');
@@ -14,8 +14,10 @@ const CAMPOS = [
     // campo => [obligatorio, largo máximo]
     'nombre' => [true, 100], 'dni' => [false, 12], 'whatsapp' => [true, 20], 'correo' => [false, 120], 'distrito' => [false, 60],
     'como' => [false, 40], 'tipo' => [true, 30], 'marca' => [true, 40], 'modelo' => [true, 80], 'serie' => [false, 40],
-    'color' => [false, 120], 'pin' => [false, 40], 'accesorios' => [false, 120], 'servicio' => [false, 40], 'falla' => [true, 1000],
+    'pin' => [false, 40], 'accesorios' => [false, 120], 'servicio' => [false, 40], 'falla' => [true, 1000], 'direccion' => [false, 200],
 ];
+// Columnas agregadas después de la primera versión: se crean solas en bases que ya existían.
+const COLUMNAS_NUEVAS = ['llega' => 'TEXT', 'modo' => 'TEXT', 'direccion' => 'TEXT', 'autoriza' => 'INTEGER', 'foto' => 'INTEGER'];
 
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
@@ -53,6 +55,10 @@ function db(): PDO
         estado TEXT NOT NULL DEFAULT 'registrado', recibido TEXT, recibido_por TEXT,
         presupuesto REAL, adelanto REAL, entrega TEXT, notas TEXT
     )");
+    $hay = array_column($pdo->query('PRAGMA table_info(ordenes)')->fetchAll(), 'name');
+    foreach (COLUMNAS_NUEVAS as $col => $tipo) {
+        if (!in_array($col, $hay, true)) $pdo->exec("ALTER TABLE ordenes ADD COLUMN $col $tipo");
+    }
     $pdo->exec('CREATE TABLE IF NOT EXISTS intentos (ip TEXT NOT NULL, tipo TEXT NOT NULL, fecha INTEGER NOT NULL)');
     return $pdo;
 }
@@ -115,6 +121,19 @@ function exigir(string ...$roles): string
     return $r;
 }
 
+/** Foto de la etiqueta: llega como data URL JPEG (el navegador ya la reduce); se guarda fuera de public_html. */
+function guardarFoto(int $id, string $dataUrl): bool
+{
+    global $DIR;
+    if (!preg_match('#^data:image/jpeg;base64,#', $dataUrl)) return false;
+    $bin = base64_decode(substr($dataUrl, 23), true);
+    if ($bin === false || strlen($bin) > 3 * 1024 * 1024) return false;
+    $info = @getimagesizefromstring($bin);
+    if (!$info || $info['mime'] !== 'image/jpeg') return false;
+    if (!is_dir("$DIR/fotos")) mkdir("$DIR/fotos", 0700, true);
+    return file_put_contents("$DIR/fotos/$id.jpg", $bin) !== false;
+}
+
 function numero(int $id): string
 {
     return 'QF-' . str_pad((string) $id, 4, '0', STR_PAD_LEFT);
@@ -139,16 +158,27 @@ try {
             }
             $fila['serie'] = mb_strtoupper($fila['serie']);
             $digitos = preg_replace('/\D/', '', $fila['whatsapp']);
-            if (strlen($digitos) < 9) fallo('Revisa tu número de WhatsApp.');
+            // Celular peruano (9 dígitos que empiezan en 9, con o sin 51) o número extranjero con "+".
+            $extranjero = substr($fila['whatsapp'], 0, 1) === '+' && substr($digitos, 0, 2) !== '51' && strlen($digitos) >= 8 && strlen($digitos) <= 15;
+            if (!preg_match('/^(51)?9\d{8}$/', $digitos) && !$extranjero) fallo('Revisa tu número de WhatsApp.');
+            if ($fila['dni'] !== '' && !preg_match('/^(\d{8}|[A-Za-z0-9]{9,12})$/', $fila['dni'])) fallo('Revisa tu DNI o CE.');
             if ($fila['correo'] !== '' && !filter_var($fila['correo'], FILTER_VALIDATE_EMAIL)) fallo('Revisa tu correo.');
+            $llega = (string) ($d['llega'] ?? '');
+            $fila['llega'] = preg_match('/^\d{4}-\d{2}-\d{2}$/', $llega) ? $llega : null;
+            $fila['modo'] = ($d['modo'] ?? '') === 'recojo' ? 'recojo' : 'taller';
+            if ($fila['modo'] === 'recojo' && $fila['direccion'] === '') fallo('Falta la dirección para el recojo.');
+            $fila['autoriza'] = max(0, min(5000, (int) ($d['autoriza'] ?? 0)));
             $origen = isset($_COOKIE['qf_taller']) && rol() ? 'taller' : 'cliente'; // sin cookie no se abre sesión para el público
             $fila += ['liquido' => sino($d['liquido'] ?? null), 'abierto' => sino($d['abierto'] ?? null), 'creado' => date('c'), 'origen' => $origen, 'ip' => ip()];
             $cols = array_keys($fila);
             db()->prepare('INSERT INTO ordenes (' . implode(',', $cols) . ') VALUES (' . rtrim(str_repeat('?,', count($cols)), ',') . ')')->execute(array_values($fila));
             $id = (int) db()->lastInsertId();
             anotar('crear');
+            if (!empty($d['foto']) && is_string($d['foto']) && guardarFoto($id, $d['foto'])) {
+                db()->prepare('UPDATE ordenes SET foto = 1 WHERE id = ?')->execute([$id]);
+            }
             if (!empty($CFG['correo'])) {
-                $texto = numero($id) . "\n{$fila['nombre']} · {$fila['whatsapp']}\n{$fila['tipo']} {$fila['marca']} {$fila['modelo']}\nS/N: {$fila['serie']}\n\n{$fila['falla']}\n\nhttps://quickfix.pe/taller/";
+                $texto = numero($id) . "\n{$fila['nombre']} · {$fila['whatsapp']}\n{$fila['tipo']} {$fila['marca']} {$fila['modelo']}\nS/N: {$fila['serie']}\n" . ($fila['modo'] === 'recojo' ? "Recojo en: {$fila['direccion']}\n" : '') . ($fila['llega'] ? "Llega: {$fila['llega']}\n" : '') . "\n{$fila['falla']}\n\nhttps://quickfix.pe/taller/";
                 @mail($CFG['correo'], '=?UTF-8?B?' . base64_encode('Nuevo equipo ' . numero($id) . ' · ' . $fila['nombre']) . '?=', $texto, "Content-Type: text/plain; charset=UTF-8\r\nFrom: QuickFix <no-reply@quickfix.pe>");
             }
             responder(['numero' => numero($id)]);
@@ -181,7 +211,7 @@ try {
         case 'GET lista':
             $r = exigir('admin', 'mostrador');
             // Mostrador ve lo necesario para recibir el equipo; ni la clave del equipo ni montos.
-            $cols = $r === 'admin' ? '*' : 'id, creado, origen, nombre, whatsapp, tipo, marca, modelo, serie, color, accesorios, servicio, falla, liquido, abierto, estado, recibido, recibido_por';
+            $cols = $r === 'admin' ? '*' : 'id, creado, origen, nombre, whatsapp, tipo, marca, modelo, serie, accesorios, servicio, falla, liquido, abierto, estado, recibido, recibido_por, distrito, llega, modo, direccion, foto';
             $where = ($_GET['filtro'] ?? '') === 'pendientes' ? "WHERE estado = 'registrado'" : '';
             $filas = db()->query("SELECT $cols FROM ordenes $where ORDER BY id DESC LIMIT 200")->fetchAll();
             foreach ($filas as &$f) $f['numero'] = numero((int) $f['id']);
@@ -193,6 +223,15 @@ try {
             $q = db()->prepare("UPDATE ordenes SET estado = 'recibido', recibido = ?, recibido_por = ? WHERE id = ? AND estado = 'registrado'");
             $q->execute([date('c'), $r, (int) ($d['id'] ?? 0)]);
             responder(['ok' => $q->rowCount() === 1]);
+
+        case 'GET foto':
+            exigir('admin', 'mostrador');
+            $archivo = "$DIR/fotos/" . (int) ($_GET['id'] ?? 0) . '.jpg';
+            if (!is_file($archivo)) fallo('Sin foto.', 404);
+            header('Content-Type: image/jpeg');
+            header('Content-Length: ' . filesize($archivo));
+            readfile($archivo);
+            exit;
 
         case 'GET csv':
             exigir('admin');
