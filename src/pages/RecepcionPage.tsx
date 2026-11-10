@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { AlertCircle, ArrowLeft, Camera, Check, Loader2, ScanLine, Search, Sparkles, X } from "lucide-react";
+import { AlertCircle, ArrowLeft, Camera, Check, ImageUp, Loader2, ScanLine, Search, Sparkles, X } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import AsistenteFalla, { type Resultado } from "@/components/AsistenteFalla";
 import { laptopLabel, searchLaptops, type Laptop } from "@/lib/laptopSearch";
@@ -163,6 +163,7 @@ type Lectura = { estado: "nada" | "leyendo" | "listo" | "aviso"; msg?: string };
 /** Función principal de la ficha 02: foto de la etiqueta → marca, modelo y S/N completados solos. */
 function EscanerEtiqueta({ foto, onFoto, onDatos }: { foto: string; onFoto: (v: string) => void; onDatos: (d: DatosEtiqueta) => void }) {
   const input = useRef<HTMLInputElement>(null);
+  const galeria = useRef<HTMLInputElement>(null);
   const [lectura, setLectura] = useState<Lectura>({ estado: "nada" });
 
   async function procesar(file: File) {
@@ -187,8 +188,11 @@ function EscanerEtiqueta({ foto, onFoto, onDatos }: { foto: string; onFoto: (v: 
 
   return (
     <div className="rounded-2xl bg-gradient-to-br from-primary/[0.16] to-primary/[0.04] p-5 ring-1 ring-primary/30">
-      <input ref={input} type="file" accept="image/*" capture="environment" className="sr-only" tabIndex={-1}
-        onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) procesar(f); }} />
+      {/* Uno abre la cámara directo; el otro (sin capture) deja elegir una foto ya tomada. */}
+      {[input, galeria].map((ref, i) => (
+        <input key={i} ref={ref} type="file" accept="image/*" capture={i === 0 ? "environment" : undefined} className="sr-only" tabIndex={-1} aria-hidden="true"
+          onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) procesar(f); }} />
+      ))}
       <div className="flex items-start gap-4">
         <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary text-black"><ScanLine className="h-5 w-5" aria-hidden="true" /></span>
         <div>
@@ -209,6 +213,8 @@ function EscanerEtiqueta({ foto, onFoto, onDatos }: { foto: string; onFoto: (v: 
             <div className="mt-2 flex gap-2">
               <button type="button" onClick={() => input.current?.click()} disabled={lectura.estado === "leyendo"}
                 className={`${PRESS} rounded-full bg-white/[0.1] px-4 py-2 text-sm text-white hover:bg-white/[0.16] disabled:opacity-50`}>Otra foto</button>
+              <button type="button" onClick={() => galeria.current?.click()} disabled={lectura.estado === "leyendo"}
+                className={`${PRESS} rounded-full px-3 py-2 text-sm text-white/75 hover:bg-white/[0.08] disabled:opacity-50`}>Subir</button>
               <button type="button" onClick={() => { onFoto(""); setLectura({ estado: "nada" }); }} aria-label="Quitar foto"
                 className={`${PRESS} rounded-full p-2 text-white/60 hover:bg-white/[0.08]`}><X className="h-4 w-4" aria-hidden="true" /></button>
             </div>
@@ -219,6 +225,10 @@ function EscanerEtiqueta({ foto, onFoto, onDatos }: { foto: string; onFoto: (v: 
           <button type="button" onClick={() => input.current?.click()}
             className={`${PRESS} mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-primary px-6 py-3.5 text-base font-medium text-black hover:bg-[#ff7a1f]`}>
             <Camera className="h-5 w-5" aria-hidden="true" /> Tomar foto a la etiqueta
+          </button>
+          <button type="button" onClick={() => galeria.current?.click()}
+            className={`${PRESS} mt-2 flex w-full items-center justify-center gap-2 rounded-full px-6 py-2.5 text-sm text-white/80 ring-1 ring-white/20 hover:bg-white/[0.06]`}>
+            <ImageUp className="h-4 w-4" aria-hidden="true" /> Subir una foto que ya tengo
           </button>
           {lectura.estado === "aviso" && <Aviso id="foto" msg={lectura.msg} />}
         </>
