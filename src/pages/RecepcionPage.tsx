@@ -445,7 +445,7 @@ const RecepcionPage = () => {
                   <Campo id="falla" label="Cuéntame la falla" error={ver("falla")}>
                     <textarea rows={4} placeholder="Se apaga al jugar, no carga, no da imagen…" {...campo("falla")} className={`${campo("falla").className} h-auto py-3 leading-relaxed`} />
                   </Campo>
-                  <SiNo label="¿Le cayó líquido o recibió un golpe?" valor={r.liquido} onChange={set("liquido")} />
+                  <SiNo label="¿Le cayó líquido?" valor={r.liquido} onChange={set("liquido")} />
                   <SiNo label="¿Lo abrió otro técnico antes?" valor={r.abierto} onChange={set("abierto")} />
 
                   <fieldset>

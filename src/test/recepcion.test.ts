@@ -50,10 +50,10 @@ describe("etiquetas", () => {
 
   it("arma la etiqueta del equipo con aviso y la del cargador solo si lo dejó", () => {
     const [eq, cargador] = etiquetas(orden);
-    expect(eq).toMatchObject({ PARTE: "EQUIPO", QF: "QF-0007", SERVICIO: "REPARACIÓN", AVISO: "⚠ SE MOJÓ O CAYÓ", SN: "S/N N3NRKD0099", FECHA: "09/11" });
+    expect(eq).toMatchObject({ PARTE: "EQUIPO", QF: "QF-0007", SERVICIO: "REPARACIÓN", AVISO: "⚠ SE MOJÓ", SN: "S/N N3NRKD0099", FECHA: "09/11" });
     expect(eq.URL).toBe("https://quickfix.pe/taller/?qf=7");
     expect(etiquetas({ ...orden, whatsapp: "+51 987654321" })[0].WHATSAPP).toBe("WhatsApp 987 654 321");
-    expect(etiquetas({ ...orden, abierto: 1 })[0].AVISO).toBe("⚠ SE MOJÓ O CAYÓ  ⚠ YA LO ABRIERON");
+    expect(etiquetas({ ...orden, abierto: 1 })[0].AVISO).toBe("⚠ SE MOJÓ  ⚠ YA LO ABRIERON");
     expect(cargador.PARTE).toBe("CARGADOR");
     expect(etiquetas({ ...orden, accesorios: "" })).toHaveLength(1);
   });

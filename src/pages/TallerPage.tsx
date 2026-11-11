@@ -54,7 +54,7 @@ const Dato = ({ k, v }: { k: string; v: string | null | undefined }) =>
 function Tarjeta({ o, rol, onRecibir, onBorrar }: { o: Orden; rol: Rol; onRecibir: () => void; onBorrar: () => void }) {
   const pendiente = o.estado === "registrado";
   const hoy = diaLima();
-  const avisos = [o.liquido === 1 && "Se mojó o se cayó", o.abierto === 1 && "Otro técnico ya lo abrió"].filter(Boolean) as string[];
+  const avisos = [o.liquido === 1 && "Se mojó", o.abierto === 1 && "Otro técnico ya lo abrió"].filter(Boolean) as string[];
   return (
     <article className={`rounded-3xl p-5 md:p-6 ${pendiente ? "bg-primary/[0.12] ring-1 ring-primary/40" : "bg-white/[0.04]"}`}>
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
