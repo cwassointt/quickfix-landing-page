@@ -173,7 +173,7 @@ export function etiquetas(o: Orden): Etiqueta[] {
     // Riesgos que declaró el cliente, en palabras simples: equipos delicados de manipular.
     AVISO: [o.liquido === 1 && "⚠ SE MOJÓ", o.abierto === 1 && "⚠ YA LO ABRIERON"].filter(Boolean).join("  "),
     CLIENTE: o.nombre,
-    WHATSAPP: o.whatsapp ? `WhatsApp ${telefono(o.whatsapp)}` : "",
+    WHATSAPP: o.whatsapp ? telefono(o.whatsapp) : "",
     EQUIPO: equipo(o),
     SN: `S/N ${o.serie || "—"}`,
     URL: urlCaso(o.id),
