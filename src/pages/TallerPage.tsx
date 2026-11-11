@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { ArrowLeft, Check, Copy, Download, Loader2, LogOut, MessageCircle, Phone, Plus, RefreshCw, Trash2, UserPlus } from "lucide-react";
+import { ArrowLeft, Check, Copy, Download, ListOrdered, Loader2, LogOut, MessageCircle, Phone, Plus, RefreshCw, Trash2, UserPlus } from "lucide-react";
 import {
   API, ESTADOS, aCsv, api, chatCliente, diaLima, equipo, etiquetas, fecha, mensajesCliente, nombreContacto, saludo, telefono, vcard, type Orden, type Rol,
 } from "@/lib/recepcion";
@@ -265,6 +265,16 @@ const TallerPage = () => {
     return () => clearInterval(t);
   }, [rol, caso, cargar]);
 
+  const [aviso, setAviso] = useState("");
+  const renumerar = async () => {
+    if (!confirm("Los casos que quedan se numeran otra vez desde QF-0001, en el mismo orden.\n\nBorra antes los de prueba. Los que cambien de número necesitan etiqueta nueva (su QR cambia). ¿Seguir?")) return;
+    try {
+      const { cambios } = await api<{ cambios: number }>("renumerar", {});
+      setAviso(cambios ? `Listo: ${cambios} caso(s) cambiaron de número. Vuelve a imprimir sus etiquetas.` : "Ya estaban en orden desde QF-0001.");
+      cargar();
+    } catch (err) { setError((err as Error).message); }
+  };
+
   const enviar = async (accion: "recibir" | "borrar", o: Orden) => {
     try {
       await api(accion, { id: o.id });
@@ -310,6 +320,12 @@ const TallerPage = () => {
                 <Download className="h-4 w-4" aria-hidden="true" /> Descargar todo para Excel
               </a>
             )}
+            {rol === "admin" && (
+              <button onClick={renumerar} className="ml-5 mt-4 inline-flex items-center gap-2 text-base text-white/60 hover:text-white">
+                <ListOrdered className="h-4 w-4" aria-hidden="true" /> Renumerar desde QF-0001
+              </button>
+            )}
+            {aviso && <p role="status" className="mt-4 rounded-2xl bg-primary/[0.12] px-5 py-3 text-white">{aviso}</p>}
             {error && <p role="alert" className="mt-6 rounded-2xl bg-red-500/15 px-5 py-4 text-red-200">{error}</p>}
 
             <div className="mt-6 space-y-4">
