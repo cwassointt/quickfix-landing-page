@@ -372,6 +372,17 @@ try {
             }
             responder(['ok' => true]);
 
+        case 'POST borrar':
+            // Solo tú: casos de prueba. El siguiente N° sigue al mayor que quede (los que quedan no cambian, ya tienen etiqueta).
+            exigir('admin');
+            $id = (int) (cuerpo()['id'] ?? 0);
+            $q = db()->prepare('DELETE FROM ordenes WHERE id = ?');
+            $q->execute([$id]);
+            if ($q->rowCount() !== 1) fallo('No existe esa orden.', 404);
+            @unlink("$DIR/fotos/$id.jpg");
+            db()->exec("UPDATE sqlite_sequence SET seq = (SELECT IFNULL(MAX(id), 0) FROM ordenes) WHERE name = 'ordenes'");
+            responder(['ok' => true]);
+
         case 'POST recibir':
             $r = exigir('admin', 'mostrador');
             $d = cuerpo();
