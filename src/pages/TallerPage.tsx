@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { ArrowLeft, Check, Download, Loader2, LogOut, MessageCircle, Phone, Plus, RefreshCw } from "lucide-react";
+import { ArrowLeft, Check, Download, Loader2, LogOut, MessageCircle, Phone, Plus, RefreshCw, Trash2 } from "lucide-react";
 import {
   API, ESTADOS, aCsv, api, chatCliente, diaLima, equipo, etiquetas, fecha, mensajesCliente, saludo, telefono, type Orden, type Rol,
 } from "@/lib/recepcion";
@@ -51,10 +51,10 @@ function Login({ onEntrar }: { onEntrar: (r: Rol) => void }) {
 const Dato = ({ k, v }: { k: string; v: string | null | undefined }) =>
   v ? <div><dt className="text-sm text-white/50">{k}</dt><dd className="text-base text-white">{v}</dd></div> : null;
 
-function Tarjeta({ o, rol, onRecibir }: { o: Orden; rol: Rol; onRecibir: () => void }) {
+function Tarjeta({ o, rol, onRecibir, onBorrar }: { o: Orden; rol: Rol; onRecibir: () => void; onBorrar: () => void }) {
   const pendiente = o.estado === "registrado";
   const hoy = diaLima();
-  const avisos = [o.liquido === 1 && "Se mojó o se cayó", o.abierto === 1 && "Otro técnico ya lo abrió"].filter(Boolean) as string[];
+  const avisos = [o.liquido === 1 && "Se mojó", o.abierto === 1 && "Otro técnico ya lo abrió"].filter(Boolean) as string[];
   return (
     <article className={`rounded-3xl p-5 md:p-6 ${pendiente ? "bg-primary/[0.12] ring-1 ring-primary/40" : "bg-white/[0.04]"}`}>
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
@@ -104,6 +104,12 @@ function Tarjeta({ o, rol, onRecibir }: { o: Orden; rol: Rol; onRecibir: () => v
             </a>
             <a href={enlaceLlamada(o.whatsapp)} className={SUAVE}><Phone className="h-5 w-5" aria-hidden="true" /> Llamar</a>
           </>
+        )}
+        {rol === "admin" && (
+          <button onClick={() => { if (confirm(`¿Borrar ${o.numero} de ${o.nombre}? No se puede deshacer.`)) onBorrar(); }}
+            className={`${BTN} ml-auto text-[#ff9b80] hover:bg-red-500/15`}>
+            <Trash2 className="h-5 w-5" aria-hidden="true" /> Borrar
+          </button>
         )}
       </div>
     </article>
@@ -188,7 +194,11 @@ function Caso({ id, rol, onSalida }: { id: number; rol: Rol; onSalida: () => voi
       {!o && !error && <Loader2 className="mx-auto mt-16 h-8 w-8 animate-spin text-white/50" aria-label="Cargando" />}
       {o && (
         <div className="mt-4">
-          <Tarjeta o={o} rol={rol} onRecibir={async () => { await api("recibir", { id: o.id }); cargar(); }} />
+          <Tarjeta o={o} rol={rol} onRecibir={async () => { await api("recibir", { id: o.id }); cargar(); }}
+            onBorrar={async () => {
+              try { await api("borrar", { id: o.id }); window.location.href = "/taller/"; }
+              catch (err) { setError((err as Error).message); }
+            }} />
           {rol === "admin" && <Seguimiento key={`${o.estado}-${o.presupuesto}`} o={o} onCambio={cargar} />}
         </div>
       )}
@@ -233,9 +243,9 @@ const TallerPage = () => {
     return () => clearInterval(t);
   }, [rol, caso, cargar]);
 
-  const recibir = async (o: Orden) => {
+  const enviar = async (accion: "recibir" | "borrar", o: Orden) => {
     try {
-      await api("recibir", { id: o.id });
+      await api(accion, { id: o.id });
       cargar();
     } catch (err) { setError((err as Error).message); }
   };
@@ -287,7 +297,7 @@ const TallerPage = () => {
                 </p>
               )}
               {ordenes.map((o) => (
-                <Tarjeta key={o.id} o={o} rol={rol} onRecibir={() => recibir(o)} />
+                <Tarjeta key={o.id} o={o} rol={rol} onRecibir={() => enviar("recibir", o)} onBorrar={() => enviar("borrar", o)} />
               ))}
             </div>
           </>

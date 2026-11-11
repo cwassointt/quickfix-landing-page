@@ -171,9 +171,9 @@ export function etiquetas(o: Orden): Etiqueta[] {
     FECHA: new Date(o.recibido ?? o.creado).toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit", timeZone: "America/Lima" }),
     SERVICIO: (o.servicio || "Revisión").toUpperCase(),
     // Riesgos que declaró el cliente, en palabras simples: equipos delicados de manipular.
-    AVISO: [o.liquido === 1 && "⚠ SE MOJÓ O CAYÓ", o.abierto === 1 && "⚠ YA LO ABRIERON"].filter(Boolean).join("  "),
+    AVISO: [o.liquido === 1 && "⚠ SE MOJÓ", o.abierto === 1 && "⚠ YA LO ABRIERON"].filter(Boolean).join("  "),
     CLIENTE: o.nombre,
-    WHATSAPP: o.whatsapp ? `WhatsApp ${telefono(o.whatsapp)}` : "",
+    WHATSAPP: o.whatsapp ? telefono(o.whatsapp) : "",
     EQUIPO: equipo(o),
     SN: `S/N ${o.serie || "—"}`,
     URL: urlCaso(o.id),
@@ -252,7 +252,7 @@ const REPARACION = ["Enciende pero no da imagen", NO_ENCIENDE, "Se apaga solo", 
   "No hay sonido", "Algún puerto no funciona (USB, HDMI, carga)", "Olor a quemado o chispazo", "Le cayó líquido", "Se golpeó o se cayó"];
 const min = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
 
-/** Convierte las respuestas en un resumen breve y deduce servicio, líquido/golpe y si otro técnico lo abrió. */
+/** Convierte las respuestas en un resumen breve y deduce servicio, si se mojó y si otro técnico lo abrió. */
 export function resumirFalla(r: Respuestas) {
   const enciende = r.enciende?.[0];
   const sintomas = r.sintomas ?? [];
@@ -278,7 +278,7 @@ export function resumirFalla(r: Respuestas) {
     texto: frases.join(" "),
     // Solo calor, ruido o lentitud apunta a mantenimiento; cualquier otra señal, a reparación.
     servicio: todo.some((x) => REPARACION.includes(x)) || !todo.length ? "Reparación" : "Mantenimiento",
-    liquido: antes.some((a) => a === "Le cayó líquido" || a === "Se golpeó o se cayó") ? true : respondioAntes ? false : null,
+    liquido: antes.includes("Le cayó líquido") ? true : respondioAntes ? false : null,
     abierto: antes.includes("Lo abrió otro técnico") ? true : respondioAntes ? false : null,
   };
 }
