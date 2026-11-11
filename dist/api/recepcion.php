@@ -383,6 +383,27 @@ try {
             db()->exec("UPDATE sqlite_sequence SET seq = (SELECT IFNULL(MAX(id), 0) FROM ordenes) WHERE name = 'ordenes'");
             responder(['ok' => true]);
 
+        case 'POST renumerar':
+            // Solo tú: tras borrar las pruebas, los casos que quedan pasan a QF-0001, QF-0002… en el mismo orden.
+            exigir('admin');
+            $pdo = db();
+            $ids = $pdo->query('SELECT id FROM ordenes ORDER BY id')->fetchAll(PDO::FETCH_COLUMN);
+            $cambios = 0;
+            $pdo->beginTransaction();
+            foreach ($ids as $i => $viejo) {
+                $nuevo = $i + 1; // siempre menor o igual y libre: se recorre de menor a mayor
+                if ((int) $viejo === $nuevo) continue;
+                $pdo->prepare('UPDATE ordenes SET id = ? WHERE id = ?')->execute([$nuevo, $viejo]);
+                $cambios++;
+            }
+            $pdo->exec("UPDATE sqlite_sequence SET seq = (SELECT IFNULL(MAX(id), 0) FROM ordenes) WHERE name = 'ordenes'");
+            $pdo->commit();
+            // Las fotos se mueven después del commit: si la base falla, quedan donde estaban.
+            foreach ($ids as $i => $viejo) {
+                if ((int) $viejo !== $i + 1 && is_file("$DIR/fotos/$viejo.jpg")) rename("$DIR/fotos/$viejo.jpg", "$DIR/fotos/" . ($i + 1) . '.jpg');
+            }
+            responder(['cambios' => $cambios]);
+
         case 'POST recibir':
             $r = exigir('admin', 'mostrador');
             $d = cuerpo();
