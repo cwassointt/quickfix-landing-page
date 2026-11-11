@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  aCsv, avisoCliente, chatCliente, diaLima, equipo, etiquetas, fallaCorta, mensajesCliente, preguntas, resumirFalla, sugerirCorreo, sugerirDistrito, validar, validarWhatsapp, type Registro,
+  aCsv, avisoCliente, chatCliente, diaLima, equipo, etiquetas, fallaCorta, mensajesCliente, nombreContacto, preguntas, vcard, resumirFalla, sugerirCorreo, sugerirDistrito, validar, validarWhatsapp, type Registro,
 } from "@/lib/recepcion";
 
 describe("recepción", () => {
@@ -64,6 +64,15 @@ describe("etiquetas", () => {
     expect(m[1].texto).toContain("QF-0007");
     expect(m[1].texto).toContain("S/ 250");
     expect(mensajesCliente(orden)[1].texto).toContain("S/ ___");
+  });
+
+  it("arma el nombre para agendar con N°, nombre, primer apellido y código del modelo", () => {
+    expect(nombreContacto(orden)).toBe("QF-0007 Ana Torres · G614JV");
+    expect(nombreContacto({ ...orden, nombre: "ana maría torres ruiz", modelo: "Zephyrus G14 GA402RJ" })).toBe("QF-0007 Ana Torres · GA402RJ");
+    expect(nombreContacto({ ...orden, nombre: "Andy Hilario", tipo: "Consola", marca: "Sony", modelo: "PS5" })).toBe("QF-0007 Andy Hilario · PS5");
+    const v = vcard({ ...orden, whatsapp: "987 654 321" });
+    expect(v).toContain("FN:QF-0007 Ana Torres · G614JV");
+    expect(v).toContain("TEL;TYPE=CELL:+51987654321");
   });
 
   it("el CSV escapa comas y comillas", () => {

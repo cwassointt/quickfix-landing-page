@@ -1,19 +1,37 @@
 import { useCallback, useEffect, useState } from "react";
-import { ArrowLeft, Check, Download, Loader2, LogOut, MessageCircle, Phone, Plus, RefreshCw, Trash2 } from "lucide-react";
+import { ArrowLeft, Check, Copy, Download, Loader2, LogOut, MessageCircle, Phone, Plus, RefreshCw, Trash2, UserPlus } from "lucide-react";
 import {
-  API, ESTADOS, aCsv, api, chatCliente, diaLima, equipo, etiquetas, fecha, mensajesCliente, saludo, telefono, type Orden, type Rol,
+  API, ESTADOS, aCsv, api, chatCliente, diaLima, equipo, etiquetas, fecha, mensajesCliente, nombreContacto, saludo, telefono, vcard, type Orden, type Rol,
 } from "@/lib/recepcion";
 
 const PRESS = "transition-[transform,background-color,color] duration-150 ease-out active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-[#050505]";
 const BTN = `${PRESS} inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-base`;
 const SUAVE = `${BTN} bg-white/[0.08] text-white hover:bg-white/[0.14]`;
 
-/** Baja las etiquetas como CSV para imprimirlas desde OpenLabel+ (plantilla "QuickFix", con QR a la columna URL). */
-function descargarCsv(o: Orden) {
-  const url = URL.createObjectURL(new Blob([aCsv(etiquetas(o))], { type: "text/csv;charset=utf-8" }));
-  const a = Object.assign(document.createElement("a"), { href: url, download: `etiqueta-${o.numero}.csv` });
+function descargar(texto: string, tipo: string, archivo: string) {
+  const url = URL.createObjectURL(new Blob([texto], { type: `${tipo};charset=utf-8` }));
+  const a = Object.assign(document.createElement("a"), { href: url, download: archivo });
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+/** Baja las etiquetas como CSV para imprimirlas desde OpenLabel+ (plantilla "QuickFix", con QR a la columna URL). */
+const descargarCsv = (o: Orden) => descargar(aCsv(etiquetas(o)), "text/csv", `etiqueta-${o.numero}.csv`);
+
+/** Nombre para agendar + botón que lo copia. */
+function Contacto({ o }: { o: Orden }) {
+  const nombre = nombreContacto(o);
+  const [copiado, setCopiado] = useState(false);
+  return (
+    <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-2xl bg-black/30 px-4 py-3">
+      <span className="w-full text-sm text-white/50">Agendar como</span>
+      <span className="flex-1 font-medium text-white">{nombre}</span>
+      <button onClick={async () => { try { await navigator.clipboard.writeText(nombre); setCopiado(true); setTimeout(() => setCopiado(false), 1500); } catch { /* sin permiso: queda visible para copiar a mano */ } }}
+        className={`${PRESS} inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm text-white/75 hover:bg-white/[0.08]`}>
+        {copiado ? <Check className="h-4 w-4 text-primary" aria-hidden="true" /> : <Copy className="h-4 w-4" aria-hidden="true" />} {copiado ? "Copiado" : "Copiar"}
+      </button>
+    </div>
+  );
 }
 
 /** tel: con código de país para celulares peruanos. */
@@ -84,6 +102,7 @@ function Tarjeta({ o, rol, onRecibir, onBorrar }: { o: Orden; rol: Rol; onRecibi
           <img src={`${API}?accion=foto&id=${o.id}`} alt={`Etiqueta de ${o.numero}`} loading="lazy" className="h-24 rounded-xl object-cover" />
         </a>
       )}
+      {rol === "admin" && o.whatsapp && <Contacto o={o} />}
       <p className="mt-4 whitespace-pre-line rounded-2xl bg-black/30 p-4 text-base text-white/85">{o.falla}</p>
       {o.recibido && <p className="mt-3 text-sm text-white/50">Recibido {fecha(o.recibido)} · {o.recibido_por === "mostrador" ? "mostrador" : "tú"}</p>}
       <div className="mt-5 flex flex-wrap gap-2">
@@ -103,6 +122,9 @@ function Tarjeta({ o, rol, onRecibir, onBorrar }: { o: Orden; rol: Rol; onRecibi
               <MessageCircle className="h-5 w-5" aria-hidden="true" /> WhatsApp
             </a>
             <a href={enlaceLlamada(o.whatsapp)} className={SUAVE}><Phone className="h-5 w-5" aria-hidden="true" /> Llamar</a>
+            <button onClick={() => descargar(vcard(o), "text/vcard", `${o.numero}.vcf`)} className={SUAVE}>
+              <UserPlus className="h-5 w-5" aria-hidden="true" /> Agendar
+            </button>
           </>
         )}
         {rol === "admin" && (
