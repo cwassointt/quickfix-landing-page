@@ -242,6 +242,29 @@ function columnas(string $rol): string
     return $rol === 'admin' ? '*' : 'id, creado, origen, nombre, whatsapp, tipo, marca, modelo, serie, accesorios, servicio, falla, liquido, abierto, estado, recibido, recibido_por, distrito, llega, modo, direccion, foto';
 }
 
+/** Datos del cliente y del equipo, limpios y validados. Lo usan el formulario (crear) y la edición del taller. */
+function datosOrden(array $d): array
+{
+    $fila = [];
+    foreach (CAMPOS as $campo => [$obligatorio, $max]) {
+        $fila[$campo] = limpiar($d[$campo] ?? '', $max);
+        if ($obligatorio && $fila[$campo] === '') fallo("Falta completar: $campo.");
+    }
+    $fila['serie'] = mb_strtoupper($fila['serie']);
+    $digitos = preg_replace('/\D/', '', $fila['whatsapp']);
+    // Celular peruano (9 dígitos que empiezan en 9, con o sin 51) o número extranjero con "+".
+    $extranjero = substr($fila['whatsapp'], 0, 1) === '+' && substr($digitos, 0, 2) !== '51' && strlen($digitos) >= 8 && strlen($digitos) <= 15;
+    if (!preg_match('/^(51)?9\d{8}$/', $digitos) && !$extranjero) fallo('Revisa el número de WhatsApp.');
+    if ($fila['dni'] !== '' && !preg_match('/^(\d{8}|[A-Za-z0-9]{9,12})$/', $fila['dni'])) fallo('Revisa el DNI o CE.');
+    if ($fila['correo'] !== '' && !filter_var($fila['correo'], FILTER_VALIDATE_EMAIL)) fallo('Revisa el correo.');
+    $llega = (string) ($d['llega'] ?? '');
+    $fila['llega'] = preg_match('/^\d{4}-\d{2}-\d{2}$/', $llega) ? $llega : null;
+    $fila['modo'] = ($d['modo'] ?? '') === 'recojo' ? 'recojo' : 'taller';
+    if ($fila['modo'] === 'recojo' && $fila['direccion'] === '') fallo('Falta la dirección para el recojo.');
+    $fila['autoriza'] = max(0, min(5000, (int) ($d['autoriza'] ?? 0)));
+    return $fila;
+}
+
 function numero(int $id): string
 {
     return 'QF-' . str_pad((string) $id, 4, '0', STR_PAD_LEFT);
@@ -259,23 +282,7 @@ try {
             // Límite alto: varios clientes pueden compartir el wifi del taller.
             if (demasiados('crear', 20, 3600)) fallo('Ya registraste varios equipos. Escríbeme por WhatsApp para continuar.', 429);
             if (empty($d['acepta'])) fallo('Debes aceptar las condiciones.');
-            $fila = [];
-            foreach (CAMPOS as $campo => [$obligatorio, $max]) {
-                $fila[$campo] = limpiar($d[$campo] ?? '', $max);
-                if ($obligatorio && $fila[$campo] === '') fallo("Falta completar: $campo.");
-            }
-            $fila['serie'] = mb_strtoupper($fila['serie']);
-            $digitos = preg_replace('/\D/', '', $fila['whatsapp']);
-            // Celular peruano (9 dígitos que empiezan en 9, con o sin 51) o número extranjero con "+".
-            $extranjero = substr($fila['whatsapp'], 0, 1) === '+' && substr($digitos, 0, 2) !== '51' && strlen($digitos) >= 8 && strlen($digitos) <= 15;
-            if (!preg_match('/^(51)?9\d{8}$/', $digitos) && !$extranjero) fallo('Revisa tu número de WhatsApp.');
-            if ($fila['dni'] !== '' && !preg_match('/^(\d{8}|[A-Za-z0-9]{9,12})$/', $fila['dni'])) fallo('Revisa tu DNI o CE.');
-            if ($fila['correo'] !== '' && !filter_var($fila['correo'], FILTER_VALIDATE_EMAIL)) fallo('Revisa tu correo.');
-            $llega = (string) ($d['llega'] ?? '');
-            $fila['llega'] = preg_match('/^\d{4}-\d{2}-\d{2}$/', $llega) ? $llega : null;
-            $fila['modo'] = ($d['modo'] ?? '') === 'recojo' ? 'recojo' : 'taller';
-            if ($fila['modo'] === 'recojo' && $fila['direccion'] === '') fallo('Falta la dirección para el recojo.');
-            $fila['autoriza'] = max(0, min(5000, (int) ($d['autoriza'] ?? 0)));
+            $fila = datosOrden($d);
             $origen = isset($_COOKIE['qf_taller']) && rol() ? 'taller' : 'cliente'; // sin cookie no se abre sesión para el público
             $fila += ['liquido' => sino($d['liquido'] ?? null), 'abierto' => sino($d['abierto'] ?? null), 'creado' => date('c'), 'origen' => $origen, 'ip' => ip()];
             $cols = array_keys($fila);
@@ -370,6 +377,17 @@ try {
                 $monto = $d['presupuesto'] === null || $d['presupuesto'] === '' ? null : round(max(0, min(99999, (float) $d['presupuesto'])), 2);
                 db()->prepare('UPDATE ordenes SET presupuesto = ? WHERE id = ?')->execute([$monto, $id]);
             }
+            responder(['ok' => true]);
+
+        case 'POST editar':
+            // Solo tú: corregir datos del cliente o del equipo. Mismas reglas que el formulario; el N° de orden no cambia.
+            exigir('admin');
+            $d = cuerpo();
+            $id = (int) ($d['id'] ?? 0);
+            $fila = datosOrden($d) + ['liquido' => sino($d['liquido'] ?? null), 'abierto' => sino($d['abierto'] ?? null)];
+            $q = db()->prepare('UPDATE ordenes SET ' . implode(' = ?, ', array_keys($fila)) . ' = ? WHERE id = ?');
+            $q->execute(array_merge(array_values($fila), [$id]));
+            if ($q->rowCount() !== 1) fallo('No existe esa orden.', 404);
             responder(['ok' => true]);
 
         case 'POST borrar':
