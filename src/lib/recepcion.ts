@@ -186,6 +186,25 @@ export function etiquetas(o: Orden): Etiqueta[] {
 type DatosMensaje = Pick<Orden, "nombre" | "numero" | "tipo" | "marca" | "modelo">;
 export const saludo = (o: DatosMensaje) => `Hola ${o.nombre.split(" ")[0]}, te escribo de QuickFix por tu ${equipo(o)} (${o.numero}).`;
 
+/** Nombre para agendar al cliente: "QF-0007 Andy Hilario · G614JV". El N° primero para buscarlo igual que en la etiqueta. */
+export function nombreContacto(o: DatosMensaje) {
+  const p = o.nombre.trim().split(/\s+/).map((x) => x.charAt(0).toUpperCase() + x.slice(1).toLowerCase());
+  // Nombre + primer apellido: con 4 palabras suele ser "Nombre Nombre Apellido Apellido".
+  const persona = (p.length >= 4 ? [p[0], p[2]] : p.slice(0, 2)).join(" ");
+  // El código del modelo (G614JV, GA402RJ) es lo que distingue una ROG de otra.
+  const codigo = (o.modelo ?? "").split(/\s+/).filter((t) => t.length >= 4 && /\d/.test(t) && /[a-z]/i.test(t)).pop();
+  const modelo = codigo?.toUpperCase() || (o.modelo && o.modelo.length <= 18 ? o.modelo : "") || equipo(o);
+  return `${o.numero} ${persona} · ${modelo}`;
+}
+
+/** Contacto .vcf: al abrirlo en el celular se agenda con nombre y número en un toque. */
+export function vcard(o: DatosMensaje & Pick<Orden, "id" | "whatsapp">) {
+  const d = o.whatsapp.replace(/\D/g, "");
+  const tel = `+${d.length === 9 ? `51${d}` : d}`;
+  const nombre = nombreContacto(o).replace(/[\\,;]/g, (c) => `\\${c}`);
+  return ["BEGIN:VCARD", "VERSION:3.0", `FN:${nombre}`, `N:${nombre};;;;`, `TEL;TYPE=CELL:${tel}`, `NOTE:${equipo(o)} · ${urlCaso(o.id)}`, "END:VCARD", ""].join("\r\n");
+}
+
 /** Mensajes de seguimiento ya redactados para el WhatsApp del cliente, según el momento del caso. */
 export function mensajesCliente(o: DatosMensaje, presupuesto?: number | null) {
   const hola = saludo(o);
