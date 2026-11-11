@@ -1,5 +1,9 @@
-import { useCallback, useEffect, useState } from "react";
-import { ArrowLeft, Check, Copy, Download, ListOrdered, Loader2, LogOut, MessageCircle, Phone, Plus, RefreshCw, Trash2, UserPlus } from "lucide-react";
+import { Suspense, lazy, useCallback, useEffect, useState } from "react";
+import { ArrowLeft, Check, Copy, Download, ListOrdered, Loader2, LogOut, MessageCircle, Pencil, Phone, Plus, Printer, RefreshCw, Trash2, UserPlus } from "lucide-react";
+
+// Solo se descarga al imprimir: así el generador de QR no pesa en el resto de la web.
+const ImprimirEtiquetas = lazy(() => import("@/components/EtiquetaImpresa").then((m) => ({ default: m.ImprimirEtiquetas })));
+const EditarCaso = lazy(() => import("@/components/EditarCaso").then((m) => ({ default: m.EditarCaso })));
 import {
   API, ESTADOS, aCsv, api, chatCliente, diaLima, equipo, etiquetas, fecha, mensajesCliente, nombreContacto, saludo, telefono, vcard, type Orden, type Rol,
 } from "@/lib/recepcion";
@@ -69,10 +73,14 @@ function Login({ onEntrar }: { onEntrar: (r: Rol) => void }) {
 const Dato = ({ k, v }: { k: string; v: string | null | undefined }) =>
   v ? <div><dt className="text-sm text-white/50">{k}</dt><dd className="text-base text-white">{v}</dd></div> : null;
 
-function Tarjeta({ o, rol, onRecibir, onBorrar }: { o: Orden; rol: Rol; onRecibir: () => void; onBorrar: () => void }) {
+function Tarjeta({ o, rol, onRecibir, onBorrar, onEditado }: { o: Orden; rol: Rol; onRecibir: () => void; onBorrar: () => void; onEditado: () => void }) {
   const pendiente = o.estado === "registrado";
   const hoy = diaLima();
   const avisos = [o.liquido === 1 && "Se mojó", o.abierto === 1 && "Otro técnico ya lo abrió"].filter(Boolean) as string[];
+  const [imprimir, setImprimir] = useState(false);
+  const cerrar = useCallback(() => setImprimir(false), []);
+  const [editar, setEditar] = useState(false);
+  const cerrarEditar = useCallback(() => setEditar(false), []);
   return (
     <article className={`rounded-3xl p-5 md:p-6 ${pendiente ? "bg-primary/[0.12] ring-1 ring-primary/40" : "bg-white/[0.04]"}`}>
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
@@ -106,16 +114,20 @@ function Tarjeta({ o, rol, onRecibir, onBorrar }: { o: Orden; rol: Rol; onRecibi
       <p className="mt-4 whitespace-pre-line rounded-2xl bg-black/30 p-4 text-base text-white/85">{o.falla}</p>
       {o.recibido && <p className="mt-3 text-sm text-white/50">Recibido {fecha(o.recibido)} · {o.recibido_por === "mostrador" ? "mostrador" : "tú"}</p>}
       <div className="mt-5 flex flex-wrap gap-2">
-        {/* La impresora térmica imprime desde OpenLabel+: "Recibido" baja el CSV de las etiquetas para importarlo allí. */}
+        {/* Imprime directo en la impresora de etiquetas (driver de Windows, papel 50 × 30 mm). El CSV queda para OpenLabel+. */}
         {pendiente ? (
-          <button onClick={() => { onRecibir(); descargarCsv(o); }} className={`${BTN} bg-primary font-medium text-black hover:bg-[#ff7a1f]`}>
-            <Check className="h-5 w-5" aria-hidden="true" /> Recibido · bajar etiquetas
+          <button onClick={() => { onRecibir(); setImprimir(true); }} className={`${BTN} bg-primary font-medium text-black hover:bg-[#ff7a1f]`}>
+            <Check className="h-5 w-5" aria-hidden="true" /> Recibido · imprimir etiquetas
           </button>
         ) : (
-          <button onClick={() => descargarCsv(o)} className={SUAVE}>
-            <Download className="h-5 w-5" aria-hidden="true" /> Etiquetas OpenLabel+
+          <button onClick={() => setImprimir(true)} className={SUAVE}>
+            <Printer className="h-5 w-5" aria-hidden="true" /> Imprimir etiquetas
           </button>
         )}
+        <button onClick={() => descargarCsv(o)} aria-label="Bajar etiquetas en CSV para OpenLabel+" title="CSV para OpenLabel+" className={`${SUAVE} px-4`}>
+          <Download className="h-5 w-5" aria-hidden="true" />
+        </button>
+        {imprimir && <Suspense fallback={null}><ImprimirEtiquetas o={o} onCerrar={cerrar} /></Suspense>}
         {rol === "admin" && o.whatsapp && (
           <>
             <a href={chatCliente(o.whatsapp, saludo(o))} target="_blank" rel="noopener noreferrer" className={SUAVE}>
@@ -128,11 +140,17 @@ function Tarjeta({ o, rol, onRecibir, onBorrar }: { o: Orden; rol: Rol; onRecibi
           </>
         )}
         {rol === "admin" && (
-          <button onClick={() => { if (confirm(`¿Borrar ${o.numero} de ${o.nombre}? No se puede deshacer.`)) onBorrar(); }}
-            className={`${BTN} ml-auto text-[#ff9b80] hover:bg-red-500/15`}>
-            <Trash2 className="h-5 w-5" aria-hidden="true" /> Borrar
-          </button>
+          <span className="ml-auto flex gap-1">
+            <button onClick={() => setEditar(true)} className={`${BTN} px-4 text-white/75 hover:bg-white/[0.08]`}>
+              <Pencil className="h-5 w-5" aria-hidden="true" /> Editar
+            </button>
+            <button onClick={() => { if (confirm(`¿Borrar ${o.numero} de ${o.nombre}? No se puede deshacer.`)) onBorrar(); }}
+              className={`${BTN} px-4 text-[#ff9b80] hover:bg-red-500/15`}>
+              <Trash2 className="h-5 w-5" aria-hidden="true" /> Borrar
+            </button>
+          </span>
         )}
+        {editar && <Suspense fallback={null}><EditarCaso o={o} onCerrar={cerrarEditar} onGuardado={onEditado} /></Suspense>}
       </div>
     </article>
   );
@@ -220,7 +238,7 @@ function Caso({ id, rol, onSalida }: { id: number; rol: Rol; onSalida: () => voi
             onBorrar={async () => {
               try { await api("borrar", { id: o.id }); window.location.href = "/taller/"; }
               catch (err) { setError((err as Error).message); }
-            }} />
+            }} onEditado={cargar} />
           {rol === "admin" && <Seguimiento key={`${o.estado}-${o.presupuesto}`} o={o} onCambio={cargar} />}
         </div>
       )}
@@ -335,7 +353,7 @@ const TallerPage = () => {
                 </p>
               )}
               {ordenes.map((o) => (
-                <Tarjeta key={o.id} o={o} rol={rol} onRecibir={() => enviar("recibir", o)} onBorrar={() => enviar("borrar", o)} />
+                <Tarjeta key={o.id} o={o} rol={rol} onRecibir={() => enviar("recibir", o)} onBorrar={() => enviar("borrar", o)} onEditado={cargar} />
               ))}
             </div>
           </>
