@@ -14,9 +14,19 @@ export const RESULTADOS = ["REPARABLE", "NO REPARABLE"];
 /** Cualquier variante que escriba la IA ("Reparado y operativo", "No reparable a nivel de componente.") → uno de los dos. */
 const resultadoDe = (v: string) => (/^NO\s/.test(v) ? "NO REPARABLE" : /^REPAR/.test(v) ? "REPARABLE" : "");
 
+/** El primer cobro siempre es el del estado: diagnóstico (S/. 99) si no es reparable, reparación (S/. 299 por defecto, editable) si lo es. */
+export const cobroBase = (resultado: string): Cobro =>
+  resultado === "REPARABLE" ? { concepto: "Reparación electrónica", monto: 299, nota: "" } : { concepto: "Diagnóstico electrónico", monto: 99, nota: "" };
+
+/** Pone el cobro del estado como primera fila; si ya está, conserva el monto que escribió el técnico. */
+export function conBase(cobros: Cobro[], resultado: string): Cobro[] {
+  const b = cobroBase(resultado);
+  return cobros[0]?.concepto === b.concepto ? cobros : [b, ...cobros.slice(1)];
+}
+
 export const informeNuevo = (): Informe => ({
   notas: { hallazgos: "", trabajo: "", resultado: RESULTADOS[0], contexto: "" },
-  cobros: [{ concepto: "Diagnóstico electrónico", monto: 99, nota: "" }],
+  cobros: [cobroBase(RESULTADOS[0])],
   adelanto: null, texto: null, fecha: "",
 });
 
@@ -53,7 +63,8 @@ export function limpiarTexto(v: unknown, cobros: Cobro[], resultado: string): Te
     intro: texto(r.intro),
     diagnostico: filas(r.diagnostico),
     protocolo: filas(r.protocolo),
-    estado: resultadoDe(estado) || resultadoDe(resultado.toUpperCase()) || RESULTADOS[0],
+    // Manda el resultado que eligió el técnico (de él depende el primer cobro); lo de la IA solo si no hay.
+    estado: resultadoDe(resultado.toUpperCase()) || resultadoDe(estado) || RESULTADOS[0],
     cierre: filas(r.cierre),
     observaciones: filas(r.observaciones),
     para_validar: (Array.isArray(r.para_validar) ? r.para_validar : []).map(texto).filter(Boolean),

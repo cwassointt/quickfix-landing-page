@@ -2,7 +2,7 @@ import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { AlertTriangle, Check, FileDown, Loader2, Plus, Sparkles, X } from "lucide-react";
 import { api, equipo, telefono, type Orden } from "@/lib/recepcion";
-import { RESULTADOS, fechaInforme, informeNuevo, limpiarTexto, soles, total, type Cobro, type Fila, type Informe, type Texto } from "@/lib/informe";
+import { RESULTADOS, conBase, fechaInforme, informeNuevo, limpiarTexto, soles, total, type Cobro, type Fila, type Informe, type Texto } from "@/lib/informe";
 
 const PRESS = "transition-[transform,background-color,color] duration-150 ease-out active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-[#050505]";
 const CAMPO = "w-full rounded-xl bg-white/[0.06] px-4 text-base text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-primary [&>option]:bg-[#111]";
@@ -22,7 +22,10 @@ const CSS = `
 .qf-informe [contenteditable="true"]:focus { background: #fff7ed; box-shadow: 0 0 0 2px ${NARANJA}; }
 @media screen { .qf-informe-print { display: none; } }
 @media print {
-  @page { size: A4; margin: 12mm 15mm; }
+  @page { size: A4; margin: 14mm 15mm 16mm;
+    @bottom-right { content: "Página " counter(page) " de " counter(pages); font: 500 8pt Inter, sans-serif; color: ${GRIS}; }
+  }
+  .qf-informe p, .qf-informe li { orphans: 3; widows: 3; }
   html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; }
   body > *:not(.qf-informe-print) { display: none !important; }
   .qf-informe-print { display: block; }
@@ -59,8 +62,8 @@ function Lista({ filas, set, editable, nueva }: { filas: Fila[]; set: (f: Fila[]
     <>
       <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
         {filas.map((f, i) => (
-          <li key={i} className="qf-punto" style={{ display: "flex", gap: "12px", margin: "0 0 8px" }}>
-            <span aria-hidden="true" style={{ flexShrink: 0, width: "7px", height: "7px", marginTop: "6px", borderRadius: "999px", background: NARANJA }} />
+          <li key={i} className="qf-punto" style={{ display: "flex", gap: "12px", margin: "0 0 10px" }}>
+            <span aria-hidden="true" style={{ flexShrink: 0, width: "7px", height: "7px", marginTop: "7px", borderRadius: "999px", background: NARANJA }} />
             <span style={{ color: TEXTO }}>
               <Ed v={f.titulo} set={(t) => cambiar(i, { titulo: t })} editable={editable} style={{ fontWeight: 700, color: TINTA }} />
               <b style={{ color: TINTA }}>: </b>
@@ -82,21 +85,34 @@ function Lista({ filas, set, editable, nueva }: { filas: Fila[]; set: (f: Fila[]
 
 const pildora = (fondo: string): CSSProperties => ({ fontSize: "12px", fontWeight: 700, color: "#fff", background: fondo, borderRadius: "999px", padding: "5px 14px", whiteSpace: "nowrap" });
 
-/** El informe en A4 con el estilo de la web (diseño en Claude Design: "Informe técnico QuickFix"). */
-function Documento({ o, inf, set, editable }: { o: Orden; inf: Informe & { texto: Texto }; set: (t: Texto) => void; editable: boolean }) {
+/**
+ * El informe en A4 con el estilo de la web (diseño en Claude Design: "Informe técnico QuickFix").
+ * Lo que el cliente busca primero (estado y total) va arriba; texto alineado a la izquierda y montos en columna.
+ */
+function Documento({ o, inf, set, onEstado, editable }: { o: Orden; inf: Informe & { texto: Texto }; set: (t: Texto) => void; onEstado: (r: string) => void; editable: boolean }) {
   const t = inf.texto;
   const cambiar = (c: Partial<Texto>) => set({ ...t, ...c });
   const suma = total(inf.cobros);
   const saldo = inf.adelanto != null ? Math.round((suma - inf.adelanto) * 100) / 100 : null;
   const id = o.serie ? ["S/N", o.serie] : o.dni ? ["DNI", o.dni] : ["S/N", "—"];
   const reparable = t.estado === "REPARABLE";
+  const cifra: CSSProperties = { fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap", textAlign: "right" };
+  const etiqueta: CSSProperties = { fontSize: "11px", fontWeight: 500, color: GRIS };
   const dato = (k: string, v: string) => (
     <div style={{ display: "flex", flexDirection: "column", gap: "2px", minWidth: 0 }}>
-      <span style={{ fontSize: "11px", color: GRIS }}>{k}</span><span style={{ fontSize: "13px", fontWeight: 600, overflowWrap: "anywhere" }}>{v}</span>
+      <span style={etiqueta}>{k}</span><span style={{ fontSize: "13px", fontWeight: 600, overflowWrap: "anywhere" }}>{v}</span>
     </div>
   );
+  const estadoPildora = editable ? (
+    <select value={t.estado} onChange={(e) => onEstado(e.target.value)} aria-label="Estado del equipo"
+      style={{ ...pildora(reparable ? NARANJA : TINTA), border: 0, font: "inherit", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>
+      {RESULTADOS.map((r) => <option key={r} value={r}>{r === "REPARABLE" ? "Reparable" : "No reparable"}</option>)}
+    </select>
+  ) : (
+    <span style={pildora(reparable ? NARANJA : TINTA)}>{reparable ? "Reparable" : "No reparable"}</span>
+  );
   return (
-    <article className="qf-informe" style={{ background: "#fff", color: TINTA, fontSize: "12px", lineHeight: 1.6, textAlign: "justify" }}>
+    <article className="qf-informe" style={{ background: "#fff", color: TINTA, fontSize: "13px", lineHeight: 1.6, textAlign: "left" }}>
       <header style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: "12px" }}>
         <Logo size="22px" />
         <div style={{ display: "flex", alignItems: "center", gap: "8px", marginLeft: "auto" }}>
@@ -105,42 +121,52 @@ function Documento({ o, inf, set, editable }: { o: Orden; inf: Informe & { texto
         </div>
       </header>
 
-      <div style={{ marginTop: "32px", textAlign: "left" }}>
+      <div style={{ marginTop: "32px" }}>
         <h1 style={{ margin: 0, fontSize: "44px", fontWeight: 800, letterSpacing: "-1.8px", lineHeight: 1 }}>Repair Service Report</h1>
         <p style={{ margin: "12px 0 0", fontSize: "13px", color: "#525252" }}>Diagnóstico y reparación de laboratorio · {fechaInforme(inf.fecha)} · Hecho por gianluca pasquale</p>
       </div>
 
-      <section style={{ marginTop: "22px", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: "10px 16px", background: "#f5f5f5", borderRadius: "18px", padding: "16px 20px", textAlign: "left" }}>
-        {dato("Cliente", o.nombre)}
-        {dato("Equipo", equipo(o))}
-        {dato(id[0], id[1])}
-        {dato("WhatsApp", o.whatsapp ? telefono(o.whatsapp) : "—")}
+      <section aria-label="Datos del caso" style={{ marginTop: "22px", background: "#f5f5f5", borderRadius: "18px", padding: "16px 20px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: "10px 16px" }}>
+          {dato("Cliente", o.nombre)}
+          {dato("Equipo", equipo(o))}
+          {dato(id[0], id[1])}
+          {dato("WhatsApp", o.whatsapp ? telefono(o.whatsapp) : "—")}
+        </div>
+        <div style={{ marginTop: "14px", paddingTop: "14px", borderTop: "1px solid #e5e5e5", display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: "10px 24px" }}>
+          <span style={{ display: "flex", alignItems: "center", gap: "10px" }}><span style={etiqueta}>Estado del equipo</span>{estadoPildora}</span>
+          <span style={{ display: "flex", alignItems: "baseline", gap: "10px" }}><span style={etiqueta}>Inversión total</span><b style={{ ...cifra, fontSize: "18px", fontWeight: 800, letterSpacing: "-0.4px" }}>{soles(suma)}</b></span>
+        </div>
       </section>
 
       <Seccion>Resumen de inversión</Seccion>
-      <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", borderTop: "1px solid #e5e5e5" }}>
+      <table style={{ width: "100%", borderCollapse: "collapse" }}>
+        <thead>
+          <tr style={{ borderBottom: "1px solid #d4d4d4" }}>
+            <th scope="col" style={{ ...etiqueta, padding: "0 24px 6px 0", textAlign: "left" }}>Concepto</th>
+            <th scope="col" style={{ ...etiqueta, padding: "0 0 6px", textAlign: "right" }}>Monto</th>
+          </tr>
+        </thead>
         <tbody>
           {inf.cobros.map((c, i) => (
             <tr key={i} style={{ borderBottom: "1px solid #e5e5e5" }}>
               <td style={{ padding: "10px 24px 10px 0", verticalAlign: "top" }}>
                 <Ed v={t.conceptos[i] ?? c.concepto} set={(v) => cambiar({ conceptos: inf.cobros.map((x, j) => (j === i ? v : t.conceptos[j] ?? x.concepto)) })} editable={editable} />
+                {c.nota && <div style={{ marginTop: "2px", fontSize: "11.5px", color: GRIS }}>{c.nota}</div>}
               </td>
-              <td style={{ padding: "10px 0", verticalAlign: "top", textAlign: "right", whiteSpace: "nowrap" }}>
-                <div style={{ fontWeight: 700 }}>{soles(c.monto)}</div>
-                {c.nota && <div style={{ fontSize: "10.5px", color: GRIS, whiteSpace: "normal", maxWidth: "220px", marginLeft: "auto" }}>({c.nota})</div>}
-              </td>
+              <td style={{ ...cifra, padding: "10px 0", verticalAlign: "top", fontWeight: 700 }}>{soles(c.monto)}</td>
             </tr>
           ))}
         </tbody>
       </table>
       <div className="qf-punto" style={{ marginTop: "12px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "16px", background: NARANJA, color: "#fff", borderRadius: "999px", padding: "10px 22px" }}>
         <span style={{ fontSize: "13px", fontWeight: 700 }}>Inversión total a cancelar</span>
-        <span style={{ fontSize: "20px", fontWeight: 800, letterSpacing: "-0.5px", whiteSpace: "nowrap" }}>{soles(suma)}</span>
+        <span style={{ ...cifra, fontSize: "20px", fontWeight: 800, letterSpacing: "-0.5px" }}>{soles(suma)}</span>
       </div>
       {inf.adelanto != null && saldo != null && (
-        <div style={{ marginTop: "8px", padding: "0 22px", display: "grid", gridTemplateColumns: "1fr auto", gap: "2px 16px", textAlign: "left" }}>
-          <span style={{ color: TEXTO }}>Adelanto recibido</span><span style={{ textAlign: "right", whiteSpace: "nowrap" }}>{soles(inf.adelanto)}</span>
-          <b>{saldo < 0 ? "Saldo a devolver" : "Saldo pendiente"}</b><b style={{ textAlign: "right", whiteSpace: "nowrap" }}>{soles(Math.abs(saldo))}</b>
+        <div style={{ marginTop: "8px", padding: "0 22px", display: "grid", gridTemplateColumns: "1fr auto", gap: "2px 16px" }}>
+          <span style={{ color: TEXTO }}>Adelanto recibido</span><span style={cifra}>{soles(inf.adelanto)}</span>
+          <b>{saldo < 0 ? "Saldo a devolver" : "Saldo pendiente"}</b><b style={cifra}>{soles(Math.abs(saldo))}</b>
         </div>
       )}
 
@@ -148,28 +174,19 @@ function Documento({ o, inf, set, editable }: { o: Orden; inf: Informe & { texto
       {(t.antecedentes || editable) && (
         <p style={{ margin: "0 0 10px", color: TEXTO }}><b style={{ color: TINTA }}>Antecedentes del caso: </b><Ed v={t.antecedentes} set={(v) => cambiar({ antecedentes: v })} editable={editable} vacio="[Solo si la falla surgió después de una entrega; si no, déjalo vacío]" /></p>
       )}
-      <p style={{ margin: "0 0 10px", color: TEXTO }}><Ed v={t.intro} set={(v) => cambiar({ intro: v })} editable={editable} /></p>
+      <p style={{ margin: "0 0 12px", color: TEXTO }}><Ed v={t.intro} set={(v) => cambiar({ intro: v })} editable={editable} /></p>
       <Lista filas={t.diagnostico} set={(f) => cambiar({ diagnostico: f })} editable={editable} nueva="Nuevo hallazgo" />
 
       <Seccion>Protocolo de solución ejecutado</Seccion>
       <Lista filas={t.protocolo} set={(f) => cambiar({ protocolo: f })} editable={editable} nueva="Nueva acción" />
-      <div className="qf-punto" style={{ margin: "12px 0", display: "flex", alignItems: "center", gap: "12px" }}>
-        <span style={{ fontSize: "12px", fontWeight: 600, color: "#525252" }}>Estado del equipo</span>
-        {editable ? (
-          <select value={t.estado} onChange={(e) => cambiar({ estado: e.target.value })} aria-label="Estado del equipo"
-            style={{ ...pildora(reparable ? NARANJA : TINTA), border: 0, font: "inherit", fontSize: "12px", fontWeight: 700 }}>
-            {RESULTADOS.map((r) => <option key={r} value={r}>{r === "REPARABLE" ? "Reparable" : "No reparable"}</option>)}
-          </select>
-        ) : (
-          <span style={pildora(reparable ? NARANJA : TINTA)}>{reparable ? "Reparable" : "No reparable"}</span>
-        )}
-      </div>
+
+      <Seccion>{reparable ? "Resultado y validación" : "Dictamen técnico"}</Seccion>
       <Lista filas={t.cierre} set={(f) => cambiar({ cierre: f })} editable={editable} nueva={reparable ? "Pruebas de Validación" : "Justificación Técnica"} />
 
       <Seccion>Observaciones de ingeniería y recomendaciones</Seccion>
       <Lista filas={t.observaciones} set={(f) => cambiar({ observaciones: f })} editable={editable} nueva="Sobre " />
 
-      <footer style={{ marginTop: "32px", paddingTop: "16px", borderTop: "1px solid #e5e5e5", display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: "8px 16px", fontSize: "11px", color: GRIS, textAlign: "left" }}>
+      <footer className="qf-punto" style={{ marginTop: "32px", paddingTop: "16px", borderTop: "1px solid #e5e5e5", display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: "8px 16px", fontSize: "11px", color: GRIS }}>
         <span><b style={{ color: TINTA }}>Departamento Técnico de Laboratorio</b> · <Logo size="11px" />.pe · San Miguel, Lima</span>
         <span>quickfix.pe · 940-755-119 · quickfix.pe24@gmail.com</span>
       </footer>
@@ -196,7 +213,7 @@ export function InformeTecnico({ o }: { o: Orden }) {
 
   useEffect(() => {
     api<{ informe: Informe | null }>("informe", undefined, `&id=${o.id}`)
-      .then((r) => setInf(r.informe ?? informeNuevo()))
+      .then((r) => setInf(r.informe ? { ...r.informe, cobros: conBase(r.informe.cobros, r.informe.notas.resultado) } : informeNuevo()))
       .catch((e) => { setError((e as Error).message); setInf(informeNuevo()); });
   }, [o.id]);
 
@@ -219,6 +236,14 @@ export function InformeTecnico({ o }: { o: Orden }) {
   const set = (c: Partial<Informe>) => { setInf({ ...inf, ...c }); setEstado(""); };
   const notas = (c: Partial<Informe["notas"]>) => set({ notas: { ...inf.notas, ...c } });
   const cobro = (i: number, c: Partial<Cobro>) => set({ cobros: inf.cobros.map((x, j) => (j === i ? { ...x, ...c } : x)) });
+  // El estado manda el primer cobro (diagnóstico 99 o reparación 299); se cambia igual desde el formulario o desde el documento.
+  const cambiarResultado = (r: string) => {
+    const cobros = conBase(inf.cobros, r);
+    const cambio = cobros !== inf.cobros;
+    const texto = inf.texto && { ...inf.texto, estado: r, conceptos: cobros.map((c, i) => (i === 0 && cambio ? c.concepto : inf.texto!.conceptos[i] ?? c.concepto)) };
+    set({ notas: { ...inf.notas, resultado: r }, cobros, texto });
+    if (cambio) setFilasVer(filasVer + 1);
+  };
 
   const guardar = async (datos: Informe) => {
     setEstado("guardando");
@@ -252,7 +277,7 @@ export function InformeTecnico({ o }: { o: Orden }) {
         <Area label="Qué se hizo y qué pruebas" ayuda="Ej.: cambié el IC de carga con aire caliente, reprogramé la BIOS con el programador SPI y verifiqué; 2 h de estrés sin cortes…" v={inf.notas.trabajo} set={(v) => notas({ trabajo: v })} />
         <label className="block text-sm text-white/60">
           Resultado
-          <select value={inf.notas.resultado} onChange={(e) => notas({ resultado: e.target.value })} className={`${CAMPO} mt-1.5 h-12`}>
+          <select value={inf.notas.resultado} onChange={(e) => cambiarResultado(e.target.value)} className={`${CAMPO} mt-1.5 h-12`}>
             {RESULTADOS.map((r) => <option key={r} value={r}>{r.charAt(0) + r.slice(1).toLowerCase()}</option>)}
           </select>
         </label>
@@ -265,13 +290,14 @@ export function InformeTecnico({ o }: { o: Orden }) {
               // El monto es un campo no controlado (para poder escribir "99." sin que se borre el punto); al quitar una fila, todas se vuelven a montar.
               <div key={`${filasVer}-${i}`} className="rounded-2xl bg-black/30 p-3">
                 <div className="flex gap-2">
-                  <input value={c.concepto} onChange={(e) => cobro(i, { concepto: e.target.value })} placeholder="Concepto (ej.: reparación de placa)" aria-label={`Concepto ${i + 1}`} className={`${CAMPO} h-11 flex-1`} />
+                  <input value={c.concepto} onChange={(e) => cobro(i, { concepto: e.target.value })} readOnly={i === 0} title={i === 0 ? "Lo define el resultado; el monto sí se puede cambiar" : undefined}
+                    placeholder="Concepto (ej.: cambio de pantalla)" aria-label={`Concepto ${i + 1}`} className={`${CAMPO} h-11 flex-1 ${i === 0 ? "text-white/70" : ""}`} />
                   <span className="relative w-32 shrink-0">
                     <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/50">S/.</span>
                     <input inputMode="decimal" defaultValue={Number.isFinite(c.monto) ? String(c.monto) : ""} aria-label={`Monto ${i + 1}`}
                       onChange={(e) => cobro(i, { monto: e.target.value.trim() === "" ? 0 : Number(e.target.value.replace(",", ".")) })} className={`${CAMPO} h-11 pl-10 pr-3 text-right`} />
                   </span>
-                  <button type="button" onClick={() => { set({ cobros: inf.cobros.filter((_, j) => j !== i) }); setFilasVer(filasVer + 1); }} aria-label={`Quitar cobro ${i + 1}`} disabled={inf.cobros.length === 1}
+                  <button type="button" onClick={() => { set({ cobros: inf.cobros.filter((_, j) => j !== i) }); setFilasVer(filasVer + 1); }} aria-label={`Quitar cobro ${i + 1}`} disabled={i === 0}
                     className={`${PRESS} rounded-full p-2.5 text-white/60 hover:bg-white/[0.08] disabled:invisible`}><X className="h-5 w-5" aria-hidden="true" /></button>
                 </div>
                 <input value={c.nota} onChange={(e) => cobro(i, { nota: e.target.value })} placeholder="Nota opcional: Bonificado / Incluido en la reparación; precio regular S/. 99.00" aria-label={`Nota del cobro ${i + 1}`} className={`${CAMPO} mt-2 h-10 text-sm`} />
@@ -309,7 +335,7 @@ export function InformeTecnico({ o }: { o: Orden }) {
           )}
           <p className="mb-2 text-sm text-white/55">Toca cualquier texto del informe para corregirlo.</p>
           <div className="overflow-x-auto rounded-2xl bg-white p-5 sm:p-8">
-            <Documento o={o} inf={conTexto} set={(t) => set({ texto: t })} editable />
+            <Documento o={o} inf={conTexto} set={(t) => set({ texto: t })} onEstado={cambiarResultado} editable />
           </div>
           <div className="mt-4 flex flex-wrap items-center justify-end gap-2">
             {estado === "guardado" && <span className="mr-auto flex items-center gap-1.5 text-sm text-white/60"><Check className="h-4 w-4 text-primary" aria-hidden="true" /> Guardado</span>}
@@ -322,7 +348,7 @@ export function InformeTecnico({ o }: { o: Orden }) {
         </div>
       )}
 
-      {imprimiendo && conTexto && createPortal(<div className="qf-informe-print"><Documento o={o} inf={conTexto} set={() => {}} editable={false} /></div>, document.body)}
+      {imprimiendo && conTexto && createPortal(<div className="qf-informe-print"><Documento o={o} inf={conTexto} set={() => {}} onEstado={() => {}} editable={false} /></div>, document.body)}
     </section>
   );
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { fechaInforme, limpiarTexto, soles, total } from "@/lib/informe";
+import { conBase, fechaInforme, limpiarTexto, soles, total } from "@/lib/informe";
 
 const cobros = [
   { concepto: "diagnóstico", monto: 0, nota: "Incluido en la reparación; precio regular S/. 99.00" },
@@ -26,11 +26,20 @@ describe("informe técnico", () => {
       para_validar: ["¿Se hizo prueba de estrés?", 3],
     }, cobros, "NO REPARABLE");
     expect(t.conceptos).toEqual(["Servicio de Triage (Inspección óptica)", "reparación", "formateo"]);
-    expect(t.estado).toBe("REPARABLE");
-    expect(limpiarTexto({ estado: "No reparable a nivel de componente." }, cobros, "REPARABLE").estado).toBe("NO REPARABLE");
+    expect(t.estado).toBe("NO REPARABLE");
+    expect(limpiarTexto({ estado: "No reparable a nivel de componente." }, cobros, "REPARABLE").estado).toBe("REPARABLE");
+    expect(limpiarTexto({ estado: "No reparable a nivel de componente." }, cobros, "").estado).toBe("NO REPARABLE");
     expect(t.diagnostico).toEqual([{ titulo: "Condensadores Defectuosos", texto: "Se midió…" }]);
     expect(t.protocolo).toEqual([]);
     expect(t.para_validar).toEqual(["¿Se hizo prueba de estrés?"]);
     expect(limpiarTexto(null, cobros, "NO REPARABLE").estado).toBe("NO REPARABLE");
+  });
+  it("el primer cobro depende del estado: diagnóstico 99 o reparación 299, y respeta el monto editado", () => {
+    const diag = [{ concepto: "Diagnóstico electrónico", monto: 99, nota: "" }, { concepto: "formateo", monto: 50, nota: "" }];
+    const rep = conBase(diag, "REPARABLE");
+    expect(rep).toEqual([{ concepto: "Reparación electrónica", monto: 299, nota: "" }, diag[1]]);
+    const editado = [{ ...rep[0], monto: 450 }, rep[1]];
+    expect(conBase(editado, "REPARABLE")).toBe(editado);
+    expect(conBase(editado, "NO REPARABLE")[0]).toEqual(diag[0]);
   });
 });
