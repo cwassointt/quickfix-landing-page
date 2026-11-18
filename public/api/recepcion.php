@@ -3,7 +3,7 @@
 // Los datos viven fuera de public_html, en /home/quickfix/recepcion/ (config.php y recepcion.sqlite),
 // así nadie puede descargarlos desde internet y nunca pasan por GitHub.
 //
-// Acciones (?accion=):  crear (público) · sesion · entrar · salir · lista · orden · actualizar · editar · borrar · renumerar · recibir · foto · leer · csv · informe · redactar
+// Acciones (?accion=):  crear (público) · sesion · entrar · salir · lista · orden · actualizar · editar · borrar · renumerar · recibir · foto · leer · csv · informe · preguntas · redactar
 
 declare(strict_types=1);
 date_default_timezone_set('America/Lima');
@@ -242,8 +242,9 @@ function leerConClaude(string $jpeg, string $clave): array
  * Borrador del informe técnico con DeepSeek V4 Pro (solo texto, mejor redacción que Flash).
  * A la IA solo van los datos que el informe necesita: nunca clave del equipo, correo, distrito ni DNI.
  */
-function redactarInforme(array $o, array $notas, array $cobros, string $clave): array
+function redactarInforme(array $o, array $notas, array $cobros, string $clave, string $modo = 'informe'): array
 {
+    $preguntas = $modo === 'preguntas';
     $ficha = [
         'equipo' => trim("{$o['tipo']} · {$o['marca']} {$o['modelo']}"),
         'serie' => (string) $o['serie'],
@@ -258,12 +259,12 @@ function redactarInforme(array $o, array $notas, array $cobros, string $clave): 
         'thinking' => ['type' => 'disabled'],
         'response_format' => ['type' => 'json_object'],
         'temperature' => 0.4,
-        'max_tokens' => 9000,
+        'max_tokens' => $preguntas ? 1500 : 9000,
         'messages' => [
             ['role' => 'system', 'content' => require __DIR__ . '/informe-guia.php'],
-            ['role' => 'user', 'content' => json_encode(['ficha' => $ficha, 'notas' => $notas, 'cobros' => $cobros], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT)],
+            ['role' => 'user', 'content' => json_encode(['modo' => $modo, 'ficha' => $ficha, 'notas' => $notas, 'cobros' => $cobros], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT)],
         ],
-    ], 150);
+    ], $preguntas ? 90 : 150);
     $choice = $json['choices'][0] ?? [];
     $datos = json_decode(trim((string) ($choice['message']['content'] ?? '')), true);
     if (($choice['finish_reason'] ?? '') !== 'stop' || !is_array($datos)) throw new RuntimeException('informe');
@@ -433,11 +434,13 @@ try {
             db()->prepare('INSERT OR REPLACE INTO informes (orden_id, datos, actualizado) VALUES (?, ?, ?)')->execute([$id, $datos, date('c')]);
             responder(['ok' => true]);
 
+        // preguntas: lo que la IA necesita saber antes de redactar; redactar: el informe con esas respuestas.
+        case 'POST preguntas':
         case 'POST redactar':
             exigir('admin');
             $claveIA = trim((string) ($CFG['deepseek_key'] ?? ''));
             if ($claveIA === '') fallo('Falta la clave de DeepSeek en config.php.', 503);
-            if (demasiados('redactar', 30, 3600)) fallo('Generaste muchos informes seguidos. Espera un rato.', 429);
+            if (demasiados('redactar', 60, 3600)) fallo('Generaste muchos informes seguidos. Espera un rato.', 429);
             $d = cuerpo();
             $q = db()->prepare('SELECT * FROM ordenes WHERE id = ?');
             $q->execute([(int) ($d['id'] ?? 0)]);
@@ -446,7 +449,12 @@ try {
             $n = is_array($d['notas'] ?? null) ? $d['notas'] : [];
             $notas = [];
             foreach (['hallazgos' => 4000, 'trabajo' => 4000, 'resultado' => 60, 'contexto' => 3000] as $k => $max) $notas[$k] = mb_substr(trim((string) ($n[$k] ?? '')), 0, $max);
-            if ($notas['hallazgos'] === '') fallo('Escribe al menos los hallazgos del diagnóstico.');
+            if ($notas['hallazgos'] === '') fallo('Escribe primero tus notas del caso.');
+            $notas['respuestas'] = [];
+            foreach (array_slice(is_array($n['respuestas'] ?? null) ? $n['respuestas'] : [], 0, 6) as $r) {
+                if (!is_array($r)) continue;
+                $notas['respuestas'][] = ['pregunta' => mb_substr(trim((string) ($r['pregunta'] ?? '')), 0, 300), 'respuesta' => mb_substr(trim((string) ($r['respuesta'] ?? '')), 0, 1000)];
+            }
             $cobros = [];
             foreach (array_slice(is_array($d['cobros'] ?? null) ? $d['cobros'] : [], 0, 12) as $c) {
                 $cobros[] = ['concepto' => limpiar($c['concepto'] ?? '', 200), 'monto' => round((float) ($c['monto'] ?? 0), 2), 'nota' => limpiar($c['nota'] ?? '', 200)];
@@ -454,6 +462,11 @@ try {
             anotar('redactar');
             set_time_limit(180);
             try {
+                if ($accion === 'preguntas') {
+                    $r = redactarInforme($o, $notas, $cobros, $claveIA, 'preguntas');
+                    $lista = array_values(array_filter(array_map(function ($p) { return is_string($p) ? mb_substr(trim($p), 0, 300) : ''; }, is_array($r['preguntas'] ?? null) ? $r['preguntas'] : [])));
+                    responder(['preguntas' => array_slice($lista, 0, 4)]);
+                }
                 responder(['borrador' => redactarInforme($o, $notas, $cobros, $claveIA)]);
             } catch (RuntimeException $e) {
                 fallo('La IA no respondió bien. Intenta de nuevo en un momento.', 502);
