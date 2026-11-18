@@ -2,7 +2,7 @@ import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { AlertTriangle, Check, FileDown, Loader2, Plus, Sparkles, X } from "lucide-react";
 import { api, equipo, telefono, type Orden } from "@/lib/recepcion";
-import { RESULTADOS, conBase, fechaInforme, informeNuevo, limpiarTexto, soles, total, type Cobro, type Fila, type Informe, type Texto } from "@/lib/informe";
+import { RESULTADOS, conBase, fechaInforme, informeNuevo, limpiarTexto, soles, total, type Cobro, type Fila, type Informe, type Respuesta, type Texto } from "@/lib/informe";
 
 const PRESS = "transition-[transform,background-color,color] duration-150 ease-out active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-[#050505]";
 const CAMPO = "w-full rounded-xl bg-white/[0.06] px-4 text-base text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-primary [&>option]:bg-[#111]";
@@ -206,14 +206,22 @@ function Area({ label, ayuda, v, set, filas = 4 }: { label: string; ayuda: strin
 /** Solo admin: notas del técnico → borrador con IA → revisión en el documento → PDF. */
 export function InformeTecnico({ o }: { o: Orden }) {
   const [inf, setInf] = useState<Informe | null>(null);
-  const [estado, setEstado] = useState<"" | "redactando" | "guardando" | "guardado">("");
+  const [estado, setEstado] = useState<"" | "preguntando" | "redactando" | "guardando" | "guardado">("");
   const [error, setError] = useState("");
   const [imprimiendo, setImprimiendo] = useState(false);
   const [filasVer, setFilasVer] = useState(0);
+  // null: la IA todavía no preguntó; con preguntas, el técnico responde antes de redactar.
+  const [preguntas, setPreguntas] = useState<Respuesta[] | null>(null);
 
   useEffect(() => {
     api<{ informe: Informe | null }>("informe", undefined, `&id=${o.id}`)
-      .then((r) => setInf(r.informe ? { ...r.informe, cobros: conBase(r.informe.cobros, r.informe.notas.resultado) } : informeNuevo()))
+      .then((r) => {
+        if (!r.informe) return setInf(informeNuevo());
+        const n = r.informe.notas;
+        // Los informes de antes tenían "qué se hizo" aparte: se junta con las notas.
+        const notas = n.trabajo?.trim() ? { ...n, hallazgos: `${n.hallazgos.trim()}\n${n.trabajo.trim()}`, trabajo: "" } : n;
+        setInf({ ...r.informe, notas, cobros: conBase(r.informe.cobros, n.resultado) });
+      })
       .catch((e) => { setError((e as Error).message); setInf(informeNuevo()); });
   }, [o.id]);
 
@@ -251,15 +259,26 @@ export function InformeTecnico({ o }: { o: Orden }) {
     catch (e) { setError((e as Error).message); setEstado(""); return false; }
   };
 
-  const redactar = async () => {
-    if (inf.texto && !confirm("Ya hay un informe. ¿Reemplazarlo por uno nuevo? Se perderán los cambios que hiciste en el texto.")) return;
+  const redactar = async (respuestas: Respuesta[]) => {
     setEstado("redactando");
+    const notas = { ...inf.notas, respuestas };
+    const r = await api<{ borrador: unknown }>("redactar", { id: o.id, notas, cobros: inf.cobros });
+    const nuevo = { ...inf, notas, texto: limpiarTexto(r.borrador, inf.cobros, inf.notas.resultado), fecha: inf.fecha || new Date().toISOString() };
+    setInf(nuevo);
+    setPreguntas(null);
+    await guardar(nuevo);
+  };
+
+  // Primero la IA pregunta lo que le falta (en mantenimientos casi nunca); sin preguntas, redacta de una vez.
+  const generar = async () => {
     setError("");
     try {
-      const r = await api<{ borrador: unknown }>("redactar", { id: o.id, notas: inf.notas, cobros: inf.cobros });
-      const nuevo = { ...inf, texto: limpiarTexto(r.borrador, inf.cobros, inf.notas.resultado), fecha: inf.fecha || new Date().toISOString() };
-      setInf(nuevo);
-      await guardar(nuevo);
+      if (preguntas) return await redactar(preguntas);
+      if (inf.texto && !confirm("Ya hay un informe. ¿Reemplazarlo por uno nuevo? Se perderán los cambios que hiciste en el texto.")) return;
+      setEstado("preguntando");
+      const r = await api<{ preguntas: string[] }>("preguntas", { id: o.id, notas: inf.notas, cobros: inf.cobros });
+      if (r.preguntas.length) { setPreguntas(r.preguntas.map((p) => ({ pregunta: p, respuesta: "" }))); setEstado(""); return; }
+      await redactar([]);
     } catch (e) { setError((e as Error).message); setEstado(""); }
   };
 
@@ -270,11 +289,10 @@ export function InformeTecnico({ o }: { o: Orden }) {
     <section className="mt-4 rounded-3xl bg-white/[0.04] p-5 md:p-6">
       <style>{CSS}</style>
       <h2 className="text-lg font-bold text-white">Informe técnico</h2>
-      <p className="mt-1 text-sm text-white/55">Escribe lo que encontraste y lo que hiciste, como se lo contarías a otro técnico. La IA lo redacta con el formato del laboratorio y tú lo revisas antes del PDF.</p>
+      <p className="mt-1 text-sm text-white/55">Escribe todo junto, como se lo contarías a otro técnico. La IA lo ordena con el formato del laboratorio, te pregunta lo que le falte y tú revisas el informe antes del PDF.</p>
 
       <div className="mt-5 space-y-4">
-        <Area label="Hallazgos del diagnóstico" ayuda="Ej.: corto en el riel de 5V del standby, IC de carga caliente con inyección de tensión, BIOS corrupta (log UART se queda en lectura de firmware)…" v={inf.notas.hallazgos} set={(v) => notas({ hallazgos: v })} filas={5} />
-        <Area label="Qué se hizo y qué pruebas" ayuda="Ej.: cambié el IC de carga con aire caliente, reprogramé la BIOS con el programador SPI y verifiqué; 2 h de estrés sin cortes…" v={inf.notas.trabajo} set={(v) => notas({ trabajo: v })} />
+        <Area label="Notas del caso" ayuda="Ej.: corto en el riel de 5V del standby, IC de carga caliente con inyección de tensión; cambié el IC con aire caliente, reprogramé la BIOS con el programador SPI y quedó encendiendo; 2 h de estrés sin cortes…" v={inf.notas.hallazgos} set={(v) => notas({ hallazgos: v })} filas={7} />
         <label className="block text-sm text-white/60">
           Resultado
           <select value={inf.notas.resultado} onChange={(e) => cambiarResultado(e.target.value)} className={`${CAMPO} mt-1.5 h-12`}>
@@ -317,9 +335,25 @@ export function InformeTecnico({ o }: { o: Orden }) {
         </fieldset>
       </div>
 
-      <button type="button" onClick={redactar} disabled={estado === "redactando" || !inf.notas.hallazgos.trim() || !montoValido}
+      {preguntas && (
+        <fieldset className="mt-5 rounded-2xl bg-primary/[0.08] p-4 ring-1 ring-primary/30">
+          <legend className="sr-only">Preguntas de la IA</legend>
+          <p className="font-medium text-white">Antes de redactar, la IA necesita saber:</p>
+          <p className="mt-1 text-sm text-white/55">Responde en pocas palabras. Si dejas una vacía, ese detalle no sale en el informe.</p>
+          {preguntas.map((p, i) => (
+            <label key={i} className="mt-4 block text-sm text-white/85">
+              {p.pregunta}
+              <input value={p.respuesta} onChange={(e) => setPreguntas(preguntas.map((x, j) => (j === i ? { ...x, respuesta: e.target.value } : x)))} className={`${CAMPO} mt-1.5 h-11`} />
+            </label>
+          ))}
+        </fieldset>
+      )}
+
+      <button type="button" onClick={generar} disabled={estado === "preguntando" || estado === "redactando" || !inf.notas.hallazgos.trim() || !montoValido}
         className={`${PRESS} mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-6 py-3.5 text-base font-medium text-black hover:bg-[#ff7a1f] disabled:opacity-50`}>
-        {estado === "redactando" ? <><Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" /> Redactando… puede tardar hasta un minuto</> : <><Sparkles className="h-5 w-5" aria-hidden="true" /> {inf.texto ? "Volver a generar con IA" : "Generar informe con IA"}</>}
+        {estado === "preguntando" ? <><Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" /> Revisando tus notas…</>
+          : estado === "redactando" ? <><Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" /> Redactando… puede tardar hasta un minuto</>
+          : <><Sparkles className="h-5 w-5" aria-hidden="true" /> {preguntas ? "Generar informe con mis respuestas" : inf.texto ? "Volver a generar con IA" : "Generar informe con IA"}</>}
       </button>
       {error && <p role="alert" className="mt-4 rounded-2xl bg-red-500/15 px-5 py-4 text-red-200">{error}</p>}
 

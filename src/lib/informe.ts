@@ -2,7 +2,9 @@
 
 export type Fila = { titulo: string; texto: string };
 export type Cobro = { concepto: string; monto: number; nota: string };
-export type Notas = { hallazgos: string; trabajo: string; resultado: string; contexto: string };
+export type Respuesta = { pregunta: string; respuesta: string };
+/** hallazgos: todas las notas del técnico en un solo texto (trabajo queda vacío; existía en los primeros informes). */
+export type Notas = { hallazgos: string; trabajo: string; resultado: string; contexto: string; respuestas?: Respuesta[] };
 export type Texto = {
   conceptos: string[]; antecedentes: string; intro: string; diagnostico: Fila[]; protocolo: Fila[];
   estado: string; cierre: Fila[]; observaciones: Fila[]; para_validar: string[];
