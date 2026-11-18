@@ -3,7 +3,7 @@
 // Los datos viven fuera de public_html, en /home/quickfix/recepcion/ (config.php y recepcion.sqlite),
 // así nadie puede descargarlos desde internet y nunca pasan por GitHub.
 //
-// Acciones (?accion=):  crear (público) · sesion · entrar · salir · lista · orden · actualizar · recibir · foto · leer · csv
+// Acciones (?accion=):  crear (público) · sesion · entrar · salir · lista · orden · actualizar · editar · borrar · renumerar · recibir · foto · leer · csv · informe · redactar
 
 declare(strict_types=1);
 date_default_timezone_set('America/Lima');
@@ -60,6 +60,8 @@ function db(): PDO
         if (!in_array($col, $hay, true)) $pdo->exec("ALTER TABLE ordenes ADD COLUMN $col $tipo");
     }
     $pdo->exec('CREATE TABLE IF NOT EXISTS intentos (ip TEXT NOT NULL, tipo TEXT NOT NULL, fecha INTEGER NOT NULL)');
+    // Un informe técnico por caso: notas del técnico, cobros y el texto ya revisado, como JSON.
+    $pdo->exec('CREATE TABLE IF NOT EXISTS informes (orden_id INTEGER PRIMARY KEY, datos TEXT NOT NULL, actualizado TEXT NOT NULL)');
     return $pdo;
 }
 
@@ -148,13 +150,13 @@ const LEER_INSTRUCCIONES = 'Es la foto de la etiqueta de un equipo que un client
     . 'legible es false si la foto no muestra una etiqueta de equipo.';
 
 /** POST JSON con curl (el hosting no tiene Composer para instalar SDKs). Lanza RuntimeException si no responde 200. */
-function postJson(string $url, array $cabeceras, array $cuerpo): array
+function postJson(string $url, array $cabeceras, array $cuerpo, int $espera = 45): array
 {
     $ch = curl_init($url);
     curl_setopt_array($ch, [
         CURLOPT_POST => true,
         CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_TIMEOUT => 45,
+        CURLOPT_TIMEOUT => $espera,
         CURLOPT_HTTPHEADER => array_merge(['content-type: application/json'], $cabeceras),
         CURLOPT_POSTFIELDS => json_encode($cuerpo, JSON_UNESCAPED_UNICODE),
     ]);
@@ -234,6 +236,38 @@ function leerConClaude(string $jpeg, string $clave): array
         }
     }
     return ['legible' => false];
+}
+
+/**
+ * Borrador del informe técnico con DeepSeek V4 Pro (solo texto, mejor redacción que Flash).
+ * A la IA solo van los datos que el informe necesita: nunca clave del equipo, correo, distrito ni DNI.
+ */
+function redactarInforme(array $o, array $notas, array $cobros, string $clave): array
+{
+    $ficha = [
+        'equipo' => trim("{$o['tipo']} · {$o['marca']} {$o['modelo']}"),
+        'serie' => (string) $o['serie'],
+        'falla_reportada' => (string) $o['falla'],
+        'deja_tambien' => (string) $o['accesorios'],
+        'otro_tecnico_lo_abrio' => $o['abierto'] === null ? 'no sabe' : (bool) $o['abierto'],
+        'le_cayo_liquido' => $o['liquido'] === null ? 'no sabe' : (bool) $o['liquido'],
+        'reparar_sin_consultar' => (int) ($o['autoriza'] ?? 0) > 0,
+    ];
+    $json = postJson('https://api.deepseek.com/chat/completions', ['Authorization: Bearer ' . $clave], [
+        'model' => 'deepseek-v4-pro',
+        'thinking' => ['type' => 'disabled'],
+        'response_format' => ['type' => 'json_object'],
+        'temperature' => 0.4,
+        'max_tokens' => 9000,
+        'messages' => [
+            ['role' => 'system', 'content' => require __DIR__ . '/informe-guia.php'],
+            ['role' => 'user', 'content' => json_encode(['ficha' => $ficha, 'notas' => $notas, 'cobros' => $cobros], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT)],
+        ],
+    ], 150);
+    $choice = $json['choices'][0] ?? [];
+    $datos = json_decode(trim((string) ($choice['message']['content'] ?? '')), true);
+    if (($choice['finish_reason'] ?? '') !== 'stop' || !is_array($datos)) throw new RuntimeException('informe');
+    return $datos;
 }
 
 /** Mostrador (tus padres) ve lo necesario para recibir y ubicar el equipo; ni la clave del equipo ni montos. */
@@ -379,6 +413,52 @@ try {
             }
             responder(['ok' => true]);
 
+        case 'GET informe':
+            exigir('admin');
+            $q = db()->prepare('SELECT datos FROM informes WHERE orden_id = ?');
+            $q->execute([(int) ($_GET['id'] ?? 0)]);
+            $fila = $q->fetch();
+            responder(['informe' => $fila ? json_decode($fila['datos'], true) : null]);
+
+        case 'POST informe':
+            // Guarda lo que revisaste: notas, cobros y el texto final (la página lo arma; aquí solo se guarda).
+            exigir('admin');
+            $d = cuerpo();
+            $id = (int) ($d['id'] ?? 0);
+            $datos = json_encode($d['informe'] ?? null, JSON_UNESCAPED_UNICODE);
+            if (!is_array($d['informe'] ?? null) || strlen($datos) > 200000) fallo('Informe inválido.');
+            $q = db()->prepare('SELECT 1 FROM ordenes WHERE id = ?');
+            $q->execute([$id]);
+            if (!$q->fetch()) fallo('No existe esa orden.', 404);
+            db()->prepare('INSERT OR REPLACE INTO informes (orden_id, datos, actualizado) VALUES (?, ?, ?)')->execute([$id, $datos, date('c')]);
+            responder(['ok' => true]);
+
+        case 'POST redactar':
+            exigir('admin');
+            $claveIA = trim((string) ($CFG['deepseek_key'] ?? ''));
+            if ($claveIA === '') fallo('Falta la clave de DeepSeek en config.php.', 503);
+            if (demasiados('redactar', 30, 3600)) fallo('Generaste muchos informes seguidos. Espera un rato.', 429);
+            $d = cuerpo();
+            $q = db()->prepare('SELECT * FROM ordenes WHERE id = ?');
+            $q->execute([(int) ($d['id'] ?? 0)]);
+            $o = $q->fetch();
+            if (!$o) fallo('No existe esa orden.', 404);
+            $n = is_array($d['notas'] ?? null) ? $d['notas'] : [];
+            $notas = [];
+            foreach (['hallazgos' => 4000, 'trabajo' => 4000, 'resultado' => 60, 'contexto' => 3000] as $k => $max) $notas[$k] = mb_substr(trim((string) ($n[$k] ?? '')), 0, $max);
+            if ($notas['hallazgos'] === '') fallo('Escribe al menos los hallazgos del diagnóstico.');
+            $cobros = [];
+            foreach (array_slice(is_array($d['cobros'] ?? null) ? $d['cobros'] : [], 0, 12) as $c) {
+                $cobros[] = ['concepto' => limpiar($c['concepto'] ?? '', 200), 'monto' => round((float) ($c['monto'] ?? 0), 2), 'nota' => limpiar($c['nota'] ?? '', 200)];
+            }
+            anotar('redactar');
+            set_time_limit(180);
+            try {
+                responder(['borrador' => redactarInforme($o, $notas, $cobros, $claveIA)]);
+            } catch (RuntimeException $e) {
+                fallo('La IA no respondió bien. Intenta de nuevo en un momento.', 502);
+            }
+
         case 'POST editar':
             // Solo tú: corregir datos del cliente o del equipo. Mismas reglas que el formulario; el N° de orden no cambia.
             exigir('admin');
@@ -397,6 +477,7 @@ try {
             $q = db()->prepare('DELETE FROM ordenes WHERE id = ?');
             $q->execute([$id]);
             if ($q->rowCount() !== 1) fallo('No existe esa orden.', 404);
+            db()->prepare('DELETE FROM informes WHERE orden_id = ?')->execute([$id]);
             @unlink("$DIR/fotos/$id.jpg");
             db()->exec("UPDATE sqlite_sequence SET seq = (SELECT IFNULL(MAX(id), 0) FROM ordenes) WHERE name = 'ordenes'");
             responder(['ok' => true]);
@@ -412,6 +493,7 @@ try {
                 $nuevo = $i + 1; // siempre menor o igual y libre: se recorre de menor a mayor
                 if ((int) $viejo === $nuevo) continue;
                 $pdo->prepare('UPDATE ordenes SET id = ? WHERE id = ?')->execute([$nuevo, $viejo]);
+                $pdo->prepare('UPDATE informes SET orden_id = ? WHERE orden_id = ?')->execute([$nuevo, $viejo]);
                 $cambios++;
             }
             $pdo->exec("UPDATE sqlite_sequence SET seq = (SELECT IFNULL(MAX(id), 0) FROM ordenes) WHERE name = 'ordenes'");

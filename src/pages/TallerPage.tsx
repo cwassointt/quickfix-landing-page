@@ -3,6 +3,7 @@ import { ArrowLeft, Check, Copy, Download, ListOrdered, Loader2, LogOut, Message
 
 // Solo se descarga al imprimir: así el generador de QR no pesa en el resto de la web.
 const ImprimirEtiquetas = lazy(() => import("@/components/EtiquetaImpresa").then((m) => ({ default: m.ImprimirEtiquetas })));
+const InformeTecnico = lazy(() => import("@/components/InformeTecnico").then((m) => ({ default: m.InformeTecnico })));
 const EditarCaso = lazy(() => import("@/components/EditarCaso").then((m) => ({ default: m.EditarCaso })));
 import {
   API, ESTADOS, aCsv, api, chatCliente, diaLima, equipo, etiquetas, fecha, mensajesCliente, nombreContacto, saludo, telefono, vcard, type Orden, type Rol,
@@ -240,6 +241,7 @@ function Caso({ id, rol, onSalida }: { id: number; rol: Rol; onSalida: () => voi
               catch (err) { setError((err as Error).message); }
             }} onEditado={cargar} />
           {rol === "admin" && <Seguimiento key={`${o.estado}-${o.presupuesto}`} o={o} onCambio={cargar} />}
+          {rol === "admin" && <Suspense fallback={null}><InformeTecnico o={o} /></Suspense>}
         </div>
       )}
     </div>
