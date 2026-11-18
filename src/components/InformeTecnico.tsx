@@ -6,17 +6,17 @@ import { RESULTADOS, fechaInforme, informeNuevo, limpiarTexto, soles, total, typ
 
 const PRESS = "transition-[transform,background-color,color] duration-150 ease-out active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-[#050505]";
 const CAMPO = "w-full rounded-xl bg-white/[0.06] px-4 text-base text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-primary [&>option]:bg-[#111]";
-// Colores de la web: naranja #FF6600 sobre blanco, texto casi negro y grises cálidos.
+// Estilo de la web, en blanco: Inter, titulares gruesos, naranja #FF6600, píldoras y una tarjeta gris clara.
 const NARANJA = "#FF6600";
-const TINTA = "#1c1917";
-const GRIS = "#57534e";
-const ROTULO: CSSProperties = { fontSize: "9.5px", fontWeight: 700, letterSpacing: "1.2px", color: "#c2410c" };
+const TINTA = "#0a0a0a";
+const TEXTO = "#262626";
+const GRIS = "#737373";
 
-// Letras de la web: DM Sans en el texto y Space Grotesk en títulos (la web las fuerza con !important, así que se repite aquí).
+// La web fuerza su propia letra con !important, así que el informe repite Inter con la misma fuerza.
 // Al imprimir, solo sale el informe en A4.
 const CSS = `
-.qf-informe, .qf-informe * { font-family: "DM Sans", system-ui, sans-serif !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-.qf-informe .qf-titulo, .qf-informe .qf-titulo * { font-family: "Space Grotesk", "DM Sans", sans-serif !important; }
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
+.qf-informe, .qf-informe * { font-family: Inter, system-ui, sans-serif !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 .qf-informe [contenteditable="true"] { border-radius: 3px; outline: none; cursor: text; }
 .qf-informe [contenteditable="true"]:hover { background: #fff7ed; }
 .qf-informe [contenteditable="true"]:focus { background: #fff7ed; box-shadow: 0 0 0 2px ${NARANJA}; }
@@ -27,7 +27,7 @@ const CSS = `
   body > *:not(.qf-informe-print) { display: none !important; }
   .qf-informe-print { display: block; }
   .qf-punto, .qf-informe tr { break-inside: avoid; }
-  .qf-seccion-titulo { break-after: avoid; }
+  .qf-informe h2 { break-after: avoid; }
 }`;
 
 /** Texto que se corrige escribiendo encima (solo en pantalla). Guarda al salir del campo. */
@@ -42,29 +42,28 @@ function Ed({ v, set, editable, style, vacio = "[Escribe aquí]" }: { v: string;
   );
 }
 
-/** Encabezado de sección: número en una pastilla naranja, título y una línea fina. */
-const Seccion = ({ n, children }: { n: string; children: ReactNode }) => (
-  <div className="qf-seccion-titulo" style={{ display: "flex", alignItems: "center", gap: "10px", margin: "22px 0 8px" }}>
-    <span className="qf-titulo" style={{ fontSize: "11px", fontWeight: 700, color: "#fff", background: NARANJA, borderRadius: "6px", padding: "2px 7px" }}>{n}</span>
-    <h2 className="qf-titulo" style={{ margin: 0, fontSize: "14px", fontWeight: 700, letterSpacing: "0.6px", color: TINTA }}>{children}</h2>
-    <span style={{ flex: 1, height: "1px", background: "#e7e5e4" }} />
-  </div>
+const Seccion = ({ children }: { children: ReactNode }) => (
+  <h2 style={{ margin: "28px 0 10px", fontSize: "17px", fontWeight: 800, letterSpacing: "-0.4px", color: TINTA, textAlign: "left" }}>{children}</h2>
+);
+
+const Logo = ({ size }: { size: string }) => (
+  <span style={{ fontSize: size, fontWeight: 800, letterSpacing: "-0.04em", color: TINTA }}>Quick<span style={{ color: NARANJA }}>Fix</span></span>
 );
 
 const QUITAR = "ml-1 inline-flex h-6 w-6 items-center justify-center rounded-full align-middle text-[#9a3412] hover:bg-[#ffedd5]";
 
-/** Viñetas "**Título:** texto" de una sección, editables. */
+/** Viñetas "Título: texto" de una sección, editables. */
 function Lista({ filas, set, editable, nueva }: { filas: Fila[]; set: (f: Fila[]) => void; editable: boolean; nueva: string }) {
   const cambiar = (i: number, f: Partial<Fila>) => set(filas.map((x, j) => (j === i ? { ...x, ...f } : x)));
   return (
     <>
       <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
         {filas.map((f, i) => (
-          <li key={i} className="qf-punto" style={{ display: "flex", gap: "10px", margin: "0 0 7px" }}>
-            <span aria-hidden="true" style={{ flexShrink: 0, width: "6px", height: "6px", marginTop: "7px", borderRadius: "2px", background: NARANJA }} />
-            <span>
-              <Ed v={f.titulo} set={(t) => cambiar(i, { titulo: t })} editable={editable} style={{ fontWeight: 700 }} />
-              <b>: </b>
+          <li key={i} className="qf-punto" style={{ display: "flex", gap: "12px", margin: "0 0 8px" }}>
+            <span aria-hidden="true" style={{ flexShrink: 0, width: "7px", height: "7px", marginTop: "6px", borderRadius: "999px", background: NARANJA }} />
+            <span style={{ color: TEXTO }}>
+              <Ed v={f.titulo} set={(t) => cambiar(i, { titulo: t })} editable={editable} style={{ fontWeight: 700, color: TINTA }} />
+              <b style={{ color: TINTA }}>: </b>
               <Ed v={f.texto} set={(t) => cambiar(i, { texto: t })} editable={editable} />
               {editable && <button type="button" onClick={() => set(filas.filter((_, j) => j !== i))} aria-label={`Quitar "${f.titulo}"`} className={QUITAR}><X className="h-3.5 w-3.5" aria-hidden="true" /></button>}
             </span>
@@ -81,7 +80,9 @@ function Lista({ filas, set, editable, nueva }: { filas: Fila[]; set: (f: Fila[]
   );
 }
 
-/** El informe con el diseño de la plantilla del laboratorio (A4). */
+const pildora = (fondo: string): CSSProperties => ({ fontSize: "12px", fontWeight: 700, color: "#fff", background: fondo, borderRadius: "999px", padding: "5px 14px", whiteSpace: "nowrap" });
+
+/** El informe en A4 con el estilo de la web (diseño en Claude Design: "Informe técnico QuickFix"). */
 function Documento({ o, inf, set, editable }: { o: Orden; inf: Informe & { texto: Texto }; set: (t: Texto) => void; editable: boolean }) {
   const t = inf.texto;
   const cambiar = (c: Partial<Texto>) => set({ ...t, ...c });
@@ -90,47 +91,41 @@ function Documento({ o, inf, set, editable }: { o: Orden; inf: Informe & { texto
   const id = o.serie ? ["S/N", o.serie] : o.dni ? ["DNI", o.dni] : ["S/N", "—"];
   const reparable = t.estado === "REPARABLE";
   const dato = (k: string, v: string) => (
-    <div style={{ padding: "12px 16px", display: "flex", flexDirection: "column", gap: "2px", minWidth: 0 }}>
-      <span style={ROTULO}>{k}</span><span style={{ fontWeight: 600, textTransform: "uppercase", overflowWrap: "anywhere" }}>{v}</span>
+    <div style={{ display: "flex", flexDirection: "column", gap: "2px", minWidth: 0 }}>
+      <span style={{ fontSize: "11px", color: GRIS }}>{k}</span><span style={{ fontSize: "13px", fontWeight: 600, overflowWrap: "anywhere" }}>{v}</span>
     </div>
   );
   return (
-    <article className="qf-informe" style={{ background: "#fff", color: TINTA, fontSize: "12.5px", lineHeight: 1.55, textAlign: "justify" }}>
-      <div style={{ height: "6px", borderRadius: "3px", background: NARANJA, marginBottom: "24px" }} />
-      <header style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "flex-start", gap: "16px", textAlign: "left" }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-          <div className="qf-titulo" style={{ fontSize: "22px", fontWeight: 700, letterSpacing: "-0.5px", lineHeight: 1 }}>
-            QUICK<span style={{ color: NARANJA }}>FIX</span><span style={{ color: "#a8a29e", fontWeight: 500 }}>.pe</span>
-          </div>
-          <div style={{ fontSize: "10.5px", color: GRIS }}>Laboratorio de diagnóstico y reparación electrónica · San Miguel, Lima</div>
-        </div>
-        <div style={{ textAlign: "right", marginLeft: "auto" }}>
-          <div style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "1.4px", color: GRIS }}>INFORME N°</div>
-          <div className="qf-titulo" style={{ fontSize: "26px", fontWeight: 700, color: NARANJA, lineHeight: 1.1 }}>{o.numero}</div>
+    <article className="qf-informe" style={{ background: "#fff", color: TINTA, fontSize: "12px", lineHeight: 1.6, textAlign: "justify" }}>
+      <header style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: "12px" }}>
+        <Logo size="22px" />
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginLeft: "auto" }}>
+          <span style={{ fontSize: "11px", fontWeight: 500, color: "#525252", border: "1px solid #e5e5e5", borderRadius: "999px", padding: "5px 12px" }}>Informe técnico</span>
+          <span style={pildora(NARANJA)}>{o.numero}</span>
         </div>
       </header>
 
-      <div style={{ margin: "20px 0 16px", textAlign: "left" }}>
-        <h1 className="qf-titulo" style={{ margin: 0, fontSize: "34px", fontWeight: 700, letterSpacing: "-1px", lineHeight: 1.05 }}>Repair Service Report</h1>
-        <div style={{ marginTop: "6px", fontSize: "11px", color: GRIS }}>Informe de diagnóstico y reparación de laboratorio · Hecho por gianluca pasquale · {fechaInforme(inf.fecha)}</div>
+      <div style={{ marginTop: "32px", textAlign: "left" }}>
+        <h1 style={{ margin: 0, fontSize: "44px", fontWeight: 800, letterSpacing: "-1.8px", lineHeight: 1 }}>Repair Service Report</h1>
+        <p style={{ margin: "12px 0 0", fontSize: "13px", color: "#525252" }}>Diagnóstico y reparación de laboratorio · {fechaInforme(inf.fecha)} · Hecho por gianluca pasquale</p>
       </div>
 
-      <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", border: "1px solid #fed7aa", borderRadius: "14px", background: "#fff7ed", textAlign: "left" }}>
-        {dato("CLIENTE", o.nombre)}
-        {dato("EQUIPO", equipo(o))}
+      <section style={{ marginTop: "22px", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: "10px 16px", background: "#f5f5f5", borderRadius: "18px", padding: "16px 20px", textAlign: "left" }}>
+        {dato("Cliente", o.nombre)}
+        {dato("Equipo", equipo(o))}
         {dato(id[0], id[1])}
-        {dato("NÚMERO", o.whatsapp ? telefono(o.whatsapp) : "—")}
+        {dato("WhatsApp", o.whatsapp ? telefono(o.whatsapp) : "—")}
       </section>
 
-      <Seccion n="01">RESUMEN DE INVERSIÓN</Seccion>
-      <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
+      <Seccion>Resumen de inversión</Seccion>
+      <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", borderTop: "1px solid #e5e5e5" }}>
         <tbody>
           {inf.cobros.map((c, i) => (
-            <tr key={i} style={{ borderBottom: "1px solid #f5f5f4" }}>
-              <td style={{ padding: "6px 24px 6px 0", verticalAlign: "top" }}>
+            <tr key={i} style={{ borderBottom: "1px solid #e5e5e5" }}>
+              <td style={{ padding: "10px 24px 10px 0", verticalAlign: "top" }}>
                 <Ed v={t.conceptos[i] ?? c.concepto} set={(v) => cambiar({ conceptos: inf.cobros.map((x, j) => (j === i ? v : t.conceptos[j] ?? x.concepto)) })} editable={editable} />
               </td>
-              <td style={{ padding: "6px 0", verticalAlign: "top", textAlign: "right", whiteSpace: "nowrap" }}>
+              <td style={{ padding: "10px 0", verticalAlign: "top", textAlign: "right", whiteSpace: "nowrap" }}>
                 <div style={{ fontWeight: 700 }}>{soles(c.monto)}</div>
                 {c.nota && <div style={{ fontSize: "10.5px", color: GRIS, whiteSpace: "normal", maxWidth: "220px", marginLeft: "auto" }}>({c.nota})</div>}
               </td>
@@ -138,44 +133,44 @@ function Documento({ o, inf, set, editable }: { o: Orden; inf: Informe & { texto
           ))}
         </tbody>
       </table>
-      <div style={{ marginTop: "8px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "16px", padding: "10px 16px", borderRadius: "12px", background: NARANJA, color: "#fff" }}>
-        <span className="qf-titulo" style={{ fontWeight: 700, letterSpacing: "0.6px", fontSize: "12.5px" }}>INVERSIÓN TOTAL A CANCELAR</span>
-        <span className="qf-titulo" style={{ fontWeight: 700, fontSize: "18px", whiteSpace: "nowrap" }}>{soles(suma)}</span>
+      <div className="qf-punto" style={{ marginTop: "12px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "16px", background: NARANJA, color: "#fff", borderRadius: "999px", padding: "10px 22px" }}>
+        <span style={{ fontSize: "13px", fontWeight: 700 }}>Inversión total a cancelar</span>
+        <span style={{ fontSize: "20px", fontWeight: 800, letterSpacing: "-0.5px", whiteSpace: "nowrap" }}>{soles(suma)}</span>
       </div>
       {inf.adelanto != null && saldo != null && (
-        <div style={{ marginTop: "6px", padding: "0 16px", display: "grid", gridTemplateColumns: "1fr auto", gap: "2px 16px", textAlign: "left" }}>
-          <span>Adelanto recibido</span><span style={{ textAlign: "right", whiteSpace: "nowrap" }}>{soles(inf.adelanto)}</span>
+        <div style={{ marginTop: "8px", padding: "0 22px", display: "grid", gridTemplateColumns: "1fr auto", gap: "2px 16px", textAlign: "left" }}>
+          <span style={{ color: TEXTO }}>Adelanto recibido</span><span style={{ textAlign: "right", whiteSpace: "nowrap" }}>{soles(inf.adelanto)}</span>
           <b>{saldo < 0 ? "Saldo a devolver" : "Saldo pendiente"}</b><b style={{ textAlign: "right", whiteSpace: "nowrap" }}>{soles(Math.abs(saldo))}</b>
         </div>
       )}
 
-      <Seccion n="02">DIAGNÓSTICO DE PRECISIÓN</Seccion>
+      <Seccion>Diagnóstico de precisión</Seccion>
       {(t.antecedentes || editable) && (
-        <p style={{ margin: "0 0 8px" }}><b>Antecedentes del caso: </b><Ed v={t.antecedentes} set={(v) => cambiar({ antecedentes: v })} editable={editable} vacio="[Solo si la falla surgió después de una entrega; si no, déjalo vacío]" /></p>
+        <p style={{ margin: "0 0 10px", color: TEXTO }}><b style={{ color: TINTA }}>Antecedentes del caso: </b><Ed v={t.antecedentes} set={(v) => cambiar({ antecedentes: v })} editable={editable} vacio="[Solo si la falla surgió después de una entrega; si no, déjalo vacío]" /></p>
       )}
-      <p style={{ margin: "0 0 8px" }}><Ed v={t.intro} set={(v) => cambiar({ intro: v })} editable={editable} /></p>
+      <p style={{ margin: "0 0 10px", color: TEXTO }}><Ed v={t.intro} set={(v) => cambiar({ intro: v })} editable={editable} /></p>
       <Lista filas={t.diagnostico} set={(f) => cambiar({ diagnostico: f })} editable={editable} nueva="Nuevo hallazgo" />
 
-      <Seccion n="03">PROTOCOLO DE SOLUCIÓN EJECUTADO</Seccion>
+      <Seccion>Protocolo de solución ejecutado</Seccion>
       <Lista filas={t.protocolo} set={(f) => cambiar({ protocolo: f })} editable={editable} nueva="Nueva acción" />
-      <div className="qf-punto" style={{ display: "flex", alignItems: "center", gap: "12px", margin: "4px 0 10px", padding: "10px 14px", border: `1.5px solid ${reparable ? NARANJA : TINTA}`, borderRadius: "12px" }}>
-        <span style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "1.2px", color: GRIS }}>ESTADO DEL EQUIPO</span>
+      <div className="qf-punto" style={{ margin: "12px 0", display: "flex", alignItems: "center", gap: "12px" }}>
+        <span style={{ fontSize: "12px", fontWeight: 600, color: "#525252" }}>Estado del equipo</span>
         {editable ? (
           <select value={t.estado} onChange={(e) => cambiar({ estado: e.target.value })} aria-label="Estado del equipo"
-            style={{ font: "inherit", fontWeight: 700, fontSize: "13px", color: "#fff", background: reparable ? NARANJA : TINTA, border: 0, borderRadius: "999px", padding: "3px 10px" }}>
-            {RESULTADOS.map((r) => <option key={r}>{r}</option>)}
+            style={{ ...pildora(reparable ? NARANJA : TINTA), border: 0, font: "inherit", fontSize: "12px", fontWeight: 700 }}>
+            {RESULTADOS.map((r) => <option key={r} value={r}>{r === "REPARABLE" ? "Reparable" : "No reparable"}</option>)}
           </select>
         ) : (
-          <span className="qf-titulo" style={{ fontWeight: 700, fontSize: "13px", color: "#fff", background: reparable ? NARANJA : TINTA, borderRadius: "999px", padding: "3px 12px" }}>{t.estado}</span>
+          <span style={pildora(reparable ? NARANJA : TINTA)}>{reparable ? "Reparable" : "No reparable"}</span>
         )}
       </div>
       <Lista filas={t.cierre} set={(f) => cambiar({ cierre: f })} editable={editable} nueva={reparable ? "Pruebas de Validación" : "Justificación Técnica"} />
 
-      <Seccion n="04">OBSERVACIONES DE INGENIERÍA Y RECOMENDACIONES</Seccion>
+      <Seccion>Observaciones de ingeniería y recomendaciones</Seccion>
       <Lista filas={t.observaciones} set={(f) => cambiar({ observaciones: f })} editable={editable} nueva="Sobre " />
 
-      <footer style={{ marginTop: "28px", paddingTop: "14px", borderTop: `2px solid ${NARANJA}`, display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: "8px 16px", fontSize: "10.5px", color: GRIS, textAlign: "left" }}>
-        <span className="qf-titulo" style={{ fontWeight: 700, color: TINTA, fontSize: "11.5px" }}>Departamento Técnico de Laboratorio QUICKFIX.PE</span>
+      <footer style={{ marginTop: "32px", paddingTop: "16px", borderTop: "1px solid #e5e5e5", display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: "8px 16px", fontSize: "11px", color: GRIS, textAlign: "left" }}>
+        <span><b style={{ color: TINTA }}>Departamento Técnico de Laboratorio</b> · <Logo size="11px" />.pe · San Miguel, Lima</span>
         <span>quickfix.pe · 940-755-119 · quickfix.pe24@gmail.com</span>
       </footer>
     </article>

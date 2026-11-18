@@ -258,7 +258,7 @@ function redactarInforme(array $o, array $notas, array $cobros, string $clave): 
         'thinking' => ['type' => 'disabled'],
         'response_format' => ['type' => 'json_object'],
         'temperature' => 0.4,
-        'max_tokens' => 6000,
+        'max_tokens' => 9000,
         'messages' => [
             ['role' => 'system', 'content' => require __DIR__ . '/informe-guia.php'],
             ['role' => 'user', 'content' => json_encode(['ficha' => $ficha, 'notas' => $notas, 'cobros' => $cobros], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT)],
