@@ -41,5 +41,9 @@ describe("informe técnico", () => {
     const editado = [{ ...rep[0], monto: 450 }, rep[1]];
     expect(conBase(editado, "REPARABLE")).toBe(editado);
     expect(conBase(editado, "NO REPARABLE")[0]).toEqual(diag[0]);
+    const mantenimiento = [{ concepto: "Mantenimiento Paquete ROG", monto: 329, nota: "" }];
+    expect(conBase(mantenimiento, "REPARABLE")).toBe(mantenimiento);
+    expect(conBase(mantenimiento, "NO REPARABLE")).toBe(mantenimiento);
+    expect(conBase([], "NO REPARABLE")).toEqual([diag[0]]);
   });
 });

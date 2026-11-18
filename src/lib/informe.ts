@@ -18,10 +18,14 @@ const resultadoDe = (v: string) => (/^NO\s/.test(v) ? "NO REPARABLE" : /^REPAR/.
 export const cobroBase = (resultado: string): Cobro =>
   resultado === "REPARABLE" ? { concepto: "Reparación electrónica", monto: 299, nota: "" } : { concepto: "Diagnóstico electrónico", monto: 99, nota: "" };
 
-/** Pone el cobro del estado como primera fila; si ya está, conserva el monto que escribió el técnico. */
+/**
+ * Pone el cobro del estado como primera fila cuando está vacía o tiene el del otro estado.
+ * Si el técnico la cambió (por ejemplo, un mantenimiento: "Paquete ROG"), la respeta.
+ */
 export function conBase(cobros: Cobro[], resultado: string): Cobro[] {
-  const b = cobroBase(resultado);
-  return cobros[0]?.concepto === b.concepto ? cobros : [b, ...cobros.slice(1)];
+  const otro = cobroBase(resultado === "REPARABLE" ? "NO REPARABLE" : "REPARABLE").concepto;
+  const primera = cobros[0]?.concepto.trim() ?? "";
+  return primera === "" || primera === otro ? [cobroBase(resultado), ...cobros.slice(1)] : cobros;
 }
 
 export const informeNuevo = (): Informe => ({
