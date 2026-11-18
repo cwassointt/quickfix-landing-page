@@ -6,22 +6,28 @@ import { RESULTADOS, fechaInforme, informeNuevo, limpiarTexto, soles, total, typ
 
 const PRESS = "transition-[transform,background-color,color] duration-150 ease-out active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-[#050505]";
 const CAMPO = "w-full rounded-xl bg-white/[0.06] px-4 text-base text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-primary [&>option]:bg-[#111]";
-const AZUL = "#0E2841";
+// Colores de la web: naranja #FF6600 sobre blanco, texto casi negro y grises cálidos.
+const NARANJA = "#FF6600";
+const TINTA = "#1c1917";
+const GRIS = "#57534e";
+const ROTULO: CSSProperties = { fontSize: "9.5px", fontWeight: 700, letterSpacing: "1.2px", color: "#c2410c" };
 
-// El documento usa su propia letra (la web fuerza DM Sans con !important) y, al imprimir, solo sale el informe en A4.
+// Letras de la web: DM Sans en el texto y Space Grotesk en títulos (la web las fuerza con !important, así que se repite aquí).
+// Al imprimir, solo sale el informe en A4.
 const CSS = `
-.qf-informe, .qf-informe * { font-family: Calibri, Carlito, "Segoe UI", Arial, sans-serif !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-.qf-informe [contenteditable="true"] { border-radius: 2px; outline: none; cursor: text; }
-.qf-informe [contenteditable="true"]:hover { background: #fff4e5; }
-.qf-informe [contenteditable="true"]:focus { background: #fff4e5; box-shadow: 0 0 0 2px #ff7a1f; }
+.qf-informe, .qf-informe * { font-family: "DM Sans", system-ui, sans-serif !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.qf-informe .qf-titulo, .qf-informe .qf-titulo * { font-family: "Space Grotesk", "DM Sans", sans-serif !important; }
+.qf-informe [contenteditable="true"] { border-radius: 3px; outline: none; cursor: text; }
+.qf-informe [contenteditable="true"]:hover { background: #fff7ed; }
+.qf-informe [contenteditable="true"]:focus { background: #fff7ed; box-shadow: 0 0 0 2px ${NARANJA}; }
 @media screen { .qf-informe-print { display: none; } }
 @media print {
-  @page { size: A4; margin: 14mm 16mm; }
+  @page { size: A4; margin: 12mm 15mm; }
   html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; }
   body > *:not(.qf-informe-print) { display: none !important; }
   .qf-informe-print { display: block; }
-  .qf-informe li, .qf-informe tr { break-inside: avoid; }
-  .qf-informe h2 { break-after: avoid; }
+  .qf-punto, .qf-informe tr { break-inside: avoid; }
+  .qf-seccion-titulo { break-after: avoid; }
 }`;
 
 /** Texto que se corrige escribiendo encima (solo en pantalla). Guarda al salir del campo. */
@@ -36,8 +42,13 @@ function Ed({ v, set, editable, style, vacio = "[Escribe aquí]" }: { v: string;
   );
 }
 
-const Titulo = ({ children }: { children: ReactNode }) => (
-  <h2 style={{ margin: "16pt 0 6pt", paddingBottom: "3pt", borderBottom: `1.5pt solid ${AZUL}`, color: AZUL, fontSize: "11.5pt", fontWeight: 700, letterSpacing: "0.04em" }}>{children}</h2>
+/** Encabezado de sección: número en una pastilla naranja, título y una línea fina. */
+const Seccion = ({ n, children }: { n: string; children: ReactNode }) => (
+  <div className="qf-seccion-titulo" style={{ display: "flex", alignItems: "center", gap: "10px", margin: "22px 0 8px" }}>
+    <span className="qf-titulo" style={{ fontSize: "11px", fontWeight: 700, color: "#fff", background: NARANJA, borderRadius: "6px", padding: "2px 7px" }}>{n}</span>
+    <h2 className="qf-titulo" style={{ margin: 0, fontSize: "14px", fontWeight: 700, letterSpacing: "0.6px", color: TINTA }}>{children}</h2>
+    <span style={{ flex: 1, height: "1px", background: "#e7e5e4" }} />
+  </div>
 );
 
 const QUITAR = "ml-1 inline-flex h-6 w-6 items-center justify-center rounded-full align-middle text-[#9a3412] hover:bg-[#ffedd5]";
@@ -47,13 +58,16 @@ function Lista({ filas, set, editable, nueva }: { filas: Fila[]; set: (f: Fila[]
   const cambiar = (i: number, f: Partial<Fila>) => set(filas.map((x, j) => (j === i ? { ...x, ...f } : x)));
   return (
     <>
-      <ul style={{ margin: 0, paddingLeft: "14pt" }}>
+      <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
         {filas.map((f, i) => (
-          <li key={i} style={{ margin: "0 0 5pt" }}>
-            <Ed v={f.titulo} set={(t) => cambiar(i, { titulo: t })} editable={editable} style={{ fontWeight: 700 }} />
-            <b>: </b>
-            <Ed v={f.texto} set={(t) => cambiar(i, { texto: t })} editable={editable} />
-            {editable && <button type="button" onClick={() => set(filas.filter((_, j) => j !== i))} aria-label={`Quitar "${f.titulo}"`} className={QUITAR}><X className="h-3.5 w-3.5" aria-hidden="true" /></button>}
+          <li key={i} className="qf-punto" style={{ display: "flex", gap: "10px", margin: "0 0 7px" }}>
+            <span aria-hidden="true" style={{ flexShrink: 0, width: "6px", height: "6px", marginTop: "7px", borderRadius: "2px", background: NARANJA }} />
+            <span>
+              <Ed v={f.titulo} set={(t) => cambiar(i, { titulo: t })} editable={editable} style={{ fontWeight: 700 }} />
+              <b>: </b>
+              <Ed v={f.texto} set={(t) => cambiar(i, { texto: t })} editable={editable} />
+              {editable && <button type="button" onClick={() => set(filas.filter((_, j) => j !== i))} aria-label={`Quitar "${f.titulo}"`} className={QUITAR}><X className="h-3.5 w-3.5" aria-hidden="true" /></button>}
+            </span>
           </li>
         ))}
       </ul>
@@ -74,80 +88,96 @@ function Documento({ o, inf, set, editable }: { o: Orden; inf: Informe & { texto
   const suma = total(inf.cobros);
   const saldo = inf.adelanto != null ? Math.round((suma - inf.adelanto) * 100) / 100 : null;
   const id = o.serie ? ["S/N", o.serie] : o.dni ? ["DNI", o.dni] : ["S/N", "—"];
-  const fila = (k: string, v: string) => (
-    <div style={{ display: "flex", gap: "5pt" }}><span style={{ fontWeight: 700, color: AZUL, minWidth: "52pt" }}>{k}:</span><span style={{ textTransform: "uppercase" }}>{v}</span></div>
+  const reparable = t.estado === "REPARABLE";
+  const dato = (k: string, v: string) => (
+    <div style={{ padding: "12px 16px", display: "flex", flexDirection: "column", gap: "2px", minWidth: 0 }}>
+      <span style={ROTULO}>{k}</span><span style={{ fontWeight: 600, textTransform: "uppercase", overflowWrap: "anywhere" }}>{v}</span>
+    </div>
   );
   return (
-    <article className="qf-informe" style={{ background: "#fff", color: "#1a1a1a", fontSize: "10.5pt", lineHeight: 1.45, textAlign: "justify" }}>
-      <header style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "flex-start", gap: "10pt", textAlign: "left" }}>
-        <div style={{ flex: "1 1 260pt", minWidth: 0 }}>
-          <div style={{ fontSize: "9pt", fontWeight: 700, letterSpacing: "0.12em", color: AZUL }}>QUICKFIX.PE</div>
-          <div style={{ fontSize: "24pt", fontWeight: 700, color: AZUL, lineHeight: 1.1 }}>Repair Service Report</div>
-          <div style={{ fontSize: "7.5pt", letterSpacing: "0.06em", marginTop: "3pt" }}>INFORME DE DIAGNÓSTICO Y REPARACIÓN DE LABORATORIO QUICKFIX.PE — SAN MIGUEL, LIMA</div>
-          <div style={{ fontSize: "8.5pt", color: "#4b5563", marginTop: "2pt" }}>https://quickfix.pe · 940-755-119 · quickfix.pe24@gmail.com</div>
+    <article className="qf-informe" style={{ background: "#fff", color: TINTA, fontSize: "12.5px", lineHeight: 1.55, textAlign: "justify" }}>
+      <div style={{ height: "6px", borderRadius: "3px", background: NARANJA, marginBottom: "24px" }} />
+      <header style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "flex-start", gap: "16px", textAlign: "left" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+          <div className="qf-titulo" style={{ fontSize: "22px", fontWeight: 700, letterSpacing: "-0.5px", lineHeight: 1 }}>
+            QUICK<span style={{ color: NARANJA }}>FIX</span><span style={{ color: "#a8a29e", fontWeight: 500 }}>.pe</span>
+          </div>
+          <div style={{ fontSize: "10.5px", color: GRIS }}>Laboratorio de diagnóstico y reparación electrónica · San Miguel, Lima</div>
         </div>
         <div style={{ textAlign: "right", marginLeft: "auto" }}>
-          <div style={{ fontSize: "18pt", fontWeight: 700, color: AZUL }}>{o.numero}</div>
-          <div style={{ fontSize: "9pt" }}>Hecho por gianluca pasquale</div>
-          <div style={{ fontSize: "9pt" }}>{fechaInforme(inf.fecha)}</div>
+          <div style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "1.4px", color: GRIS }}>INFORME N°</div>
+          <div className="qf-titulo" style={{ fontSize: "26px", fontWeight: 700, color: NARANJA, lineHeight: 1.1 }}>{o.numero}</div>
         </div>
       </header>
 
-      <section style={{ marginTop: "12pt", padding: "8pt 10pt", border: `1pt solid ${AZUL}`, borderRadius: "3pt", background: "#eef2f7", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190pt, 1fr))", gap: "2pt 16pt", fontSize: "9.5pt", textAlign: "left" }}>
-        {fila("CLIENTE", o.nombre)}
-        {fila("EQUIPO", equipo(o))}
-        {fila(id[0], id[1])}
-        {fila("NÚMERO", o.whatsapp ? telefono(o.whatsapp) : "—")}
+      <div style={{ margin: "20px 0 16px", textAlign: "left" }}>
+        <h1 className="qf-titulo" style={{ margin: 0, fontSize: "34px", fontWeight: 700, letterSpacing: "-1px", lineHeight: 1.05 }}>Repair Service Report</h1>
+        <div style={{ marginTop: "6px", fontSize: "11px", color: GRIS }}>Informe de diagnóstico y reparación de laboratorio · Hecho por gianluca pasquale · {fechaInforme(inf.fecha)}</div>
+      </div>
+
+      <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", border: "1px solid #fed7aa", borderRadius: "14px", background: "#fff7ed", textAlign: "left" }}>
+        {dato("CLIENTE", o.nombre)}
+        {dato("EQUIPO", equipo(o))}
+        {dato(id[0], id[1])}
+        {dato("NÚMERO", o.whatsapp ? telefono(o.whatsapp) : "—")}
       </section>
 
-      <Titulo>RESUMEN DE INVERSIÓN</Titulo>
+      <Seccion n="01">RESUMEN DE INVERSIÓN</Seccion>
       <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
         <tbody>
           {inf.cobros.map((c, i) => (
-            <tr key={i} style={{ borderBottom: "0.5pt solid #d1d5db" }}>
-              <td style={{ padding: "4pt 8pt 4pt 0", verticalAlign: "top" }}>
+            <tr key={i} style={{ borderBottom: "1px solid #f5f5f4" }}>
+              <td style={{ padding: "6px 24px 6px 0", verticalAlign: "top" }}>
                 <Ed v={t.conceptos[i] ?? c.concepto} set={(v) => cambiar({ conceptos: inf.cobros.map((x, j) => (j === i ? v : t.conceptos[j] ?? x.concepto)) })} editable={editable} />
               </td>
-              <td style={{ padding: "4pt 0", verticalAlign: "top", textAlign: "right", whiteSpace: "nowrap" }}>
+              <td style={{ padding: "6px 0", verticalAlign: "top", textAlign: "right", whiteSpace: "nowrap" }}>
                 <div style={{ fontWeight: 700 }}>{soles(c.monto)}</div>
-                {c.nota && <div style={{ fontSize: "8.5pt", color: "#4b5563", whiteSpace: "normal", maxWidth: "170pt", marginLeft: "auto" }}>({c.nota})</div>}
+                {c.nota && <div style={{ fontSize: "10.5px", color: GRIS, whiteSpace: "normal", maxWidth: "220px", marginLeft: "auto" }}>({c.nota})</div>}
               </td>
             </tr>
           ))}
-          <tr><td style={{ padding: "6pt 8pt 2pt 0", fontWeight: 700, color: AZUL }}>INVERSIÓN TOTAL A CANCELAR</td><td style={{ padding: "6pt 0 2pt", textAlign: "right", fontWeight: 700, fontSize: "12pt", color: AZUL, whiteSpace: "nowrap" }}>{soles(suma)}</td></tr>
-          {inf.adelanto != null && saldo != null && (
-            <>
-              <tr><td style={{ padding: "2pt 8pt 0 0" }}>Adelanto recibido</td><td style={{ textAlign: "right", whiteSpace: "nowrap" }}>{soles(inf.adelanto)}</td></tr>
-              <tr><td style={{ padding: "2pt 8pt 0 0", fontWeight: 700 }}>{saldo < 0 ? "Saldo a devolver" : "Saldo pendiente"}</td><td style={{ textAlign: "right", fontWeight: 700, whiteSpace: "nowrap" }}>{soles(Math.abs(saldo))}</td></tr>
-            </>
-          )}
         </tbody>
       </table>
-
-      <Titulo>DIAGNÓSTICO DE PRECISIÓN</Titulo>
-      {(t.antecedentes || editable) && (
-        <p style={{ margin: "0 0 6pt" }}><b>Antecedentes del caso: </b><Ed v={t.antecedentes} set={(v) => cambiar({ antecedentes: v })} editable={editable} vacio="[Solo si la falla surgió después de una entrega; si no, déjalo vacío]" /></p>
+      <div style={{ marginTop: "8px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "16px", padding: "10px 16px", borderRadius: "12px", background: NARANJA, color: "#fff" }}>
+        <span className="qf-titulo" style={{ fontWeight: 700, letterSpacing: "0.6px", fontSize: "12.5px" }}>INVERSIÓN TOTAL A CANCELAR</span>
+        <span className="qf-titulo" style={{ fontWeight: 700, fontSize: "18px", whiteSpace: "nowrap" }}>{soles(suma)}</span>
+      </div>
+      {inf.adelanto != null && saldo != null && (
+        <div style={{ marginTop: "6px", padding: "0 16px", display: "grid", gridTemplateColumns: "1fr auto", gap: "2px 16px", textAlign: "left" }}>
+          <span>Adelanto recibido</span><span style={{ textAlign: "right", whiteSpace: "nowrap" }}>{soles(inf.adelanto)}</span>
+          <b>{saldo < 0 ? "Saldo a devolver" : "Saldo pendiente"}</b><b style={{ textAlign: "right", whiteSpace: "nowrap" }}>{soles(Math.abs(saldo))}</b>
+        </div>
       )}
-      <p style={{ margin: "0 0 6pt" }}><Ed v={t.intro} set={(v) => cambiar({ intro: v })} editable={editable} /></p>
+
+      <Seccion n="02">DIAGNÓSTICO DE PRECISIÓN</Seccion>
+      {(t.antecedentes || editable) && (
+        <p style={{ margin: "0 0 8px" }}><b>Antecedentes del caso: </b><Ed v={t.antecedentes} set={(v) => cambiar({ antecedentes: v })} editable={editable} vacio="[Solo si la falla surgió después de una entrega; si no, déjalo vacío]" /></p>
+      )}
+      <p style={{ margin: "0 0 8px" }}><Ed v={t.intro} set={(v) => cambiar({ intro: v })} editable={editable} /></p>
       <Lista filas={t.diagnostico} set={(f) => cambiar({ diagnostico: f })} editable={editable} nueva="Nuevo hallazgo" />
 
-      <Titulo>PROTOCOLO DE SOLUCIÓN EJECUTADO</Titulo>
+      <Seccion n="03">PROTOCOLO DE SOLUCIÓN EJECUTADO</Seccion>
       <Lista filas={t.protocolo} set={(f) => cambiar({ protocolo: f })} editable={editable} nueva="Nueva acción" />
-      <p style={{ margin: "6pt 0 5pt 14pt", fontWeight: 700 }}>
-        Estado del Equipo:{" "}
+      <div className="qf-punto" style={{ display: "flex", alignItems: "center", gap: "12px", margin: "4px 0 10px", padding: "10px 14px", border: `1.5px solid ${reparable ? NARANJA : TINTA}`, borderRadius: "12px" }}>
+        <span style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "1.2px", color: GRIS }}>ESTADO DEL EQUIPO</span>
         {editable ? (
           <select value={t.estado} onChange={(e) => cambiar({ estado: e.target.value })} aria-label="Estado del equipo"
-            style={{ font: "inherit", fontWeight: 700, border: "1px dashed #ff7a1f", borderRadius: "3px", background: "#fff", color: "#1a1a1a" }}>
+            style={{ font: "inherit", fontWeight: 700, fontSize: "13px", color: "#fff", background: reparable ? NARANJA : TINTA, border: 0, borderRadius: "999px", padding: "3px 10px" }}>
             {RESULTADOS.map((r) => <option key={r}>{r}</option>)}
           </select>
-        ) : t.estado}.
-      </p>
-      <Lista filas={t.cierre} set={(f) => cambiar({ cierre: f })} editable={editable} nueva={t.estado.startsWith("REPARADO") ? "Pruebas de Validación" : "Justificación Técnica"} />
+        ) : (
+          <span className="qf-titulo" style={{ fontWeight: 700, fontSize: "13px", color: "#fff", background: reparable ? NARANJA : TINTA, borderRadius: "999px", padding: "3px 12px" }}>{t.estado}</span>
+        )}
+      </div>
+      <Lista filas={t.cierre} set={(f) => cambiar({ cierre: f })} editable={editable} nueva={reparable ? "Pruebas de Validación" : "Justificación Técnica"} />
 
-      <Titulo>OBSERVACIONES DE INGENIERÍA Y RECOMENDACIONES</Titulo>
+      <Seccion n="04">OBSERVACIONES DE INGENIERÍA Y RECOMENDACIONES</Seccion>
       <Lista filas={t.observaciones} set={(f) => cambiar({ observaciones: f })} editable={editable} nueva="Sobre " />
 
-      <p style={{ marginTop: "22pt", paddingTop: "6pt", borderTop: `0.75pt solid ${AZUL}`, textAlign: "center", fontWeight: 700, color: AZUL }}>Departamento Técnico de Laboratorio QUICKFIX.PE</p>
+      <footer style={{ marginTop: "28px", paddingTop: "14px", borderTop: `2px solid ${NARANJA}`, display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: "8px 16px", fontSize: "10.5px", color: GRIS, textAlign: "left" }}>
+        <span className="qf-titulo" style={{ fontWeight: 700, color: TINTA, fontSize: "11.5px" }}>Departamento Técnico de Laboratorio QUICKFIX.PE</span>
+        <span>quickfix.pe · 940-755-119 · quickfix.pe24@gmail.com</span>
+      </footer>
     </article>
   );
 }
@@ -182,7 +212,7 @@ export function InformeTecnico({ o }: { o: Orden }) {
     const fecha = new Date(`${inf.fecha.slice(0, 10)}T12:00:00`);
     const ddmmaa = fecha.toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit", year: "2-digit" }).replace(/\//g, "");
     const codigo = (o.modelo.trim().split(/\s+/).pop() || o.tipo).toUpperCase().replace(/[^A-Z0-9]/g, "");
-    document.title = `${o.numero}-${inf.texto?.estado.startsWith("REPARADO") ? "QFR" : "QFD"}${ddmmaa}_${codigo}`;
+    document.title = `${o.numero}-${inf.texto?.estado === "REPARABLE" ? "QFR" : "QFD"}${ddmmaa}_${codigo}`;
     const fin = () => { document.title = antes; setImprimiendo(false); };
     window.addEventListener("afterprint", fin, { once: true });
     const t = setTimeout(() => window.print(), 100);

@@ -9,7 +9,10 @@ export type Texto = {
 };
 export type Informe = { notas: Notas; cobros: Cobro[]; adelanto: number | null; texto: Texto | null; fecha: string };
 
-export const RESULTADOS = ["REPARADO Y OPERATIVO", "NO REPARABLE A NIVEL DE COMPONENTE", "NO REPARABLE"];
+export const RESULTADOS = ["REPARABLE", "NO REPARABLE"];
+
+/** Cualquier variante que escriba la IA ("Reparado y operativo", "No reparable a nivel de componente.") → uno de los dos. */
+const resultadoDe = (v: string) => (/^NO\s/.test(v) ? "NO REPARABLE" : /^REPAR/.test(v) ? "REPARABLE" : "");
 
 export const informeNuevo = (): Informe => ({
   notas: { hallazgos: "", trabajo: "", resultado: RESULTADOS[0], contexto: "" },
@@ -50,7 +53,7 @@ export function limpiarTexto(v: unknown, cobros: Cobro[], resultado: string): Te
     intro: texto(r.intro),
     diagnostico: filas(r.diagnostico),
     protocolo: filas(r.protocolo),
-    estado: RESULTADOS.includes(estado) ? estado : resultado,
+    estado: resultadoDe(estado) || resultadoDe(resultado.toUpperCase()) || RESULTADOS[0],
     cierre: filas(r.cierre),
     observaciones: filas(r.observaciones),
     para_validar: (Array.isArray(r.para_validar) ? r.para_validar : []).map(texto).filter(Boolean),

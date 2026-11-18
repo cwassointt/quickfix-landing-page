@@ -26,7 +26,8 @@ describe("informe técnico", () => {
       para_validar: ["¿Se hizo prueba de estrés?", 3],
     }, cobros, "NO REPARABLE");
     expect(t.conceptos).toEqual(["Servicio de Triage (Inspección óptica)", "reparación", "formateo"]);
-    expect(t.estado).toBe("REPARADO Y OPERATIVO");
+    expect(t.estado).toBe("REPARABLE");
+    expect(limpiarTexto({ estado: "No reparable a nivel de componente." }, cobros, "REPARABLE").estado).toBe("NO REPARABLE");
     expect(t.diagnostico).toEqual([{ titulo: "Condensadores Defectuosos", texto: "Se midió…" }]);
     expect(t.protocolo).toEqual([]);
     expect(t.para_validar).toEqual(["¿Se hizo prueba de estrés?"]);

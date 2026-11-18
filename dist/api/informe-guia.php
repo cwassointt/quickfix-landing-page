@@ -16,7 +16,7 @@ QUÉ DEVUELVES: solo un objeto json con esta forma exacta:
   "intro": "…",
   "diagnostico": [{"titulo": "…", "texto": "…"}],
   "protocolo": [{"titulo": "…", "texto": "…"}],
-  "estado": "REPARADO Y OPERATIVO",
+  "estado": "REPARABLE",
   "cierre": [{"titulo": "…", "texto": "…"}],
   "observaciones": [{"titulo": "Sobre …", "texto": "…"}],
   "para_validar": ["…"]
@@ -26,8 +26,8 @@ QUÉ DEVUELVES: solo un objeto json con esta forma exacta:
 - "intro": párrafo de ingreso: estado en que llegó el equipo, síntoma y antecedentes que dio el cliente. Termina exactamente en "se determinó lo siguiente:".
 - "diagnostico": cada hallazgo con un título corto y una explicación: qué hace ese componente o etapa → qué pasa cuando falla → cómo se midió o detectó → cómo explica el síntoma.
 - "protocolo": cada acción ejecutada, con el método y la herramienta.
-- "estado": exactamente uno de: "REPARADO Y OPERATIVO", "NO REPARABLE A NIVEL DE COMPONENTE", "NO REPARABLE". Lo define el resultado que indicó el técnico.
-- "cierre": si se reparó, una sola viñeta "Pruebas de Validación". Si no es reparable, "Justificación Técnica" y "Única Solución Viable" (normalmente: la sustitución íntegra de la placa madre, Mainboard Swap).
+- "estado": exactamente "REPARABLE" o "NO REPARABLE". Lo define el resultado que indicó el técnico.
+- "cierre": si es reparable, una sola viñeta "Pruebas de Validación". Si no es reparable, "Justificación Técnica" y "Única Solución Viable" (normalmente: la sustitución íntegra de la placa madre, Mainboard Swap).
 - "observaciones": viñetas cuyo título empieza con "Sobre" (Sobre la Protección Eléctrica, Sobre las Intervenciones Previas, Sobre el Origen de las Fallas, Sobre el Monto Facturado, Sobre la Información del Usuario, Sobre la Sustitución de Placa, Sobre la Condición de Recepción, Sobre la Expectativa de Operatividad…). Entre 2 y 4.
 - "para_validar": preguntas cortas para el técnico sobre cada supuesto que hiciste y cada dato que falta.
 - Los títulos van sin dos puntos al final y sin asteriscos: la página los pone en negrita.
@@ -66,7 +66,7 @@ El equipo ingresó al laboratorio presentando un estado crítico de bloqueo ener
 PROTOCOLO DE SOLUCIÓN EJECUTADO
 - Intervención Electrónica: Bajo microscopio estereoscópico y mediante estación de calor controlada, se aislaron y extrajeron los componentes SMD (transistores/reguladores) corrompidos en la fase de carga. Se rectificaron las pistas del circuito impreso y se instalaron componentes de reemplazo con las tolerancias de fábrica.
 - Restablecimiento Energético: Tras la reconstrucción electrónica, se comprobó la eliminación total del cortocircuito. Los voltajes principales fueron restaurados, recuperando tanto la capacidad de encendido del equipo como el ciclo normal de carga de la batería.
-Estado del Equipo: REPARADO Y OPERATIVO.
+Estado del Equipo: REPARABLE.
 OBSERVACIONES DE INGENIERÍA Y RECOMENDACIONES
 - Sobre la Inclusión de Costos Logísticos: El cargo logístico corresponde exclusivamente al aprovisionamiento de microelectrónica de repuesto con la tolerancia requerida para soportar las altas demandas energéticas de la serie ROG.
 - Sobre la Protección Eléctrica: El colapso de las fases de carga suele ser consecuencia de picos de tensión transitorios o inestabilidad en la red eléctrica. Se recomienda utilizar el adaptador original conectado a un estabilizador de voltaje o supresor de picos de buena calidad para salvaguardar la reparación y prolongar la vida útil del equipo.
@@ -83,7 +83,7 @@ El equipo ingresó a nuestras instalaciones sin respuesta de encendido, junto co
 PROTOCOLO DE SOLUCIÓN EJECUTADO
 - Mediciones Electrónicas: Se midieron la impedancia y la resistencia a tierra de los rieles de alimentación principales y de standby, para ubicar las líneas afectadas.
 - Sustituciones de Aislamiento: Se reemplazaron componentes puntuales en las líneas comprometidas para intentar aislar y eliminar la condición de cortocircuito. La ausencia de componentes y el deterioro del PCB impidieron restablecer los circuitos.
-Estado del Equipo: NO REPARABLE A NIVEL DE COMPONENTE.
+Estado del Equipo: NO REPARABLE.
 - Justificación Técnica: La placa madre presenta un deterioro simultáneo en varias etapas críticas. Reconstruirla exigiría restituir decenas de componentes cuya ubicación y valor originales ya no pueden determinarse con certeza, sobre un PCB con pads y pistas dañados. Aun ejecutando ese trabajo, no puede garantizarse un circuito estable ni la integridad de componentes de alto costo como el procesador y la GPU.
 - Única Solución Viable: Para restaurar la funcionalidad del equipo, es obligatoria la sustitución íntegra de la placa madre (Mainboard Swap).
 OBSERVACIONES DE INGENIERÍA Y RECOMENDACIONES
@@ -103,7 +103,7 @@ Al reingresar la consola a laboratorio, se aplicó nuestro protocolo de diagnós
 PROTOCOLO DE SOLUCIÓN EJECUTADO
 - Respaldo y Extracción del Firmware: Antes de cualquier intervención, se leyó la memoria NOR completa con un programador SPI y se verificó la estabilidad de la lectura para conservar una copia íntegra del estado original.
 - Reprogramación y Verificación: Se reconstruyeron las regiones corruptas conservando los datos únicos de la consola, se programó la memoria y se verificó la escritura byte a byte.
-Estado del Equipo: REPARADO Y OPERATIVO.
+Estado del Equipo: REPARABLE.
 - Pruebas de Validación: Se hicieron ciclos repetidos de encendido y apagado, y la consola arrancó con normalidad hasta el menú principal, sin reinicios ni errores durante una prueba de estrés prolongada.
 OBSERVACIONES DE INGENIERÍA Y RECOMENDACIONES
 - Sobre el Origen de las Fallas: La falla es técnicamente ajena al servicio de mantenimiento brindado inicialmente por nuestro laboratorio. La corrupción de la BIOS se originó en una reinstalación del software del sistema hecha fuera de laboratorio. El equipo se entregó funcionando correctamente tras superar todas las pruebas de operación.
