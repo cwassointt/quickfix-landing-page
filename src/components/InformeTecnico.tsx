@@ -290,8 +290,7 @@ export function InformeTecnico({ o }: { o: Orden }) {
               // El monto es un campo no controlado (para poder escribir "99." sin que se borre el punto); al quitar una fila, todas se vuelven a montar.
               <div key={`${filasVer}-${i}`} className="rounded-2xl bg-black/30 p-3">
                 <div className="flex gap-2">
-                  <input value={c.concepto} onChange={(e) => cobro(i, { concepto: e.target.value })} readOnly={i === 0} title={i === 0 ? "Lo define el resultado; el monto sí se puede cambiar" : undefined}
-                    placeholder="Concepto (ej.: cambio de pantalla)" aria-label={`Concepto ${i + 1}`} className={`${CAMPO} h-11 flex-1 ${i === 0 ? "text-white/70" : ""}`} />
+                  <input value={c.concepto} onChange={(e) => cobro(i, { concepto: e.target.value })} placeholder={i === 0 ? "Concepto (ej.: Mantenimiento Paquete ROG)" : "Concepto (ej.: cambio de pantalla)"} aria-label={`Concepto ${i + 1}`} className={`${CAMPO} h-11 flex-1`} />
                   <span className="relative w-32 shrink-0">
                     <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/50">S/.</span>
                     <input inputMode="decimal" defaultValue={Number.isFinite(c.monto) ? String(c.monto) : ""} aria-label={`Monto ${i + 1}`}
