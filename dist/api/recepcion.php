@@ -3,7 +3,7 @@
 // Los datos viven fuera de public_html, en /home/quickfix/recepcion/ (config.php y recepcion.sqlite),
 // así nadie puede descargarlos desde internet y nunca pasan por GitHub.
 //
-// Acciones (?accion=):  crear (público) · sesion · entrar · salir · lista · orden · actualizar · editar · borrar · renumerar · recibir · foto · leer · csv · informe · preguntas · redactar
+// Acciones (?accion=):  crear (público) · sesion · entrar · salir · lista · orden · actualizar · editar · borrar · renumerar · recibir · foto · leer · csv · informe · preguntas · redactar · borrador
 
 declare(strict_types=1);
 date_default_timezone_set('America/Lima');
@@ -28,6 +28,20 @@ function responder($datos, int $codigo = 200): void
     http_response_code($codigo);
     echo json_encode($datos, JSON_UNESCAPED_UNICODE);
     exit;
+}
+
+/** Responde y cierra la conexión, pero el script sigue trabajando (para lo que tarda más de lo que espera el servidor web). */
+function soltarRespuesta(array $datos, int $codigo): void
+{
+    $salida = (string) json_encode($datos, JSON_UNESCAPED_UNICODE);
+    ignore_user_abort(true);
+    http_response_code($codigo);
+    header('Content-Length: ' . strlen($salida));
+    header('Connection: close');
+    echo $salida;
+    if (function_exists('litespeed_finish_request')) litespeed_finish_request();
+    elseif (function_exists('fastcgi_finish_request')) fastcgi_finish_request();
+    else { while (ob_get_level() > 0) ob_end_flush(); flush(); }
 }
 
 function fallo(string $mensaje, int $codigo = 400): void
@@ -62,6 +76,8 @@ function db(): PDO
     $pdo->exec('CREATE TABLE IF NOT EXISTS intentos (ip TEXT NOT NULL, tipo TEXT NOT NULL, fecha INTEGER NOT NULL)');
     // Un informe técnico por caso: notas del técnico, cobros y el texto ya revisado, como JSON.
     $pdo->exec('CREATE TABLE IF NOT EXISTS informes (orden_id INTEGER PRIMARY KEY, datos TEXT NOT NULL, actualizado TEXT NOT NULL)');
+    // Borrador que la IA está redactando en segundo plano (estado: redactando, listo o error).
+    $pdo->exec('CREATE TABLE IF NOT EXISTS borradores (orden_id INTEGER PRIMARY KEY, estado TEXT NOT NULL, datos TEXT NOT NULL, actualizado TEXT NOT NULL)');
     return $pdo;
 }
 
@@ -460,17 +476,46 @@ try {
                 $cobros[] = ['concepto' => limpiar($c['concepto'] ?? '', 200), 'monto' => round((float) ($c['monto'] ?? 0), 2), 'nota' => limpiar($c['nota'] ?? '', 200)];
             }
             anotar('redactar');
-            set_time_limit(180);
-            try {
-                if ($accion === 'preguntas') {
+            // La IA tarda: la sesión se suelta para que la página pueda seguir consultando mientras tanto.
+            session_write_close();
+            set_time_limit(300);
+            if ($accion === 'preguntas') {
+                try {
                     $r = redactarInforme($o, $notas, $cobros, $claveIA, 'preguntas');
-                    $lista = array_values(array_filter(array_map(function ($p) { return is_string($p) ? mb_substr(trim($p), 0, 300) : ''; }, is_array($r['preguntas'] ?? null) ? $r['preguntas'] : [])));
-                    responder(['preguntas' => array_slice($lista, 0, 4)]);
+                } catch (RuntimeException $e) {
+                    fallo('La IA no respondió bien. Intenta de nuevo en un momento.', 502);
                 }
-                responder(['borrador' => redactarInforme($o, $notas, $cobros, $claveIA)]);
-            } catch (RuntimeException $e) {
+                $lista = array_values(array_filter(array_map(function ($p) { return is_string($p) ? mb_substr(trim($p), 0, 300) : ''; }, is_array($r['preguntas'] ?? null) ? $r['preguntas'] : [])));
+                responder(['preguntas' => array_slice($lista, 0, 4)]);
+            }
+            // Un informe completo tarda más de lo que LiteSpeed espera una respuesta (corta la conexión con una página de error).
+            // Se responde enseguida y se redacta en segundo plano; la página consulta "borrador" hasta que esté listo.
+            $id = (int) $o['id'];
+            db()->prepare("INSERT OR REPLACE INTO borradores (orden_id, estado, datos, actualizado) VALUES (?, 'redactando', '', ?)")->execute([$id, date('c')]);
+            soltarRespuesta(['pendiente' => true], 202);
+            try {
+                $estado = 'listo';
+                $datos = (string) json_encode(redactarInforme($o, $notas, $cobros, $claveIA), JSON_UNESCAPED_UNICODE);
+            } catch (Throwable $e) {
+                error_log('recepcion redactar: ' . $e->getMessage());
+                $estado = 'error';
+                $datos = '';
+            }
+            db()->prepare('UPDATE borradores SET estado = ?, datos = ?, actualizado = ? WHERE orden_id = ?')->execute([$estado, $datos, date('c'), $id]);
+            exit;
+
+        case 'GET borrador':
+            exigir('admin');
+            $q = db()->prepare('SELECT estado, datos, actualizado FROM borradores WHERE orden_id = ?');
+            $q->execute([(int) ($_GET['id'] ?? 0)]);
+            $b = $q->fetch();
+            if (!$b) fallo('No hay un informe en preparación. Vuelve a generarlo.', 404);
+            // Si sigue "redactando" después de 5 minutos, el proceso se cortó.
+            if ($b['estado'] === 'error' || ($b['estado'] === 'redactando' && strtotime($b['actualizado']) < time() - 300)) {
                 fallo('La IA no respondió bien. Intenta de nuevo en un momento.', 502);
             }
+            if ($b['estado'] !== 'listo') responder(['pendiente' => true]);
+            responder(['borrador' => json_decode($b['datos'], true)]);
 
         case 'POST editar':
             // Solo tú: corregir datos del cliente o del equipo. Mismas reglas que el formulario; el N° de orden no cambia.
@@ -491,6 +536,7 @@ try {
             $q->execute([$id]);
             if ($q->rowCount() !== 1) fallo('No existe esa orden.', 404);
             db()->prepare('DELETE FROM informes WHERE orden_id = ?')->execute([$id]);
+            db()->prepare('DELETE FROM borradores WHERE orden_id = ?')->execute([$id]);
             @unlink("$DIR/fotos/$id.jpg");
             db()->exec("UPDATE sqlite_sequence SET seq = (SELECT IFNULL(MAX(id), 0) FROM ordenes) WHERE name = 'ordenes'");
             responder(['ok' => true]);
@@ -507,6 +553,7 @@ try {
                 if ((int) $viejo === $nuevo) continue;
                 $pdo->prepare('UPDATE ordenes SET id = ? WHERE id = ?')->execute([$nuevo, $viejo]);
                 $pdo->prepare('UPDATE informes SET orden_id = ? WHERE orden_id = ?')->execute([$nuevo, $viejo]);
+                $pdo->prepare('DELETE FROM borradores WHERE orden_id = ?')->execute([$viejo]);
                 $cambios++;
             }
             $pdo->exec("UPDATE sqlite_sequence SET seq = (SELECT IFNULL(MAX(id), 0) FROM ordenes) WHERE name = 'ordenes'");
