@@ -20,7 +20,10 @@ const CSS = `
 .qf-informe [contenteditable="true"] { border-radius: 3px; outline: none; cursor: text; }
 .qf-informe [contenteditable="true"]:hover { background: #fff7ed; }
 .qf-informe [contenteditable="true"]:focus { background: #fff7ed; box-shadow: 0 0 0 2px ${NARANJA}; }
-@media screen { .qf-informe-print { display: none; } }
+@media screen { .qf-informe-print { display: none; } }`;
+
+// Solo se monta mientras se imprime el informe: si quedara puesto, ocultaría las etiquetas al imprimirlas (salían en blanco).
+const CSS_IMPRESION = `
 @media print {
   @page { size: A4; margin: 14mm 15mm 16mm;
     @bottom-right { content: "Página " counter(page) " de " counter(pages); font: 500 8pt Inter, sans-serif; color: ${GRIS}; }
@@ -294,6 +297,7 @@ export function InformeTecnico({ o }: { o: Orden }) {
   return (
     <section className="mt-4 rounded-3xl bg-white/[0.04] p-5 md:p-6">
       <style>{CSS}</style>
+      {imprimiendo && <style>{CSS_IMPRESION}</style>}
       <h2 className="text-lg font-bold text-white">Informe técnico</h2>
       <p className="mt-1 text-sm text-white/55">Escribe todo junto, como se lo contarías a otro técnico. La IA lo ordena con el formato del laboratorio, te pregunta lo que le falte y tú revisas el informe antes del PDF.</p>
 
