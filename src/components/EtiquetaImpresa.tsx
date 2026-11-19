@@ -55,10 +55,24 @@ function Resumen({ texto, max }: { texto: string; max: number }) {
   return <div ref={ref} style={{ flex: 1, minHeight: 0, overflow: "hidden", lineHeight: 1.2, overflowWrap: "anywhere" }}>{texto}</div>;
 }
 
+/** Una línea que achica su letra hasta entrar completa (el código del modelo está al final y no se puede cortar). */
+function Ajustada({ texto, max, min }: { texto: string; max: number; min: number }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    for (let mm = max; mm >= min; mm = Math.round((mm - 0.1) * 10) / 10) {
+      el.style.fontSize = `${mm}mm`;
+      if (el.scrollWidth <= el.clientWidth + 1) break;
+    }
+  }, [texto, max, min]);
+  return <span ref={ref} style={{ flex: 1, minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{texto}</span>;
+}
+
 const unaLinea: CSSProperties = { whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" };
 const caja: CSSProperties = { width: "76mm", height: "50mm", boxSizing: "border-box", padding: "2mm 2.5mm", background: "#fff", color: "#000", display: "flex", flexDirection: "column", gap: "1.4mm", overflow: "hidden" };
 // Banda negra de arriba: el N° del caso se reconoce de lejos en el estante.
-const banda: CSSProperties = { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "2mm", background: "#000", color: "#fff", borderRadius: "1.2mm", padding: "1mm 2.2mm", flexShrink: 0 };
+const banda: CSSProperties = { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "2mm", background: "#000", color: "#fff", borderRadius: "1.2mm", padding: "0.8mm 2.2mm", flexShrink: 0 };
 const rotulo: CSSProperties = { fontSize: "1.9mm", fontWeight: 700, letterSpacing: "0.25mm", lineHeight: 1 };
 const fila: CSSProperties = { display: "flex", alignItems: "center", gap: "1.2mm", minWidth: 0 };
 const icono: CSSProperties = { width: "3mm", height: "3mm", flexShrink: 0 };
@@ -97,21 +111,27 @@ export function EtiquetaQF({ e }: { e: Etiqueta }) {
         </span>
       </div>
 
+      {/* Modelo y serie a todo el ancho; si el modelo es largo se corta él, nunca la serie. */}
+      <div style={{ display: "flex", alignItems: "baseline", gap: "2mm", fontWeight: 700, lineHeight: 1.1, flexShrink: 0 }}>
+        <Ajustada texto={e.EQUIPO} max={2.6} min={1.8} />
+        <span className="qf-mono" style={{ fontSize: "2.4mm", whiteSpace: "nowrap" }}>{e.SN}</span>
+      </div>
+
       {/* Izquierda: de quién es y cómo abrirlo. Derecha: todo el resumen, con la mayor altura posible. */}
       <div style={{ display: "flex", gap: "2.2mm", flex: 1, minHeight: 0 }}>
-        <div style={{ width: "25mm", flexShrink: 0, display: "flex", flexDirection: "column", gap: "1.1mm" }}>
-          <div style={{ fontSize: "3.3mm", fontWeight: 700, lineHeight: 1.1, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", overflowWrap: "anywhere" }}>{e.CLIENTE}</div>
-          <div style={{ ...fila, fontSize: "3mm", fontWeight: 700 }}>
+        <div style={{ width: "25mm", flexShrink: 0, display: "flex", flexDirection: "column", gap: "0.9mm" }}>
+          <div style={{ flexShrink: 0, fontSize: "3mm", fontWeight: 700, lineHeight: 1.1, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", overflowWrap: "anywhere" }}>{e.CLIENTE}</div>
+          <div style={{ ...fila, flexShrink: 0, fontSize: "2.8mm", fontWeight: 700 }}>
             <MessageCircle aria-label="WhatsApp" style={icono} strokeWidth={2.6} />
             <span style={{ whiteSpace: "nowrap" }}>{e.WHATSAPP || "—"}</span>
           </div>
           {/* La clave nunca se corta: si es larga, pasa a la línea siguiente. */}
-          <div style={{ display: "flex", alignItems: "flex-start", gap: "1mm", border: "0.35mm solid #000", borderRadius: "0.8mm", padding: "0.6mm 1mm" }}>
+          <div style={{ flexShrink: 0, display: "flex", alignItems: "flex-start", gap: "1mm", border: "0.35mm solid #000", borderRadius: "0.8mm", padding: "0.5mm 1mm" }}>
             <KeyRound aria-label="Clave del equipo" style={{ ...icono, marginTop: "0.1mm" }} strokeWidth={2.6} />
-            <span className="qf-mono" style={{ fontSize: "3.1mm", fontWeight: 700, lineHeight: 1.1, overflowWrap: "anywhere", minWidth: 0 }}>{e.CLAVE}</span>
+            <span className="qf-mono" style={{ fontSize: "2.9mm", fontWeight: 700, lineHeight: 1.1, overflowWrap: "anywhere", minWidth: 0 }}>{e.CLAVE}</span>
           </div>
           <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.5mm" }}>
-            <Qr texto={e.URL} mm={15} />
+            <Qr texto={e.URL} mm={12.5} />
             {marca}
           </div>
         </div>
