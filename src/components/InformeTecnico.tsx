@@ -262,7 +262,13 @@ export function InformeTecnico({ o }: { o: Orden }) {
   const redactar = async (respuestas: Respuesta[]) => {
     setEstado("redactando");
     const notas = { ...inf.notas, respuestas };
-    const r = await api<{ borrador: unknown }>("redactar", { id: o.id, notas, cobros: inf.cobros });
+    // El servidor redacta en segundo plano (tarda más de lo que el hosting deja abierta una conexión): se consulta cada 4 s, hasta 5 min.
+    let r = await api<{ borrador?: unknown; pendiente?: boolean }>("redactar", { id: o.id, notas, cobros: inf.cobros });
+    for (let i = 0; r.pendiente && i < 75; i++) {
+      await new Promise((ok) => setTimeout(ok, 4000));
+      r = await api<{ borrador?: unknown; pendiente?: boolean }>("borrador", undefined, `&id=${o.id}`);
+    }
+    if (r.pendiente) throw new Error("La IA está tardando demasiado. Intenta de nuevo en un momento.");
     const nuevo = { ...inf, notas, texto: limpiarTexto(r.borrador, inf.cobros, inf.notas.resultado), fecha: inf.fecha || new Date().toISOString() };
     setInf(nuevo);
     setPreguntas(null);
@@ -352,7 +358,7 @@ export function InformeTecnico({ o }: { o: Orden }) {
       <button type="button" onClick={generar} disabled={estado === "preguntando" || estado === "redactando" || !inf.notas.hallazgos.trim() || !montoValido}
         className={`${PRESS} mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-6 py-3.5 text-base font-medium text-black hover:bg-[#ff7a1f] disabled:opacity-50`}>
         {estado === "preguntando" ? <><Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" /> Revisando tus notas…</>
-          : estado === "redactando" ? <><Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" /> Redactando… puede tardar hasta un minuto</>
+          : estado === "redactando" ? <><Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" /> Redactando… puede tardar 1 a 3 minutos</>
           : <><Sparkles className="h-5 w-5" aria-hidden="true" /> {preguntas ? "Generar informe con mis respuestas" : inf.texto ? "Volver a generar con IA" : "Generar informe con IA"}</>}
       </button>
       {error && <p role="alert" className="mt-4 rounded-2xl bg-red-500/15 px-5 py-4 text-red-200">{error}</p>}
