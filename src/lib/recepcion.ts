@@ -136,22 +136,9 @@ export const equipo = (o: Pick<Registro, "tipo" | "marca" | "modelo">) => [o.mar
 
 // ---------- Etiquetas (navegador y OpenLabel+) ----------
 
-/** Resumen de la falla para 2 líneas de la etiqueta: suma frases mientras quepan y corta en palabra completa. */
-export function fallaCorta(falla: string, max = 64) {
-  const partes = falla.replace(/\s+/g, " ").trim().split(/(?<=[.;!?])\s/);
-  let texto = partes[0];
-  for (const p of partes.slice(1)) {
-    if (texto.length + 1 + p.length > max) break;
-    texto += ` ${p}`;
-  }
-  texto = texto.replace(/[.;]$/, "");
-  if (texto.length <= max) return texto;
-  const corte = texto.lastIndexOf(" ", max - 1);
-  return texto.slice(0, corte > 20 ? corte : max - 1) + "…";
-}
-
 export type Etiqueta = {
-  PARTE: string; QF: string; FECHA: string; SERVICIO: string; AVISO: string; CLIENTE: string; WHATSAPP: string; EQUIPO: string; SN: string; FALLA: string; URL: string;
+  PARTE: string; QF: string; FECHA: string; SERVICIO: string; AVISO: string; CLIENTE: string; WHATSAPP: string; CLAVE: string;
+  EQUIPO: string; SN: string; FALLA: string; URL: string;
 };
 
 /** Página del caso que abre el QR (pide la clave del taller si no hay sesión). */
@@ -174,11 +161,14 @@ export function etiquetas(o: Orden): Etiqueta[] {
     AVISO: [o.liquido === 1 && "⚠ SE MOJÓ", o.abierto === 1 && "⚠ YA LO ABRIERON"].filter(Boolean).join("  "),
     CLIENTE: o.nombre,
     WHATSAPP: o.whatsapp ? telefono(o.whatsapp) : "",
+    // Solo admin recibe la clave del equipo: para mostrador no llega y la etiqueta muestra "—".
+    CLAVE: o.pin === undefined ? "—" : o.pin.trim() || "sin clave",
     EQUIPO: equipo(o),
     SN: `S/N ${o.serie || "—"}`,
     URL: urlCaso(o.id),
   };
-  const lista: Etiqueta[] = [{ PARTE: "EQUIPO", ...base, FALLA: fallaCorta(o.falla) }];
+  // Todo el resumen escrito va en la etiqueta del equipo (la letra se achica para que entre).
+  const lista: Etiqueta[] = [{ PARTE: "EQUIPO", ...base, FALLA: o.falla.replace(/\s+/g, " ").trim() }];
   if (/cargador/i.test(o.accesorios ?? "")) lista.push({ PARTE: "CARGADOR", ...base, FALLA: `Cargador de ${equipo(o)}` });
   return lista;
 }
