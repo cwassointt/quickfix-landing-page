@@ -1,12 +1,12 @@
 import { Suspense, lazy, useCallback, useEffect, useState } from "react";
-import { ArrowLeft, Check, Copy, Download, ListOrdered, Loader2, LogOut, MessageCircle, Pencil, Phone, Plus, Printer, RefreshCw, Trash2, UserPlus } from "lucide-react";
+import { ArrowLeft, Check, Copy, Download, ListOrdered, Loader2, LogOut, MessageCircle, Pencil, Phone, Plus, Printer, RefreshCw, Search, Trash2, UserPlus, X } from "lucide-react";
 
 // Solo se descarga al imprimir: así el generador de QR no pesa en el resto de la web.
 const ImprimirEtiquetas = lazy(() => import("@/components/EtiquetaImpresa").then((m) => ({ default: m.ImprimirEtiquetas })));
 const InformeTecnico = lazy(() => import("@/components/InformeTecnico").then((m) => ({ default: m.InformeTecnico })));
 const EditarCaso = lazy(() => import("@/components/EditarCaso").then((m) => ({ default: m.EditarCaso })));
 import {
-  API, ESTADOS, aCsv, api, chatCliente, diaLima, equipo, etiquetas, fecha, mensajesCliente, nombreContacto, saludo, telefono, vcard, type Orden, type Rol,
+  API, COLOR_ESTADO, ESTADOS, aCsv, api, chatCliente, diaLima, equipo, estadoDe, etiquetas, fecha, mensajesCliente, nombreContacto, progreso, saludo, telefono, vcard, type Orden, type Rol,
 } from "@/lib/recepcion";
 
 const PRESS = "transition-[transform,background-color,color] duration-150 ease-out active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-[#050505]";
@@ -71,6 +71,38 @@ function Login({ onEntrar }: { onEntrar: (r: Rol) => void }) {
   );
 }
 
+/** Barra de progreso tipo envío: Recibido → En diagnóstico → Reparado (verde) o No reparado (rojo) → Entregado. */
+function Progreso({ estado }: { estado: string }) {
+  const { etapa, mal } = progreso(estado);
+  const final = mal ? COLOR_ESTADO.no_reparado : COLOR_ESTADO.reparado;
+  const pasos = ["Recibido", "En diagnóstico", etapa >= 3 ? (mal ? "No reparado" : "Reparado") : "Reparado o no", "Entregado"];
+  // Los dos primeros pasos en naranja; desde el resultado, verde o rojo según cómo terminó.
+  const color = (i: number) => (i >= 2 ? final : "hsl(var(--primary))");
+  return (
+    <ol className="mt-5 flex items-start" aria-label={`Progreso: ${ESTADOS[estadoDe(estado)]}`}>
+      {pasos.map((p, i) => {
+        const hecho = i < etapa;
+        return (
+          <li key={i} title={hecho ? `${p}: hecho` : `${p}: pendiente`} className="group relative flex flex-1 flex-col items-center text-center">
+            {i < pasos.length - 1 && (
+              <span aria-hidden="true" className="absolute left-1/2 top-4 h-1 w-full -translate-y-1/2 rounded-full transition-colors"
+                style={{ background: i + 1 < etapa ? color(i + 1) : "rgba(255,255,255,0.1)" }} />
+            )}
+            <span className="relative z-10 flex h-8 w-8 items-center justify-center rounded-full border-2 text-sm font-bold transition-transform duration-150 group-hover:scale-110"
+              style={hecho
+                ? { background: color(i), borderColor: color(i), color: "#000", boxShadow: i === etapa - 1 ? `0 0 0 4px ${i >= 2 ? final : "hsl(var(--primary))"}33` : undefined }
+                : { background: "#111", borderColor: "rgba(255,255,255,0.2)", color: "rgba(255,255,255,0.45)" }}>
+              {hecho ? (i === 2 && mal ? <X className="h-4 w-4" strokeWidth={3} aria-hidden="true" /> : <Check className="h-4 w-4" strokeWidth={3} aria-hidden="true" />) : i + 1}
+            </span>
+            <span className={`mt-2 px-1 text-xs leading-tight transition-colors group-hover:text-white ${hecho ? "font-medium text-white" : "text-white/45"}`}
+              style={hecho && i >= 2 ? { color: final } : undefined}>{p}</span>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
 const Dato = ({ k, v }: { k: string; v: string | null | undefined }) =>
   v ? <div><dt className="text-sm text-white/50">{k}</dt><dd className="text-base text-white">{v}</dd></div> : null;
 
@@ -83,14 +115,20 @@ function Tarjeta({ o, rol, onRecibir, onBorrar, onEditado }: { o: Orden; rol: Ro
   const [editar, setEditar] = useState(false);
   const cerrarEditar = useCallback(() => setEditar(false), []);
   return (
-    <article className={`rounded-3xl p-5 md:p-6 ${pendiente ? "bg-primary/[0.12] ring-1 ring-primary/40" : "bg-white/[0.04]"}`}>
+    <article id={`caso-${o.id}`} className={`relative scroll-mt-6 overflow-hidden rounded-3xl p-5 pt-6 ring-1 transition-[background-color,box-shadow] duration-200 md:p-6 md:pt-7 ${pendiente ? "bg-primary/[0.12] ring-primary/40 hover:bg-primary/[0.16]" : "bg-white/[0.04] ring-white/[0.06] hover:bg-white/[0.06] hover:ring-white/15"}`}>
+      {/* Barra superior con el color del estado: se reconoce de un vistazo en qué va el caso. */}
+      <span aria-hidden="true" className="absolute inset-x-0 top-0 h-1.5" style={{ background: COLOR_ESTADO[estadoDe(o.estado)] }} />
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <a href={`/taller/?qf=${o.id}`} className="font-mono text-3xl font-bold text-primary hover:underline">{o.numero}</a>
-        <p className="text-sm text-white/60">{ESTADOS[o.estado] ?? o.estado} · {fecha(o.creado)}{o.origen === "taller" ? " · registrado en el taller" : ""}</p>
+        <p className="flex items-center gap-2 text-sm text-white/60">
+          <span className="whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-bold text-black" style={{ background: COLOR_ESTADO[estadoDe(o.estado)] }}>{ESTADOS[estadoDe(o.estado)]}</span>
+          {fecha(o.creado)}{o.origen === "taller" ? " · registrado en el taller" : ""}
+        </p>
       </div>
       <p className="mt-2 text-xl font-bold text-white">{o.nombre}</p>
       <p className="text-lg text-white/85">{o.tipo} · {equipo(o)}</p>
       {avisos.length > 0 && <p className="mt-2 text-base font-medium text-[#ff9b80]">⚠ {avisos.join(" · ")}</p>}
+      <Progreso estado={o.estado} />
       {pendiente && (o.llega || o.modo === "recojo") && (
         <p className="mt-3 rounded-2xl bg-black/30 px-4 py-3 text-base text-white">
           {o.modo === "recojo" ? <><span className="font-medium text-primary">Recojo en casa</span> · {o.direccion}{o.distrito ? `, ${o.distrito}` : ""}</> : "Lo trae al taller"}
@@ -174,12 +212,17 @@ function Seguimiento({ o, onCambio }: { o: Orden; onCambio: () => void }) {
       <div>
         <h2 className="text-lg font-bold text-white">Estado</h2>
         <div className="mt-3 flex flex-wrap gap-2">
-          {Object.entries(ESTADOS).map(([id, nombre]) => (
-            <button key={id} disabled={guardando} aria-pressed={o.estado === id} onClick={() => guardar({ estado: id })}
-              className={`${PRESS} rounded-full px-4 py-2.5 text-base disabled:opacity-60 ${o.estado === id ? "bg-primary text-black" : "bg-white/[0.06] text-white hover:bg-white/[0.12]"}`}>
-              {nombre}
-            </button>
-          ))}
+          {Object.entries(ESTADOS).map(([id, nombre]) => {
+            const activo = estadoDe(o.estado) === id;
+            return (
+              <button key={id} disabled={guardando} aria-pressed={activo} onClick={() => guardar({ estado: id })}
+                className={`${PRESS} inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-base disabled:opacity-60 ${activo ? "font-medium text-black" : "bg-white/[0.06] text-white hover:bg-white/[0.12]"}`}
+                style={activo ? { background: COLOR_ESTADO[id] } : undefined}>
+                {!activo && <span aria-hidden="true" className="h-2.5 w-2.5 rounded-full" style={{ background: COLOR_ESTADO[id] }} />}
+                {nombre}
+              </button>
+            );
+          })}
         </div>
       </div>
       <div>
@@ -214,7 +257,7 @@ function Seguimiento({ o, onCambio }: { o: Orden; onCambio: () => void }) {
 }
 
 /** Lo que abre el QR de la etiqueta: un solo equipo, con el seguimiento si eres admin. */
-function Caso({ id, rol, onSalida }: { id: number; rol: Rol; onSalida: () => void }) {
+function Caso({ id, rol, onSalida, onCambio, onVolver }: { id: number; rol: Rol; onSalida: () => void; onCambio: () => void; onVolver: () => void }) {
   const [o, setO] = useState<Orden | null>(null);
   const [error, setError] = useState("");
   const cargar = useCallback(async () => {
@@ -228,19 +271,19 @@ function Caso({ id, rol, onSalida }: { id: number; rol: Rol; onSalida: () => voi
 
   return (
     <div className="mt-8">
-      <a href="/taller/" className="inline-flex items-center gap-2 text-base text-white/60 hover:text-white">
+      <a href="/taller/" onClick={(e) => { e.preventDefault(); onVolver(); }} className="inline-flex items-center gap-2 text-base text-white/60 transition-colors hover:text-white">
         <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Todos los equipos
       </a>
       {error && <p role="alert" className="mt-6 rounded-2xl bg-red-500/15 px-5 py-4 text-red-200">{error}</p>}
       {!o && !error && <Loader2 className="mx-auto mt-16 h-8 w-8 animate-spin text-white/50" aria-label="Cargando" />}
       {o && (
         <div className="mt-4">
-          <Tarjeta o={o} rol={rol} onRecibir={async () => { await api("recibir", { id: o.id }); cargar(); }}
+          <Tarjeta o={o} rol={rol} onRecibir={async () => { await api("recibir", { id: o.id }); cargar(); onCambio(); }}
             onBorrar={async () => {
               try { await api("borrar", { id: o.id }); window.location.href = "/taller/"; }
               catch (err) { setError((err as Error).message); }
-            }} onEditado={cargar} />
-          {rol === "admin" && <Seguimiento key={`${o.estado}-${o.presupuesto}`} o={o} onCambio={cargar} />}
+            }} onEditado={() => { cargar(); onCambio(); }} />
+          {rol === "admin" && <Seguimiento key={`${o.estado}-${o.presupuesto}`} o={o} onCambio={() => { cargar(); onCambio(); }} />}
           {rol === "admin" && <Suspense fallback={null}><InformeTecnico o={o} /></Suspense>}
         </div>
       )}
@@ -248,42 +291,97 @@ function Caso({ id, rol, onSalida }: { id: number; rol: Rol; onSalida: () => voi
   );
 }
 
-/** Pantalla del taller: tus padres reciben equipos y bajan las etiquetas; tú ves todo y haces el seguimiento. */
+/** Grupos del tablero: "Entregado" junta también los que se devolvieron sin reparar. */
+const GRUPOS = ["registrado", "recibido", "diagnostico", "reparado", "no_reparado", "entregado"];
+const grupoDe = (estado: string) => { const e = estadoDe(estado); return e === "devuelto" ? "entregado" : e; };
+const sinTildes = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+
+/** Menú de la izquierda: todos los casos con el color de su estado, para ubicarlos rápido. */
+function Menu({ ordenes, actual, onAbrir }: { ordenes: Orden[]; actual: number | null; onAbrir: (id: number) => void }) {
+  const [q, setQ] = useState("");
+  const busca = sinTildes(q.trim());
+  const lista = busca ? ordenes.filter((o) => sinTildes(`${o.numero} ${o.nombre} ${equipo(o)} ${o.serie}`).includes(busca)) : ordenes;
+  return (
+    <aside className="sticky top-0 hidden h-[100svh] w-72 shrink-0 flex-col border-r border-white/[0.08] bg-[#0a0a0a] lg:flex">
+      <div className="p-4">
+        <p className="px-1 text-sm font-medium text-white/50">Casos · {ordenes.length}</p>
+        <label className="relative mt-3 block">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" aria-hidden="true" />
+          <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Nombre, QF o modelo" aria-label="Buscar caso"
+            className="h-10 w-full rounded-xl bg-white/[0.06] pl-9 pr-3 text-sm text-white transition-colors placeholder:text-white/35 hover:bg-white/[0.09] focus:outline-none focus:ring-2 focus:ring-primary" />
+        </label>
+      </div>
+      <nav aria-label="Casos" className="flex-1 overflow-y-auto px-2 pb-4">
+        {lista.length === 0 && <p className="px-3 py-2 text-sm text-white/45">{busca ? "Ningún caso coincide." : "Todavía no hay casos."}</p>}
+        <ul className="space-y-0.5">
+          {lista.map((o) => (
+            <li key={o.id}>
+              <a href={`/taller/?qf=${o.id}`} onClick={(e) => { e.preventDefault(); onAbrir(o.id); }} aria-current={actual === o.id ? "page" : undefined}
+                className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${actual === o.id ? "bg-white/[0.1]" : "hover:bg-white/[0.06]"}`}>
+                <span aria-hidden="true" className="h-9 w-1.5 shrink-0 rounded-full transition-transform group-hover:scale-y-110" style={{ background: COLOR_ESTADO[estadoDe(o.estado)] }} />
+                <span className="min-w-0 flex-1">
+                  <span className="flex items-baseline justify-between gap-2">
+                    <span className="truncate text-sm font-medium text-white">{o.nombre}</span>
+                    <span className="shrink-0 font-mono text-xs text-white/45 transition-colors group-hover:text-primary">{o.numero}</span>
+                  </span>
+                  <span className="block truncate text-xs text-white/50">{ESTADOS[estadoDe(o.estado)]} · {equipo(o)}</span>
+                </span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </nav>
+    </aside>
+  );
+}
+
+/** Tablero del taller: menú de casos a la izquierda, contadores por estado y las tarjetas con su barra de progreso. */
 const TallerPage = () => {
   const [rol, setRol] = useState<Rol | null | undefined>(undefined);
   const [caso, setCaso] = useState<number | null>(null);
   const [ordenes, setOrdenes] = useState<Orden[]>([]);
-  const [filtro, setFiltro] = useState<"pendientes" | "todos">("pendientes");
+  const [filtro, setFiltro] = useState("todos");
   const [error, setError] = useState("");
   const [cargando, setCargando] = useState(false);
 
+  // Siempre trae todos: el menú los necesita y el filtro de estado se aplica aquí.
   const cargar = useCallback(async () => {
     setCargando(true);
     try {
-      const res = await api<{ rol: Rol; ordenes: Orden[] }>("lista", undefined, filtro === "pendientes" ? "&filtro=pendientes" : "");
-      setOrdenes(res.ordenes);
+      setOrdenes((await api<{ rol: Rol; ordenes: Orden[] }>("lista")).ordenes);
       setError("");
     } catch (err) {
       if ((err as { status?: number }).status === 401) setRol(null);
       else setError((err as Error).message);
     }
     setCargando(false);
-  }, [filtro]);
+  }, []);
   const salida = useCallback(() => setRol(null), []);
 
-  useEffect(() => {
-    // ?qf=7 viene del QR de la etiqueta (se lee aquí porque la página se pregenera sin la URL).
+  // ?qf=7 viene del QR de la etiqueta (se lee aquí porque la página se pregenera sin la URL); atrás/adelante del navegador también lo cambia.
+  const leerUrl = useCallback(() => {
     const qf = Number(new URLSearchParams(window.location.search).get("qf"));
-    if (qf > 0) setCaso(qf);
-    api<{ rol: Rol | null }>("sesion").then((r) => setRol(r.rol)).catch((e) => { setRol(null); setError(e.message); });
+    setCaso(qf > 0 ? qf : null);
   }, []);
+  useEffect(() => {
+    leerUrl();
+    window.addEventListener("popstate", leerUrl);
+    api<{ rol: Rol | null }>("sesion").then((r) => setRol(r.rol)).catch((e) => { setRol(null); setError(e.message); });
+    return () => window.removeEventListener("popstate", leerUrl);
+  }, [leerUrl]);
+  const abrir = useCallback((id: number | null) => {
+    setCaso(id);
+    window.history.pushState(null, "", id ? `/taller/?qf=${id}` : "/taller/");
+    window.scrollTo({ top: 0 });
+  }, []);
+
   // La lista se actualiza sola cada 30 s: un cliente puede registrarse en el mostrador mientras la pantalla está abierta.
   useEffect(() => {
-    if (!rol || caso) return;
+    if (!rol) return;
     cargar();
     const t = setInterval(cargar, 30_000);
     return () => clearInterval(t);
-  }, [rol, caso, cargar]);
+  }, [rol, cargar]);
 
   const [aviso, setAviso] = useState("");
   const renumerar = async () => {
@@ -302,13 +400,20 @@ const TallerPage = () => {
     } catch (err) { setError((err as Error).message); }
   };
 
+  const contadores = [
+    { id: "todos", nombre: "Todos", n: ordenes.length, color: "#ffffff" },
+    ...GRUPOS.map((g) => ({ id: g, nombre: g === "entregado" ? "Entregados" : ESTADOS[g], n: ordenes.filter((o) => grupoDe(o.estado) === g).length, color: COLOR_ESTADO[g] })),
+  ];
+  const visibles = filtro === "todos" ? ordenes : ordenes.filter((o) => grupoDe(o.estado) === filtro);
+
   return (
-    <div className="min-h-[100svh] bg-[#050505]">
-      <main className="mx-auto max-w-3xl px-5 pb-24 pt-8 md:px-8 md:pt-12">
+    <div className="min-h-[100svh] bg-[#050505] lg:flex">
+      {rol && <Menu ordenes={ordenes} actual={caso} onAbrir={abrir} />}
+      <main className="mx-auto w-full max-w-5xl flex-1 px-5 pb-24 pt-8 md:px-8 md:pt-12">
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <a href="/taller/" className="text-2xl font-bold text-white">QUICK<span className="text-primary">FIX</span> <span className="font-normal text-white/50">· Taller</span></a>
+          <a href="/taller/" onClick={(e) => { if (rol) { e.preventDefault(); abrir(null); } }} className="text-2xl font-bold text-white transition-opacity hover:opacity-80">QUICK<span className="text-primary">FIX</span> <span className="font-normal text-white/50">· Taller</span></a>
           {rol && (
-            <button onClick={async () => { await api("salir", {}); setRol(null); }} className={`${BTN} bg-white/[0.06] text-white/70 hover:bg-white/[0.12]`}>
+            <button onClick={async () => { await api("salir", {}); setRol(null); }} className={`${BTN} bg-white/[0.06] text-white/70 hover:bg-white/[0.12] hover:text-white`}>
               <LogOut className="h-5 w-5" aria-hidden="true" /> Salir
             </button>
           )}
@@ -317,44 +422,52 @@ const TallerPage = () => {
         {rol === undefined && <Loader2 className="mx-auto mt-16 h-8 w-8 animate-spin text-white/50" aria-label="Cargando" />}
         {rol === null && <Login onEntrar={setRol} />}
 
-        {rol && caso && <Caso id={caso} rol={rol} onSalida={salida} />}
+        {rol && caso && <Caso key={caso} id={caso} rol={rol} onSalida={salida} onCambio={cargar} onVolver={() => abrir(null)} />}
 
         {rol && !caso && (
           <>
-            <div className="mt-8 flex flex-wrap gap-2">
-              {(["pendientes", "todos"] as const).map((f) => (
-                <button key={f} aria-pressed={filtro === f} onClick={() => setFiltro(f)}
-                  className={`${BTN} ${filtro === f ? "bg-white text-black" : "bg-white/[0.06] text-white hover:bg-white/[0.12]"}`}>
-                  {f === "pendientes" ? "Por recibir" : "Todos"}
-                </button>
-              ))}
-              <button onClick={cargar} aria-label="Actualizar" className={`${BTN} bg-white/[0.06] px-4 text-white hover:bg-white/[0.12]`}>
+            <div className="mt-8 flex flex-wrap items-center gap-2">
+              <h1 className="mr-auto text-xl font-bold text-white">Tablero</h1>
+              {rol === "admin" && (
+                <>
+                  <a href="/api/recepcion.php?accion=csv" title="Descargar todo para Excel" className={`${BTN} px-4 text-white/60 hover:bg-white/[0.08] hover:text-white`}>
+                    <Download className="h-5 w-5" aria-hidden="true" /> <span className="hidden sm:inline">Excel</span>
+                  </a>
+                  <button onClick={renumerar} title="Renumerar desde QF-0001" className={`${BTN} px-4 text-white/60 hover:bg-white/[0.08] hover:text-white`}>
+                    <ListOrdered className="h-5 w-5" aria-hidden="true" /> <span className="hidden sm:inline">Renumerar</span>
+                  </button>
+                </>
+              )}
+              <button onClick={cargar} aria-label="Actualizar" title="Actualizar" className={`${BTN} bg-white/[0.06] px-4 text-white hover:bg-white/[0.12]`}>
                 <RefreshCw className={`h-5 w-5 ${cargando ? "animate-spin" : ""}`} aria-hidden="true" />
               </button>
-              <a href="/recepcion/" className={`${BTN} ml-auto bg-primary font-medium text-black hover:bg-[#ff7a1f]`}>
+              <a href="/recepcion/" className={`${BTN} bg-primary font-medium text-black hover:bg-[#ff7a1f]`}>
                 <Plus className="h-5 w-5" aria-hidden="true" /> Registrar equipo
               </a>
             </div>
-            {rol === "admin" && (
-              <a href="/api/recepcion.php?accion=csv" className="mt-4 inline-flex items-center gap-2 text-base text-white/60 hover:text-white">
-                <Download className="h-4 w-4" aria-hidden="true" /> Descargar todo para Excel
-              </a>
-            )}
-            {rol === "admin" && (
-              <button onClick={renumerar} className="ml-5 mt-4 inline-flex items-center gap-2 text-base text-white/60 hover:text-white">
-                <ListOrdered className="h-4 w-4" aria-hidden="true" /> Renumerar desde QF-0001
-              </button>
-            )}
+
+            {/* Contadores por estado: cada uno filtra las tarjetas de abajo. */}
+            <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4 xl:grid-cols-7">
+              {contadores.map((c) => (
+                <button key={c.id} aria-pressed={filtro === c.id} onClick={() => setFiltro(c.id)}
+                  className={`${PRESS} relative overflow-hidden rounded-2xl p-4 pt-5 text-left ring-1 hover:-translate-y-0.5 ${filtro === c.id ? "bg-white/[0.1] ring-white/30" : "bg-white/[0.04] ring-white/[0.06] hover:bg-white/[0.08]"}`}>
+                  <span aria-hidden="true" className="absolute inset-x-0 top-0 h-1" style={{ background: c.color }} />
+                  <span className="block text-3xl font-bold tabular-nums text-white">{c.n}</span>
+                  <span className="mt-1 block text-sm leading-tight text-white/60">{c.nombre}</span>
+                </button>
+              ))}
+            </div>
+
             {aviso && <p role="status" className="mt-4 rounded-2xl bg-primary/[0.12] px-5 py-3 text-white">{aviso}</p>}
             {error && <p role="alert" className="mt-6 rounded-2xl bg-red-500/15 px-5 py-4 text-red-200">{error}</p>}
 
-            <div className="mt-6 space-y-4">
-              {ordenes.length === 0 && !cargando && (
-                <p className="rounded-3xl bg-white/[0.04] p-8 text-center text-lg text-white/60">
-                  {filtro === "pendientes" ? "No hay equipos por recibir. Cuando un cliente se registre, aparece aquí solo." : "Todavía no hay equipos."}
+            <div className="mt-6 grid gap-4 2xl:grid-cols-2">
+              {visibles.length === 0 && !cargando && (
+                <p className="rounded-3xl bg-white/[0.04] p-8 text-center text-lg text-white/60 2xl:col-span-2">
+                  {filtro === "registrado" ? "No hay equipos por recibir. Cuando un cliente se registre, aparece aquí solo." : ordenes.length ? "No hay casos en este estado." : "Todavía no hay equipos."}
                 </p>
               )}
-              {ordenes.map((o) => (
+              {visibles.map((o) => (
                 <Tarjeta key={o.id} o={o} rol={rol} onRecibir={() => enviar("recibir", o)} onBorrar={() => enviar("borrar", o)} onEditado={cargar} />
               ))}
             </div>

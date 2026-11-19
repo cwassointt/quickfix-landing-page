@@ -9,7 +9,8 @@ declare(strict_types=1);
 date_default_timezone_set('America/Lima');
 
 $DIR = getenv('QF_RECEPCION_DIR') ?: dirname($_SERVER['DOCUMENT_ROOT'] ?? __DIR__) . '/recepcion';
-const ESTADOS = ['registrado', 'recibido', 'diagnostico', 'aprobacion', 'reparacion', 'pruebas', 'listo', 'entregado', 'devuelto'];
+// aprobacion, reparacion, pruebas y listo son de la primera versión: se aceptan por los casos que ya los tienen.
+const ESTADOS = ['registrado', 'recibido', 'diagnostico', 'reparado', 'no_reparado', 'entregado', 'devuelto', 'aprobacion', 'reparacion', 'pruebas', 'listo'];
 const CAMPOS = [
     // campo => [obligatorio, largo máximo]
     'nombre' => [true, 100], 'dni' => [false, 12], 'whatsapp' => [true, 20], 'correo' => [false, 120], 'distrito' => [false, 60],
