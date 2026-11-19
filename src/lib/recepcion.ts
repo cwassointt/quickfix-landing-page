@@ -113,10 +113,28 @@ export function validar(r: Registro): Errores {
   return e;
 }
 
+/** Estados del caso, en el orden de la barra de progreso: Recibido → En diagnóstico → Reparado o No reparado → Entregado. */
 export const ESTADOS: Record<string, string> = {
-  registrado: "Por recibir", recibido: "Recibido", diagnostico: "En diagnóstico", aprobacion: "Esperando aprobación",
-  reparacion: "En reparación", pruebas: "En pruebas", listo: "Listo para recoger", entregado: "Entregado", devuelto: "Devuelto sin reparar",
+  registrado: "Por recibir", recibido: "Recibido", diagnostico: "En diagnóstico", reparado: "Reparado", no_reparado: "No reparado",
+  entregado: "Entregado", devuelto: "Entregado sin reparar",
 };
+
+/** Color de cada estado: barra superior de la tarjeta, punto del menú y botones. */
+export const COLOR_ESTADO: Record<string, string> = {
+  registrado: "#f59e0b", recibido: "#38bdf8", diagnostico: "#a78bfa", reparado: "#22c55e", no_reparado: "#ef4444",
+  entregado: "#2dd4bf", devuelto: "#94a3b8",
+};
+
+// Estados de la primera versión que ya pueden estar guardados en casos antiguos.
+const ANTIGUOS: Record<string, string> = { aprobacion: "diagnostico", reparacion: "diagnostico", pruebas: "diagnostico", listo: "reparado" };
+export const estadoDe = (e: string) => ANTIGUOS[e] ?? (e in ESTADOS ? e : "recibido");
+
+/** Cuántos pasos de la barra ya están hechos (0 = por recibir, 4 = entregado) y si terminó sin reparar. */
+export function progreso(estado: string) {
+  const e = estadoDe(estado);
+  const etapa = { registrado: 0, recibido: 1, diagnostico: 2, reparado: 3, no_reparado: 3, entregado: 4, devuelto: 4 }[e] ?? 1;
+  return { etapa, mal: e === "no_reparado" || e === "devuelto" };
+}
 
 export const API = "/api/recepcion.php";
 
