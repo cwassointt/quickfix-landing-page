@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  aCsv, avisoCliente, chatCliente, diaLima, equipo, etiquetas, fallaCorta, mensajesCliente, nombreContacto, preguntas, vcard, resumirFalla, sugerirCorreo, sugerirDistrito, validar, validarWhatsapp, type Registro,
+  aCsv, avisoCliente, chatCliente, diaLima, equipo, etiquetas, mensajesCliente, partirResumen, nombreContacto, preguntas, vcard, resumirFalla, sugerirCorreo, sugerirDistrito, validar, validarWhatsapp, type Registro,
 } from "@/lib/recepcion";
 
 describe("recepción", () => {
@@ -41,16 +41,24 @@ describe("etiquetas", () => {
     recibido: null, recibido_por: null, llega: null, modo: "taller", direccion: "", autoriza: 0, foto: null,
   } as const;
 
-  it("resume la falla en su primera frase y corta en palabra completa", () => {
-    expect(fallaCorta(orden.falla)).toBe("No enciende para nada; al conectarlo no prende ninguna luz");
-    const larga = fallaCorta("Se apaga cuando juego más de diez minutos y los ventiladores suenan como turbina de avión");
-    expect(larga.length).toBeLessThanOrEqual(64);
-    expect(larga.endsWith("…")).toBe(true);
+  it("reparte todo el resumen en etiquetas, cortando en palabra completa", () => {
+    expect(partirResumen("  corto   y simple ")).toEqual(["corto y simple"]);
+    const largo = Array.from({ length: 200 }, (_, i) => `palabra${i}`).join(" ");
+    const trozos = partirResumen(largo);
+    expect(trozos.length).toBeGreaterThan(2);
+    expect(trozos.slice(1).every((t) => t.length <= 720)).toBe(true);
+    expect(trozos[0].length).toBeLessThanOrEqual(380);
+    expect(trozos.join(" ")).toBe(largo);
+    expect(trozos.every((t) => !t.startsWith(" ") && !t.endsWith(" "))).toBe(true);
   });
 
   it("arma la etiqueta del equipo con aviso y la del cargador solo si lo dejó", () => {
     const [eq, cargador] = etiquetas(orden);
-    expect(eq).toMatchObject({ PARTE: "EQUIPO", QF: "QF-0007", SERVICIO: "REPARACIÓN", AVISO: "⚠ SE MOJÓ", SN: "S/N N3NRKD0099", FECHA: "09/11" });
+    expect(eq).toMatchObject({ PARTE: "EQUIPO", HOJA: "", QF: "QF-0007", AVISO: "⚠ SE MOJÓ", FECHA: "09/11", FALLA: orden.falla, CLAVE: "sin clave" });
+    expect(etiquetas({ ...orden, pin: " 1234 " })[0].CLAVE).toBe("1234");
+    expect(etiquetas({ ...orden, pin: undefined as unknown as string })[0].CLAVE).toBe("—");
+    const largas = etiquetas({ ...orden, falla: "x ".repeat(400) });
+    expect(largas.map((e) => [e.PARTE, e.HOJA])).toEqual([["EQUIPO", "1/2"], ["RESUMEN 2", "2/2"], ["CARGADOR", ""]]);
     expect(eq.URL).toBe("https://quickfix.pe/taller/?qf=7");
     expect(etiquetas({ ...orden, whatsapp: "+51 987654321" })[0].WHATSAPP).toBe("987 654 321");
     expect(etiquetas({ ...orden, abierto: 1 })[0].AVISO).toBe("⚠ SE MOJÓ  ⚠ YA LO ABRIERON");
