@@ -136,24 +136,8 @@ export const equipo = (o: Pick<Registro, "tipo" | "marca" | "modelo">) => [o.mar
 
 // ---------- Etiquetas (navegador y OpenLabel+) ----------
 
-/**
- * Corta el resumen en trozos que entran en una etiqueta: el primero en la del equipo y el resto en etiquetas de continuación.
- * Corta en palabra completa. shortcut: largo estimado en caracteres (Arial a 1.3 mm); cada etiqueta igual achica la letra si hace falta.
- */
-export function partirResumen(texto: string, primero = 380, resto = 720): string[] {
-  const partes: string[] = [];
-  let t = texto.replace(/\s+/g, " ").trim();
-  for (let max = primero; t.length > max; max = resto) {
-    const corte = t.lastIndexOf(" ", max);
-    const i = corte > max * 0.6 ? corte : max;
-    partes.push(t.slice(0, i).trim());
-    t = t.slice(i).trim();
-  }
-  return [...partes, t];
-}
-
 export type Etiqueta = {
-  PARTE: string; HOJA: string; QF: string; FECHA: string; SERVICIO: string; AVISO: string; CLIENTE: string; WHATSAPP: string; CLAVE: string;
+  PARTE: string; QF: string; FECHA: string; SERVICIO: string; AVISO: string; CLIENTE: string; WHATSAPP: string; CLAVE: string;
   EQUIPO: string; SN: string; FALLA: string; URL: string;
 };
 
@@ -183,11 +167,9 @@ export function etiquetas(o: Orden): Etiqueta[] {
     SN: `S/N ${o.serie || "—"}`,
     URL: urlCaso(o.id),
   };
-  // Todo el resumen escrito: si no entra en la etiqueta del equipo, sigue en etiquetas "RESUMEN 2", "RESUMEN 3"…
-  const trozos = partirResumen(o.falla);
-  const hoja = (i: number) => (trozos.length > 1 ? `${i + 1}/${trozos.length}` : "");
-  const lista: Etiqueta[] = trozos.map((t, i) => ({ PARTE: i === 0 ? "EQUIPO" : `RESUMEN ${i + 1}`, HOJA: hoja(i), ...base, FALLA: t }));
-  if (/cargador/i.test(o.accesorios ?? "")) lista.push({ PARTE: "CARGADOR", HOJA: "", ...base, FALLA: `Cargador de ${equipo(o)}` });
+  // Todo el resumen escrito va en la etiqueta del equipo (la letra se achica para que entre).
+  const lista: Etiqueta[] = [{ PARTE: "EQUIPO", ...base, FALLA: o.falla.replace(/\s+/g, " ").trim() }];
+  if (/cargador/i.test(o.accesorios ?? "")) lista.push({ PARTE: "CARGADOR", ...base, FALLA: `Cargador de ${equipo(o)}` });
   return lista;
 }
 

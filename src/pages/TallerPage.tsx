@@ -115,7 +115,7 @@ function Tarjeta({ o, rol, onRecibir, onBorrar, onEditado }: { o: Orden; rol: Ro
       <p className="mt-4 whitespace-pre-line rounded-2xl bg-black/30 p-4 text-base text-white/85">{o.falla}</p>
       {o.recibido && <p className="mt-3 text-sm text-white/50">Recibido {fecha(o.recibido)} · {o.recibido_por === "mostrador" ? "mostrador" : "tú"}</p>}
       <div className="mt-5 flex flex-wrap gap-2">
-        {/* Imprime directo en la impresora de etiquetas (driver de Windows, papel 50 × 30 mm). El CSV queda para OpenLabel+. */}
+        {/* Imprime directo en la impresora de etiquetas (driver de Windows, papel 76 × 50 mm). El CSV queda para OpenLabel+. */}
         {pendiente ? (
           <button onClick={() => { onRecibir(); setImprimir(true); }} className={`${BTN} bg-primary font-medium text-black hover:bg-[#ff7a1f]`}>
             <Check className="h-5 w-5" aria-hidden="true" /> Recibido · imprimir etiquetas
