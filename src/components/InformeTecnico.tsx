@@ -217,15 +217,18 @@ export function InformeTecnico({ o }: { o: Orden }) {
   const [preguntas, setPreguntas] = useState<Respuesta[] | null>(null);
 
   useEffect(() => {
+    const inicial = ["no_reparado", "devuelto"].includes(o.estado) ? RESULTADOS[1] : RESULTADOS[0];
     api<{ informe: Informe | null }>("informe", undefined, `&id=${o.id}`)
       .then((r) => {
-        if (!r.informe) return setInf(informeNuevo());
+        if (!r.informe) return setInf(informeNuevo(inicial));
         const n = r.informe.notas;
         // Los informes de antes tenían "qué se hizo" aparte: se junta con las notas.
         const notas = n.trabajo?.trim() ? { ...n, hallazgos: `${n.hallazgos.trim()}\n${n.trabajo.trim()}`, trabajo: "" } : n;
         setInf({ ...r.informe, notas, cobros: conBase(r.informe.cobros, n.resultado) });
       })
-      .catch((e) => { setError((e as Error).message); setInf(informeNuevo()); });
+      .catch((e) => { setError((e as Error).message); setInf(informeNuevo(inicial)); });
+    // Solo al abrir el caso: si se volviera a leer con cada cambio de estado, se perdería lo que el técnico está escribiendo.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [o.id]);
 
   // Imprime solo cuando el informe ya está montado para impresión; el nombre del PDF sigue la costumbre del laboratorio.
@@ -295,7 +298,7 @@ export function InformeTecnico({ o }: { o: Orden }) {
   const montoValido = inf.cobros.every((c) => Number.isFinite(c.monto) && c.monto >= 0);
 
   return (
-    <section className="mt-4 rounded-3xl bg-[#111c2f] p-5 md:p-6">
+    <section className="rounded-3xl bg-white/[0.035] p-5 ring-1 ring-white/[0.07] md:p-6">
       <style>{CSS}</style>
       {imprimiendo && <style>{CSS_IMPRESION}</style>}
       <h2 className="text-lg font-bold text-white">Informe técnico</h2>

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  aCsv, atrasado, avisoCliente, diasEnEstado, progreso, chatCliente, diaLima, equipo, etiquetas, mensajesCliente, nombreContacto, preguntas, vcard, resumirFalla, sugerirCorreo, sugerirDistrito, validar, validarWhatsapp, type Registro,
+  aCsv, atrasado, avisoCliente, destinoEstado, faltaCotizar, diasEnEstado, progreso, chatCliente, diaLima, equipo, etiquetas, mensajesCliente, nombreContacto, preguntas, vcard, resumirFalla, sugerirCorreo, sugerirDistrito, validar, validarWhatsapp, type Registro,
 } from "@/lib/recepcion";
 
 describe("recepción", () => {
@@ -58,7 +58,7 @@ describe("etiquetas", () => {
 
   it("los mensajes de seguimiento llevan el N° y el presupuesto", () => {
     const m = mensajesCliente(orden, 250);
-    expect(m.map((x) => x.id)).toEqual(["recibido", "presupuesto", "avance", "listo"]);
+    expect(m.map((x) => x.id)).toEqual(["recibido", "presupuesto", "avance", "listo", "placa", "entregado"]);
     expect(m[1].texto).toContain("QF-0007");
     expect(m[1].texto).toContain("S/ 250");
     expect(mensajesCliente(orden)[1].texto).toContain("S/ ___");
@@ -152,5 +152,28 @@ describe("tablero", () => {
     expect(progreso("devuelto")).toEqual({ etapa: 4, mal: true });
     expect(progreso("listo")).toEqual({ etapa: 3, mal: false });
     expect(progreso("registrado")).toEqual({ etapa: 0, mal: false });
+  });
+});
+
+describe("estados", () => {
+  it("Entregado depende del resultado y exige cotizar la placa si no se reparó", () => {
+    expect(destinoEstado("reparado", "entregado", false)).toEqual({ estado: "entregado" });
+    expect(destinoEstado("listo", "entregado", false)).toEqual({ estado: "entregado" });
+    expect(destinoEstado("no_reparado", "entregado", true)).toEqual({ estado: "devuelto" });
+    expect(destinoEstado("no_reparado", "entregado", false)).toHaveProperty("error");
+    expect(destinoEstado("diagnostico", "entregado", true)).toHaveProperty("error");
+    expect(destinoEstado("entregado", "diagnostico", false)).toEqual({ estado: "diagnostico" });
+  });
+
+  it("marca los no reparados sin cotización de placa", () => {
+    expect(faltaCotizar({ estado: "no_reparado", cotizada: 0 })).toBe(true);
+    expect(faltaCotizar({ estado: "no_reparado", cotizada: 1 })).toBe(false);
+    expect(faltaCotizar({ estado: "devuelto", cotizada: 0 })).toBe(false);
+  });
+
+  it("el mensaje lleva el enlace de seguimiento y el monto de la placa", () => {
+    const m = mensajesCliente({ nombre: "Ana Torres", numero: "QF-0007", tipo: "Laptop", marca: "ASUS", modelo: "G614JV", seguir: "a".repeat(24) }, null, 850);
+    expect(m.find((x) => x.id === "recibido")!.texto).toContain("https://quickfix.pe/seguimiento/?t=" + "a".repeat(24));
+    expect(m.find((x) => x.id === "placa")!.texto).toContain("S/ 850");
   });
 });

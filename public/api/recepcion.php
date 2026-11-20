@@ -3,7 +3,7 @@
 // Los datos viven fuera de public_html, en /home/quickfix/recepcion/ (config.php y recepcion.sqlite),
 // así nadie puede descargarlos desde internet y nunca pasan por GitHub.
 //
-// Acciones (?accion=):  crear (público) · sesion · entrar · salir · lista · orden · actualizar · editar · borrar · renumerar · recibir · foto · leer · csv · informe · preguntas · redactar · borrador
+// Acciones (?accion=):  crear (público) · sesion · entrar · salir · lista · orden · actualizar · editar · borrar · renumerar · recibir · foto · leer · csv · informe · preguntas · redactar · borrador · foto_entrada · borrar_foto · seguimiento (público)
 
 declare(strict_types=1);
 date_default_timezone_set('America/Lima');
@@ -18,9 +18,10 @@ const CAMPOS = [
     'pin' => [false, 40], 'accesorios' => [false, 120], 'servicio' => [false, 40], 'falla' => [true, 1000], 'direccion' => [false, 200],
 ];
 // Columnas agregadas después de la primera versión: se crean solas en bases que ya existían.
-const COLUMNAS_NUEVAS = ['llega' => 'TEXT', 'modo' => 'TEXT', 'direccion' => 'TEXT', 'autoriza' => 'INTEGER', 'foto' => 'INTEGER', 'cambio' => 'TEXT'];
+const COLUMNAS_NUEVAS = ['llega' => 'TEXT', 'modo' => 'TEXT', 'direccion' => 'TEXT', 'autoriza' => 'INTEGER', 'foto' => 'INTEGER', 'cambio' => 'TEXT', 'placa' => 'REAL', 'seguir' => 'TEXT'];
 // Lo que necesita el tablero de cada caso (menú, buscador, filas). Sin la falla ni datos personales extra: la lista va completa, sin límite.
-const COLUMNAS_LISTA = 'id, creado, origen, nombre, whatsapp, tipo, marca, modelo, serie, servicio, liquido, abierto, estado, recibido, cambio, llega, modo';
+const COLUMNAS_LISTA = 'id, creado, origen, nombre, whatsapp, tipo, marca, modelo, serie, servicio, liquido, abierto, estado, recibido, cambio, llega, modo, seguir, (placa IS NOT NULL) AS cotizada';
+const MAX_FOTOS_ENTRADA = 8;
 
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
@@ -81,7 +82,63 @@ function db(): PDO
     $pdo->exec('CREATE TABLE IF NOT EXISTS informes (orden_id INTEGER PRIMARY KEY, datos TEXT NOT NULL, actualizado TEXT NOT NULL)');
     // Borrador que la IA está redactando en segundo plano (estado: redactando, listo o error).
     $pdo->exec('CREATE TABLE IF NOT EXISTS borradores (orden_id INTEGER PRIMARY KEY, estado TEXT NOT NULL, datos TEXT NOT NULL, actualizado TEXT NOT NULL)');
+    // Historial del caso: cada cambio de estado, quién lo hizo y cuándo.
+    $pdo->exec('CREATE TABLE IF NOT EXISTS historial (orden_id INTEGER NOT NULL, estado TEXT NOT NULL, quien TEXT NOT NULL, fecha TEXT NOT NULL)');
+    $pdo->exec('CREATE INDEX IF NOT EXISTS historial_orden ON historial (orden_id)');
+    // Clave del enlace público de seguimiento (24 hex, imposible de adivinar); la reciben también los casos antiguos.
+    $pdo->exec("UPDATE ordenes SET seguir = lower(hex(randomblob(12))) WHERE seguir IS NULL");
+    respaldar($pdo);
     return $pdo;
+}
+
+/** Una copia de la base por día, fuera de public_html; se guardan las últimas 14. */
+function respaldar(PDO $pdo): void
+{
+    global $DIR;
+    $hoy = "$DIR/respaldos/recepcion-" . date('Y-m-d') . '.sqlite';
+    if (is_file($hoy)) return;
+    if (!is_dir("$DIR/respaldos")) @mkdir("$DIR/respaldos", 0700, true);
+    try {
+        $pdo->exec('VACUUM INTO ' . $pdo->quote($hoy)); // copia consistente aunque haya escrituras (SQLite 3.27+)
+    } catch (Throwable $e) {
+        $pdo->exec('PRAGMA wal_checkpoint(TRUNCATE)');
+        @copy("$DIR/recepcion.sqlite", $hoy);
+    }
+    $todos = glob("$DIR/respaldos/recepcion-*.sqlite") ?: [];
+    rsort($todos);
+    foreach (array_slice($todos, 14) as $viejo) @unlink($viejo);
+}
+
+function historial(int $id, string $estado, string $quien): void
+{
+    db()->prepare('INSERT INTO historial (orden_id, estado, quien, fecha) VALUES (?, ?, ?, ?)')->execute([$id, $estado, $quien, date('c')]);
+}
+
+/** Fotos de entrada del caso (estado del equipo al recibirlo): 1, 2, 3… */
+function fotosEntrada(int $id): array
+{
+    global $DIR;
+    $n = [];
+    foreach (glob("$DIR/fotos/$id-e*.jpg") ?: [] as $f) {
+        if (preg_match('/-e(\d+)\.jpg$/', $f, $m)) $n[] = (int) $m[1];
+    }
+    sort($n);
+    return $n;
+}
+
+/**
+ * A qué estado pasa de verdad: "Entregado" queda como entregado (reparado) o devuelto (sin reparar) según el resultado anterior.
+ * Un equipo no reparado no se entrega sin la cotización del reemplazo de placa. Devuelve el estado o un mensaje de error.
+ */
+function destinoEstado(array $o, string $pedido): array
+{
+    if ($pedido !== 'entregado' && $pedido !== 'devuelto') return [$pedido, null];
+    $actual = $o['estado'];
+    if (in_array($actual, ['no_reparado', 'devuelto'], true)) {
+        return $o['placa'] === null ? [null, 'Antes de entregarlo, cotiza el reemplazo de la placa.'] : ['devuelto', null];
+    }
+    if (in_array($actual, ['reparado', 'listo', 'entregado'], true)) return ['entregado', null];
+    return [null, 'Primero marca si quedó reparado o no reparado.'];
 }
 
 function ip(): string
@@ -343,6 +400,8 @@ try {
             db()->prepare('INSERT INTO ordenes (' . implode(',', $cols) . ') VALUES (' . rtrim(str_repeat('?,', count($cols)), ',') . ')')->execute(array_values($fila));
             $id = (int) db()->lastInsertId();
             anotar('crear');
+            historial($id, 'registrado', $origen === 'taller' ? 'taller' : 'cliente');
+            db()->exec("UPDATE ordenes SET seguir = lower(hex(randomblob(12))) WHERE seguir IS NULL");
             if (!empty($d['foto']) && is_string($d['foto']) && guardarFoto($id, $d['foto'])) {
                 db()->prepare('UPDATE ordenes SET foto = 1 WHERE id = ?')->execute([$id]);
             }
@@ -404,7 +463,7 @@ try {
         case 'GET lista':
             $r = exigir('admin', 'mostrador');
             // shortcut: sin límite de filas; con columnas cortas, 5000 casos pesan ~1 MB. Si llega a eso, ocultar entregados de hace meses.
-            $filas = db()->query('SELECT ' . COLUMNAS_LISTA . ' FROM ordenes ORDER BY id DESC')->fetchAll();
+            $filas = db()->query('SELECT ' . COLUMNAS_LISTA . ($r === 'admin' ? ', presupuesto' : '') . ' FROM ordenes ORDER BY id DESC')->fetchAll();
             foreach ($filas as &$f) $f['numero'] = numero((int) $f['id']);
             responder(['rol' => $r, 'ordenes' => $filas]);
 
@@ -416,6 +475,10 @@ try {
             $o = $q->fetch();
             if (!$o) fallo('No existe esa orden.', 404);
             $o['numero'] = numero((int) $o['id']);
+            $h = db()->prepare('SELECT estado, quien, fecha FROM historial WHERE orden_id = ? ORDER BY fecha, rowid');
+            $h->execute([(int) $o['id']]);
+            $o['historial'] = $h->fetchAll();
+            $o['fotos_entrada'] = fotosEntrada((int) $o['id']);
             responder(['rol' => $r, 'orden' => $o]);
 
         case 'POST actualizar':
@@ -423,16 +486,29 @@ try {
             exigir('admin');
             $d = cuerpo();
             $id = (int) ($d['id'] ?? 0);
+            if (array_key_exists('placa', $d)) {
+                $placa = $d['placa'] === null || $d['placa'] === '' ? null : round(max(0, min(99999, (float) $d['placa'])), 2);
+                db()->prepare('UPDATE ordenes SET placa = ? WHERE id = ?')->execute([$placa, $id]);
+            }
             if (isset($d['estado'])) {
                 if (!in_array($d['estado'], ESTADOS, true)) fallo('Estado inválido.');
+                $q = db()->prepare('SELECT estado, placa FROM ordenes WHERE id = ?');
+                $q->execute([$id]);
+                $o = $q->fetch();
+                if (!$o) fallo('No existe esa orden.', 404);
+                [$estado, $error] = destinoEstado($o, $d['estado']);
+                if ($error) fallo($error, 409);
                 // cambio: desde cuándo está en este estado (para los días en el taller y los atrasados).
-                db()->prepare('UPDATE ordenes SET estado = ?, cambio = ? WHERE id = ? AND estado != ?')->execute([$d['estado'], date('c'), $id, $d['estado']]);
+                $q = db()->prepare('UPDATE ordenes SET estado = ?, cambio = ? WHERE id = ? AND estado != ?');
+                $q->execute([$estado, date('c'), $id, $estado]);
+                if ($q->rowCount() === 1) historial($id, $estado, 'admin');
+                $nuevoEstado = $estado;
             }
             if (array_key_exists('presupuesto', $d)) {
                 $monto = $d['presupuesto'] === null || $d['presupuesto'] === '' ? null : round(max(0, min(99999, (float) $d['presupuesto'])), 2);
                 db()->prepare('UPDATE ordenes SET presupuesto = ? WHERE id = ?')->execute([$monto, $id]);
             }
-            responder(['ok' => true]);
+            responder(['ok' => true, 'estado' => $nuevoEstado ?? null]);
 
         case 'GET informe':
             exigir('admin');
@@ -541,7 +617,9 @@ try {
             if ($q->rowCount() !== 1) fallo('No existe esa orden.', 404);
             db()->prepare('DELETE FROM informes WHERE orden_id = ?')->execute([$id]);
             db()->prepare('DELETE FROM borradores WHERE orden_id = ?')->execute([$id]);
+            db()->prepare('DELETE FROM historial WHERE orden_id = ?')->execute([$id]);
             @unlink("$DIR/fotos/$id.jpg");
+            foreach (glob("$DIR/fotos/$id-e*.jpg") ?: [] as $f) @unlink($f);
             db()->exec("UPDATE sqlite_sequence SET seq = (SELECT IFNULL(MAX(id), 0) FROM ordenes) WHERE name = 'ordenes'");
             responder(['ok' => true]);
 
@@ -557,6 +635,7 @@ try {
                 if ((int) $viejo === $nuevo) continue;
                 $pdo->prepare('UPDATE ordenes SET id = ? WHERE id = ?')->execute([$nuevo, $viejo]);
                 $pdo->prepare('UPDATE informes SET orden_id = ? WHERE orden_id = ?')->execute([$nuevo, $viejo]);
+                $pdo->prepare('UPDATE historial SET orden_id = ? WHERE orden_id = ?')->execute([$nuevo, $viejo]);
                 $pdo->prepare('DELETE FROM borradores WHERE orden_id = ?')->execute([$viejo]);
                 $cambios++;
             }
@@ -564,7 +643,9 @@ try {
             $pdo->commit();
             // Las fotos se mueven después del commit: si la base falla, quedan donde estaban.
             foreach ($ids as $i => $viejo) {
-                if ((int) $viejo !== $i + 1 && is_file("$DIR/fotos/$viejo.jpg")) rename("$DIR/fotos/$viejo.jpg", "$DIR/fotos/" . ($i + 1) . '.jpg');
+                if ((int) $viejo === $i + 1) continue;
+                if (is_file("$DIR/fotos/$viejo.jpg")) rename("$DIR/fotos/$viejo.jpg", "$DIR/fotos/" . ($i + 1) . '.jpg');
+                foreach (glob("$DIR/fotos/$viejo-e*.jpg") ?: [] as $f) rename($f, str_replace("/$viejo-e", '/' . ($i + 1) . '-e', $f));
             }
             responder(['cambios' => $cambios]);
 
@@ -573,16 +654,59 @@ try {
             $d = cuerpo();
             $q = db()->prepare("UPDATE ordenes SET estado = 'recibido', recibido = ?, cambio = ?, recibido_por = ? WHERE id = ? AND estado = 'registrado'");
             $q->execute([date('c'), date('c'), $r, (int) ($d['id'] ?? 0)]);
+            if ($q->rowCount() === 1) historial((int) $d['id'], 'recibido', $r);
             responder(['ok' => $q->rowCount() === 1]);
 
         case 'GET foto':
             exigir('admin', 'mostrador');
-            $archivo = "$DIR/fotos/" . (int) ($_GET['id'] ?? 0) . '.jpg';
+            $n = (int) ($_GET['n'] ?? 0);
+            $archivo = "$DIR/fotos/" . (int) ($_GET['id'] ?? 0) . ($n > 0 ? "-e$n" : '') . '.jpg';
             if (!is_file($archivo)) fallo('Sin foto.', 404);
             header('Content-Type: image/jpeg');
             header('Content-Length: ' . filesize($archivo));
             readfile($archivo);
             exit;
+
+        case 'POST foto_entrada':
+            // Fotos del equipo al recibirlo (golpes, rayones, piezas que faltan): respaldo ante reclamos.
+            exigir('admin', 'mostrador');
+            $d = cuerpo();
+            $id = (int) ($d['id'] ?? 0);
+            $q = db()->prepare('SELECT 1 FROM ordenes WHERE id = ?');
+            $q->execute([$id]);
+            if (!$q->fetch()) fallo('No existe esa orden.', 404);
+            $hay = fotosEntrada($id);
+            if (count($hay) >= MAX_FOTOS_ENTRADA) fallo('Ya hay ' . MAX_FOTOS_ENTRADA . ' fotos de este equipo.');
+            $bin = jpegDe((string) ($d['foto'] ?? ''));
+            if ($bin === null) fallo('La foto no es válida.');
+            if (!is_dir("$DIR/fotos")) mkdir("$DIR/fotos", 0700, true);
+            $n = ($hay ? max($hay) : 0) + 1;
+            if (file_put_contents("$DIR/fotos/$id-e$n.jpg", $bin) === false) fallo('No se pudo guardar la foto.', 500);
+            responder(['fotos' => fotosEntrada($id)]);
+
+        case 'POST borrar_foto':
+            exigir('admin');
+            $d = cuerpo();
+            $id = (int) ($d['id'] ?? 0);
+            @unlink("$DIR/fotos/$id-e" . (int) ($d['n'] ?? 0) . '.jpg');
+            responder(['fotos' => fotosEntrada($id)]);
+
+        case 'GET seguimiento':
+            // Público: lo que ve el cliente con su enlace. Solo el primer nombre, el equipo y el avance; nada más.
+            $t = (string) ($_GET['t'] ?? '');
+            if (demasiados('seguir', 30, 900)) fallo('Demasiados intentos. Espera unos minutos.', 429);
+            if (!preg_match('/^[a-f0-9]{24}$/', $t)) { anotar('seguir'); fallo('Enlace no válido.', 404); }
+            $q = db()->prepare('SELECT id, nombre, tipo, marca, modelo, estado, creado, recibido FROM ordenes WHERE seguir = ?');
+            $q->execute([$t]);
+            $o = $q->fetch();
+            if (!$o) { anotar('seguir'); fallo('No encontramos este equipo. Revisa el enlace o escríbenos por WhatsApp.', 404); }
+            $h = db()->prepare('SELECT estado, fecha FROM historial WHERE orden_id = ? ORDER BY fecha, rowid');
+            $h->execute([(int) $o['id']]);
+            responder(['caso' => [
+                'numero' => numero((int) $o['id']), 'nombre' => explode(' ', trim($o['nombre']))[0],
+                'tipo' => $o['tipo'], 'marca' => $o['marca'], 'modelo' => $o['modelo'],
+                'estado' => $o['estado'], 'creado' => $o['creado'], 'recibido' => $o['recibido'], 'historial' => $h->fetchAll(),
+            ]]);
 
         case 'GET csv':
             exigir('admin');
