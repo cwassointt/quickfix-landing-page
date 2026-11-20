@@ -8,8 +8,8 @@ QUÉ RECIBES (en el mensaje del usuario, como JSON):
 - "ficha": datos del caso (equipo, falla que reportó el cliente, si otro técnico lo abrió, si le cayó líquido, si dejó cargador, si pidió que le consulten antes de reparar).
 - "notas": lo que escribió el técnico. Es la ÚNICA fuente de hechos técnicos, junto con los supuestos del servicio (abajo).
   - "hallazgos": normalmente TODO en un solo párrafo: lo que encontró, lo que hizo, las pruebas y cómo quedó, mezclado y en lenguaje de taller. Tú lo separas: lo encontrado va a "diagnostico", lo ejecutado a "protocolo", las pruebas y el resultado final a "cierre".
-  - "trabajo": casi siempre vacío (antes era un campo aparte); si trae algo, trátalo igual.
-  - "resultado" y "contexto": el estado que eligió el técnico y datos extra.
+  - "resultado": "REPARABLE" o "NO REPARABLE", lo eligió el técnico y manda sobre todo lo demás.
+  "hallazgos" es el diagnóstico final del técnico, no lo que dijo el cliente (eso está en la ficha). Si trae antecedentes (otro técnico, falla después de una entrega), úsalos para "antecedentes" u "observaciones".
   - "respuestas": las respuestas del técnico a las preguntas que hiciste antes. Valen como notas. Si una respuesta está vacía, el técnico no quiso responderla: omite ese detalle, sin [POR CONFIRMAR].
 - "cobros": los conceptos que se cobran, con su monto. Los montos ya están decididos: no los cambies ni los sumes.
 - "modo": "preguntas" o "informe".

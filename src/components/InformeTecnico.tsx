@@ -1,7 +1,7 @@
 import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { AlertTriangle, Check, FileDown, Loader2, Plus, Sparkles, X } from "lucide-react";
-import { api, equipo, telefono, type Orden } from "@/lib/recepcion";
+import { COLOR_ESTADO, api, equipo, telefono, type Orden } from "@/lib/recepcion";
 import { RESULTADOS, conBase, fechaInforme, informeNuevo, limpiarTexto, soles, total, type Cobro, type Fila, type Informe, type Respuesta, type Texto } from "@/lib/informe";
 
 const PRESS = "transition-[transform,background-color,color] duration-150 ease-out active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-[#050505]";
@@ -222,8 +222,9 @@ export function InformeTecnico({ o }: { o: Orden }) {
       .then((r) => {
         if (!r.informe) return setInf(informeNuevo(inicial));
         const n = r.informe.notas;
-        // Los informes de antes tenían "qué se hizo" aparte: se junta con las notas.
-        const notas = n.trabajo?.trim() ? { ...n, hallazgos: `${n.hallazgos.trim()}\n${n.trabajo.trim()}`, trabajo: "" } : n;
+        // Los informes de antes tenían "qué se hizo" y "contexto" aparte: se juntan con el diagnóstico.
+        const hallazgos = [n.hallazgos, n.trabajo, n.contexto].map((x) => x?.trim()).filter(Boolean).join("\n");
+        const notas = { ...n, hallazgos, trabajo: "", contexto: "" };
         setInf({ ...r.informe, notas, cobros: conBase(r.informe.cobros, n.resultado) });
       })
       .catch((e) => { setError((e as Error).message); setInf(informeNuevo(inicial)); });
@@ -302,20 +303,40 @@ export function InformeTecnico({ o }: { o: Orden }) {
       <style>{CSS}</style>
       {imprimiendo && <style>{CSS_IMPRESION}</style>}
       <h2 className="text-lg font-bold text-white">Informe técnico</h2>
-      <p className="mt-1 text-sm text-white/55">Escribe todo junto, como se lo contarías a otro técnico. La IA lo ordena con el formato del laboratorio, te pregunta lo que le falte y tú revisas el informe antes del PDF.</p>
+      <p className="mt-1 text-sm text-white/55">Marca el resultado y escribe tu diagnóstico como se lo contarías a otro técnico. La IA lo ordena con el formato del laboratorio, te pregunta lo que le falte y tú revisas el informe antes del PDF.</p>
 
       <div className="mt-5 space-y-4">
-        <Area label="Notas del caso" ayuda="Ej.: corto en el riel de 5V del standby, IC de carga caliente con inyección de tensión; cambié el IC con aire caliente, reprogramé la BIOS con el programador SPI y quedó encendiendo; 2 h de estrés sin cortes…" v={inf.notas.hallazgos} set={(v) => notas({ hallazgos: v })} filas={7} />
-        <label className="block text-sm text-white/60">
-          Resultado
-          <select value={inf.notas.resultado} onChange={(e) => cambiarResultado(e.target.value)} className={`${CAMPO} mt-1.5 h-12`}>
-            {RESULTADOS.map((r) => <option key={r} value={r}>{r.charAt(0) + r.slice(1).toLowerCase()}</option>)}
-          </select>
-        </label>
-        <Area label="Contexto adicional (opcional)" ayuda="Ej.: la falla apareció después de la entrega porque el cliente reinstaló el sistema; se le prometió que encendería; se devuelve con cargador y placa donante…" v={inf.notas.contexto} set={(v) => notas({ contexto: v })} filas={3} />
+        {/* Primero el resultado: de él dependen el primer cobro y el tono del informe. */}
+        <fieldset>
+          <legend className="text-sm text-white/60">1. Resultado</legend>
+          <div className="mt-1.5 grid grid-cols-2 gap-2">
+            {RESULTADOS.map((r) => {
+              const activo = inf.notas.resultado === r;
+              const ok = r === "REPARABLE";
+              return (
+                <button key={r} type="button" aria-pressed={activo} onClick={() => cambiarResultado(r)}
+                  className={`${PRESS} flex h-12 items-center justify-center gap-2 rounded-xl text-base ring-1 ${activo ? "font-semibold text-black ring-transparent" : "text-white ring-white/[0.08] hover:bg-white/[0.06] hover:ring-white/25"}`}
+                  style={activo ? { background: COLOR_ESTADO[ok ? "reparado" : "no_reparado"] } : undefined}>
+                  {ok ? <Check className="h-5 w-5" aria-hidden="true" /> : <X className="h-5 w-5" aria-hidden="true" />} {ok ? "Reparable" : "No reparable"}
+                </button>
+              );
+            })}
+          </div>
+          <p className="mt-1.5 text-xs text-white/40">Pone el primer cobro: {inf.notas.resultado === "REPARABLE" ? "reparación electrónica" : "diagnóstico electrónico"}.</p>
+        </fieldset>
+
+        <div>
+          <Area label="2. Tu diagnóstico final"
+            ayuda={inf.notas.resultado === "REPARABLE"
+              ? "Ej.: corto en el riel de 5V del standby, IC de carga caliente con inyección de tensión; cambié el IC con aire caliente, reprogramé la BIOS con el programador SPI y quedó encendiendo; 2 h de estrés sin cortes…"
+              : "Ej.: corto en el riel VCORE, el CPU no responde con inyección de tensión; cambié el PWM sin cambios; la falla está dentro del procesador, no tiene reparación a nivel de componente…"}
+            v={inf.notas.hallazgos} set={(v) => notas({ hallazgos: v })} filas={8} />
+          <p className="mt-1.5 text-xs text-white/40">Lo que encontraste, lo que hiciste, las pruebas y cómo quedó. Si hay antecedentes (otro técnico, falla después de una entrega), van aquí mismo.</p>
+          {o.falla && <p className="mt-2 line-clamp-3 rounded-xl bg-black/30 px-4 py-2.5 text-sm text-white/50"><span className="text-white/70">El cliente reportó:</span> {o.falla}</p>}
+        </div>
 
         <fieldset>
-          <legend className="text-sm text-white/60">Cobros (el total lo calcula la página)</legend>
+          <legend className="text-sm text-white/60">3. Cobros (el total lo calcula la página)</legend>
           <div className="mt-2 space-y-3">
             {inf.cobros.map((c, i) => (
               // El monto es un campo no controlado (para poder escribir "99." sin que se borre el punto); al quitar una fila, todas se vuelven a montar.
