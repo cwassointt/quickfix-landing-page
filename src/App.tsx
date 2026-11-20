@@ -1,15 +1,19 @@
-import { useEffect } from "react";
+import { Suspense, lazy, useEffect } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import ServicePage from "./pages/ServicePage";
 import LegalPage from "./pages/LegalPage";
 import ComponentesPage from "./pages/ComponentesPage";
-import RecepcionPage from "./pages/RecepcionPage";
-import TallerPage from "./pages/TallerPage";
 import { legalDocs } from "./data/legal";
 import { servicePages } from "./data/pages";
 import { heads } from "./lib/seo";
+
+// Recepción y Taller solo los usan ustedes: se descargan al abrirlas, no en cada visita a la web.
+// El HTML pregenerado de esas dos rutas trae solo el fondo; el navegador las dibuja al cargar su archivo.
+const RecepcionPage = lazy(() => import("./pages/RecepcionPage"));
+const TallerPage = lazy(() => import("./pages/TallerPage"));
+const Cargando = () => <div className="min-h-[100svh] bg-[#050505]" />;
 
 /** Rutas de la web. El router lo pone main.tsx (navegador) o entry-server.tsx (HTML pregenerado). */
 const App = () => {
@@ -31,8 +35,8 @@ const App = () => {
         <Route key={d.slug} path={`/${d.slug}`} element={<LegalPage doc={d} />} />
       ))}
       <Route path="/componentes" element={<ComponentesPage />} />
-      <Route path="/recepcion" element={<RecepcionPage />} />
-      <Route path="/taller" element={<TallerPage />} />
+      <Route path="/recepcion" element={<Suspense fallback={<Cargando />}><RecepcionPage /></Suspense>} />
+      <Route path="/taller" element={<Suspense fallback={<Cargando />}><TallerPage /></Suspense>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

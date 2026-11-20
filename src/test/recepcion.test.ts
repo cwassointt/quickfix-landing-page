@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  aCsv, avisoCliente, chatCliente, diaLima, equipo, etiquetas, mensajesCliente, nombreContacto, preguntas, vcard, resumirFalla, sugerirCorreo, sugerirDistrito, validar, validarWhatsapp, type Registro,
+  aCsv, atrasado, avisoCliente, diasEnEstado, progreso, chatCliente, diaLima, equipo, etiquetas, mensajesCliente, nombreContacto, preguntas, vcard, resumirFalla, sugerirCorreo, sugerirDistrito, validar, validarWhatsapp, type Registro,
 } from "@/lib/recepcion";
 
 describe("recepción", () => {
@@ -122,5 +122,35 @@ describe("validación del formulario", () => {
     expect(validar({ ...ok, cuando: "Otro día", llega: "" }).llega).toBeDefined();
     expect(validar({ ...ok, cuando: "Otro día", llega: diaLima(3) }).llega).toBeUndefined();
     expect(validar({ ...ok, cuando: "Otro día", llega: diaLima(90) }).llega).toBeDefined();
+  });
+});
+
+describe("tablero", () => {
+  const dia = 86_400_000;
+  const ahora = Date.parse("2026-11-20T12:00:00-05:00");
+  const caso = (estado: string, cambioHaceDias: number | null, recibidoHaceDias = 10) => ({
+    estado, creado: new Date(ahora - 20 * dia).toISOString(),
+    recibido: new Date(ahora - recibidoHaceDias * dia).toISOString(),
+    cambio: cambioHaceDias === null ? null : new Date(ahora - cambioHaceDias * dia).toISOString(),
+  });
+
+  it("cuenta los días desde el cambio de estado; sin cambio guardado, desde que se recibió", () => {
+    expect(diasEnEstado(caso("diagnostico", 3), ahora)).toBe(3);
+    expect(diasEnEstado(caso("diagnostico", null, 6), ahora)).toBe(6);
+    expect(diasEnEstado({ cambio: "basura", recibido: null, creado: "" }, ahora)).toBe(0);
+  });
+
+  it("marca atrasado solo pasado el plazo de cada estado", () => {
+    expect(atrasado(caso("diagnostico", 4), ahora)).toBe(false);
+    expect(atrasado(caso("diagnostico", 5), ahora)).toBe(true);
+    expect(atrasado(caso("pruebas", 5), ahora)).toBe(true); // estado antiguo = diagnóstico
+    expect(atrasado(caso("entregado", 90), ahora)).toBe(false);
+    expect(atrasado(caso("registrado", 30), ahora)).toBe(false);
+  });
+
+  it("la barra de progreso sabe si terminó sin reparar", () => {
+    expect(progreso("devuelto")).toEqual({ etapa: 4, mal: true });
+    expect(progreso("listo")).toEqual({ etapa: 3, mal: false });
+    expect(progreso("registrado")).toEqual({ etapa: 0, mal: false });
   });
 });
