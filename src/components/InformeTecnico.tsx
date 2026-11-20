@@ -120,7 +120,8 @@ function Documento({ o, inf, set, onEstado, editable }: { o: Orden; inf: Informe
         <Logo size="22px" />
         <div style={{ display: "flex", alignItems: "center", gap: "8px", marginLeft: "auto" }}>
           <span style={{ fontSize: "11px", fontWeight: 500, color: "#525252", border: "1px solid #e5e5e5", borderRadius: "999px", padding: "5px 12px" }}>Informe técnico</span>
-          <span style={pildora(NARANJA)}>{o.numero}</span>
+          {/* El N° es lo que el cliente cita al escribir: grande y a la vista. */}
+          <span style={{ ...pildora(NARANJA), fontSize: "24px", fontWeight: 800, letterSpacing: "0.5px", padding: "8px 20px", fontVariantNumeric: "tabular-nums" }}>{o.numero}</span>
         </div>
       </header>
 
