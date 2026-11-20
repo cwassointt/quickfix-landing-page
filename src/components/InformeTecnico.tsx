@@ -295,7 +295,7 @@ export function InformeTecnico({ o }: { o: Orden }) {
   const montoValido = inf.cobros.every((c) => Number.isFinite(c.monto) && c.monto >= 0);
 
   return (
-    <section className="mt-4 rounded-3xl bg-white/[0.04] p-5 md:p-6">
+    <section className="mt-4 rounded-3xl bg-[#111c2f] p-5 md:p-6">
       <style>{CSS}</style>
       {imprimiendo && <style>{CSS_IMPRESION}</style>}
       <h2 className="text-lg font-bold text-white">Informe técnico</h2>
