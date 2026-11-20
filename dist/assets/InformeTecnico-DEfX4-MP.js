@@ -1,4 +1,4 @@
-import{c as K,j as e,X as ee,P as te,C as ne}from"./index-DQ51p1NQ.js";import{r as w,a as oe}from"./vendor-D-Q10PB_.js";import{c as q,L as V,j as se,t as re}from"./recepcion-CqYFx6xp.js";import{S as ie}from"./sparkles-aV0yY6ej.js";import"./router-LSVNxHBI.js";/**
+import{c as K,j as e,X as ee,P as te,C as ne}from"./index-BFr0FGUi.js";import{r as w,a as oe}from"./vendor-D-Q10PB_.js";import{c as q,L as V,j as se,w as re}from"./recepcion-CUbEZqaG.js";import{S as ie}from"./sparkles-B1-gckZQ.js";import"./router-LSVNxHBI.js";/**
  * @license lucide-react v0.462.0 - ISC
  *
  * This source code is licensed under the ISC license.

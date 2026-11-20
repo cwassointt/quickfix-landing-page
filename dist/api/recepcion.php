@@ -18,7 +18,7 @@ const CAMPOS = [
     'pin' => [false, 40], 'accesorios' => [false, 120], 'servicio' => [false, 40], 'falla' => [true, 1000], 'direccion' => [false, 200],
 ];
 // Columnas agregadas después de la primera versión: se crean solas en bases que ya existían.
-const COLUMNAS_NUEVAS = ['llega' => 'TEXT', 'modo' => 'TEXT', 'direccion' => 'TEXT', 'autoriza' => 'INTEGER', 'foto' => 'INTEGER', 'cambio' => 'TEXT', 'placa' => 'REAL', 'seguir' => 'TEXT'];
+const COLUMNAS_NUEVAS = ['llega' => 'TEXT', 'modo' => 'TEXT', 'direccion' => 'TEXT', 'autoriza' => 'INTEGER', 'foto' => 'INTEGER', 'cambio' => 'TEXT', 'placa' => 'REAL', 'seguir' => 'TEXT', 'nota' => 'INTEGER'];
 // Lo que necesita el tablero de cada caso (menú, buscador, filas). Sin la falla ni datos personales extra: la lista va completa, sin límite.
 const COLUMNAS_LISTA = 'id, creado, origen, nombre, whatsapp, tipo, marca, modelo, serie, servicio, liquido, abierto, estado, recibido, cambio, llega, modo, seguir, (placa IS NOT NULL) AS cotizada';
 const MAX_FOTOS_ENTRADA = 8;
@@ -85,6 +85,9 @@ function db(): PDO
     // Historial del caso: cada cambio de estado, quién lo hizo y cuándo.
     $pdo->exec('CREATE TABLE IF NOT EXISTS historial (orden_id INTEGER NOT NULL, estado TEXT NOT NULL, quien TEXT NOT NULL, fecha TEXT NOT NULL)');
     $pdo->exec('CREATE INDEX IF NOT EXISTS historial_orden ON historial (orden_id)');
+    // Pagos del cliente (adelanto, saldo): el saldo es presupuesto menos la suma.
+    $pdo->exec('CREATE TABLE IF NOT EXISTS pagos (orden_id INTEGER NOT NULL, monto REAL NOT NULL, fecha TEXT NOT NULL)');
+    $pdo->exec('CREATE INDEX IF NOT EXISTS pagos_orden ON pagos (orden_id)');
     // Clave del enlace público de seguimiento (24 hex, imposible de adivinar); la reciben también los casos antiguos.
     $pdo->exec("UPDATE ordenes SET seguir = lower(hex(randomblob(12))) WHERE seguir IS NULL");
     respaldar($pdo);
@@ -107,6 +110,13 @@ function respaldar(PDO $pdo): void
     $todos = glob("$DIR/respaldos/recepcion-*.sqlite") ?: [];
     rsort($todos);
     foreach (array_slice($todos, 14) as $viejo) @unlink($viejo);
+}
+
+function pagos(int $id): array
+{
+    $q = db()->prepare('SELECT rowid AS id, monto, fecha FROM pagos WHERE orden_id = ? ORDER BY fecha, rowid');
+    $q->execute([$id]);
+    return $q->fetchAll();
 }
 
 function historial(int $id, string $estado, string $quien): void
@@ -463,7 +473,7 @@ try {
         case 'GET lista':
             $r = exigir('admin', 'mostrador');
             // shortcut: sin límite de filas; con columnas cortas, 5000 casos pesan ~1 MB. Si llega a eso, ocultar entregados de hace meses.
-            $filas = db()->query('SELECT ' . COLUMNAS_LISTA . ($r === 'admin' ? ', presupuesto' : '') . ' FROM ordenes ORDER BY id DESC')->fetchAll();
+            $filas = db()->query('SELECT ' . COLUMNAS_LISTA . ($r === 'admin' ? ', presupuesto, (SELECT IFNULL(SUM(monto), 0) FROM pagos WHERE orden_id = ordenes.id) AS pagado' : '') . ' FROM ordenes ORDER BY id DESC')->fetchAll();
             foreach ($filas as &$f) $f['numero'] = numero((int) $f['id']);
             responder(['rol' => $r, 'ordenes' => $filas]);
 
@@ -479,7 +489,28 @@ try {
             $h->execute([(int) $o['id']]);
             $o['historial'] = $h->fetchAll();
             $o['fotos_entrada'] = fotosEntrada((int) $o['id']);
+            if ($r === 'admin') $o['pagos'] = pagos((int) $o['id']);
             responder(['rol' => $r, 'orden' => $o]);
+
+        case 'POST pago':
+            // Solo tú: adelanto o saldo que pagó el cliente.
+            exigir('admin');
+            $d = cuerpo();
+            $id = (int) ($d['id'] ?? 0);
+            $monto = round((float) ($d['monto'] ?? 0), 2);
+            if ($monto <= 0 || $monto > 99999) fallo('Monto inválido.');
+            $q = db()->prepare('SELECT 1 FROM ordenes WHERE id = ?');
+            $q->execute([$id]);
+            if (!$q->fetch()) fallo('No existe esa orden.', 404);
+            db()->prepare('INSERT INTO pagos (orden_id, monto, fecha) VALUES (?, ?, ?)')->execute([$id, $monto, date('c')]);
+            responder(['pagos' => pagos($id)]);
+
+        case 'POST borrar_pago':
+            exigir('admin');
+            $d = cuerpo();
+            $id = (int) ($d['id'] ?? 0);
+            db()->prepare('DELETE FROM pagos WHERE rowid = ? AND orden_id = ?')->execute([(int) ($d['pago'] ?? 0), $id]);
+            responder(['pagos' => pagos($id)]);
 
         case 'POST actualizar':
             // Solo tú: estado del equipo y presupuesto.
@@ -618,6 +649,7 @@ try {
             db()->prepare('DELETE FROM informes WHERE orden_id = ?')->execute([$id]);
             db()->prepare('DELETE FROM borradores WHERE orden_id = ?')->execute([$id]);
             db()->prepare('DELETE FROM historial WHERE orden_id = ?')->execute([$id]);
+            db()->prepare('DELETE FROM pagos WHERE orden_id = ?')->execute([$id]);
             @unlink("$DIR/fotos/$id.jpg");
             foreach (glob("$DIR/fotos/$id-e*.jpg") ?: [] as $f) @unlink($f);
             db()->exec("UPDATE sqlite_sequence SET seq = (SELECT IFNULL(MAX(id), 0) FROM ordenes) WHERE name = 'ordenes'");
@@ -636,6 +668,7 @@ try {
                 $pdo->prepare('UPDATE ordenes SET id = ? WHERE id = ?')->execute([$nuevo, $viejo]);
                 $pdo->prepare('UPDATE informes SET orden_id = ? WHERE orden_id = ?')->execute([$nuevo, $viejo]);
                 $pdo->prepare('UPDATE historial SET orden_id = ? WHERE orden_id = ?')->execute([$nuevo, $viejo]);
+                $pdo->prepare('UPDATE pagos SET orden_id = ? WHERE orden_id = ?')->execute([$nuevo, $viejo]);
                 $pdo->prepare('DELETE FROM borradores WHERE orden_id = ?')->execute([$viejo]);
                 $cambios++;
             }
@@ -696,7 +729,7 @@ try {
             $t = (string) ($_GET['t'] ?? '');
             if (demasiados('seguir', 30, 900)) fallo('Demasiados intentos. Espera unos minutos.', 429);
             if (!preg_match('/^[a-f0-9]{24}$/', $t)) { anotar('seguir'); fallo('Enlace no válido.', 404); }
-            $q = db()->prepare('SELECT id, nombre, tipo, marca, modelo, estado, creado, recibido FROM ordenes WHERE seguir = ?');
+            $q = db()->prepare('SELECT id, nombre, tipo, marca, modelo, estado, creado, recibido, nota FROM ordenes WHERE seguir = ?');
             $q->execute([$t]);
             $o = $q->fetch();
             if (!$o) { anotar('seguir'); fallo('No encontramos este equipo. Revisa el enlace o escríbenos por WhatsApp.', 404); }
@@ -706,7 +739,20 @@ try {
                 'numero' => numero((int) $o['id']), 'nombre' => explode(' ', trim($o['nombre']))[0],
                 'tipo' => $o['tipo'], 'marca' => $o['marca'], 'modelo' => $o['modelo'],
                 'estado' => $o['estado'], 'creado' => $o['creado'], 'recibido' => $o['recibido'], 'historial' => $h->fetchAll(),
+                'nota' => $o['nota'] === null ? null : (int) $o['nota'],
             ]]);
+
+        case 'POST calificar':
+            // Público: encuesta de 1 clic tras la entrega (1 = bien, -1 = pudo ser mejor). Se puede cambiar.
+            $d = cuerpo();
+            $t = (string) ($d['t'] ?? '');
+            $nota = (int) ($d['nota'] ?? 0);
+            if (demasiados('seguir', 30, 900)) fallo('Demasiados intentos. Espera unos minutos.', 429);
+            if (!preg_match('/^[a-f0-9]{24}$/', $t) || !in_array($nota, [1, -1], true)) { anotar('seguir'); fallo('Solicitud inválida.'); }
+            $q = db()->prepare("UPDATE ordenes SET nota = ? WHERE seguir = ? AND estado IN ('entregado', 'devuelto')");
+            $q->execute([$nota, $t]);
+            if ($q->rowCount() !== 1) { anotar('seguir'); fallo('Podrás calificarnos cuando recojas tu equipo.', 409); }
+            responder(['ok' => true]);
 
         case 'GET csv':
             exigir('admin');

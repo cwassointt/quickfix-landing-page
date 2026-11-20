@@ -1,10 +1,55 @@
 import { useEffect, useState } from "react";
-import { Loader2, MapPin, MessageCircle } from "lucide-react";
+import { Loader2, MapPin, MessageCircle, Star, ThumbsDown, ThumbsUp } from "lucide-react";
 import { Progreso } from "@/components/Progreso";
 import { COLOR_ESTADO, api, estadoDe, fecha, progreso, type Paso } from "@/lib/recepcion";
-import { MAPS_URL, waLink } from "@/lib/site";
+import { MAPS_URL, RESENA_URL, waLink } from "@/lib/site";
 
-type Caso = { numero: string; nombre: string; tipo: string; marca: string; modelo: string; estado: string; creado: string; recibido: string | null; historial: Paso[] };
+type Caso = { numero: string; nombre: string; tipo: string; marca: string; modelo: string; estado: string; creado: string; recibido: string | null; historial: Paso[]; nota: number | null };
+
+/** Encuesta de 1 clic tras la entrega: si le fue bien, se le pide la reseña en Google; si no, que nos cuente por WhatsApp. */
+function Encuesta({ t, caso }: { t: string; caso: Caso }) {
+  const [nota, setNota] = useState(caso.nota);
+  const [error, setError] = useState("");
+  const votar = (n: number) => {
+    setNota(n);
+    api("calificar", { t, nota: n }).then(() => setError("")).catch((e) => { setNota(caso.nota); setError(e.message); });
+  };
+  const opcion = "inline-flex items-center justify-center gap-2 rounded-full px-5 py-3.5 text-base ring-1 transition active:scale-[0.98]";
+  return (
+    <section className="mt-4 rounded-3xl bg-white/[0.035] p-6 ring-1 ring-white/[0.07] md:p-8">
+      <h2 className="font-display text-lg font-bold text-white">¿Cómo te fue con QuickFix?</h2>
+      <div className="mt-4 grid grid-cols-2 gap-3">
+        <button onClick={() => votar(1)} aria-pressed={nota === 1}
+          className={`${opcion} ${nota === 1 ? "bg-primary font-medium text-black ring-primary" : "bg-white/[0.05] text-white ring-white/10 hover:bg-white/[0.1]"}`}>
+          <ThumbsUp className="h-5 w-5" aria-hidden="true" /> Bien
+        </button>
+        <button onClick={() => votar(-1)} aria-pressed={nota === -1}
+          className={`${opcion} ${nota === -1 ? "bg-white font-medium text-black ring-white" : "bg-white/[0.05] text-white ring-white/10 hover:bg-white/[0.1]"}`}>
+          <ThumbsDown className="h-5 w-5" aria-hidden="true" /> Pudo ser mejor
+        </button>
+      </div>
+      {nota === 1 && (
+        <div className="mt-5">
+          <p className="text-base text-white/80">¡Gracias! Una reseña en Google nos ayuda muchísimo a que más gente nos encuentre.</p>
+          <a href={RESENA_URL} target="_blank" rel="noopener noreferrer"
+            className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-6 py-4 text-base font-medium text-black transition hover:bg-[#ff7a1f] active:scale-[0.98]">
+            <Star className="h-5 w-5" aria-hidden="true" /> Dejar una reseña en Google
+          </a>
+        </div>
+      )}
+      {nota === -1 && (
+        <div className="mt-5">
+          <p className="text-base text-white/80">Lo sentimos. Cuéntanos qué pasó y lo resolvemos.</p>
+          <a href={waLink(`Hola QuickFix, sobre mi equipo ${caso.numero}: `)} target="_blank" rel="noopener noreferrer"
+            className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full bg-white/[0.07] px-6 py-4 text-base text-white transition hover:bg-white/[0.13] active:scale-[0.98]">
+            <MessageCircle className="h-5 w-5" aria-hidden="true" /> Contarnos por WhatsApp
+          </a>
+        </div>
+      )}
+      {error && <p role="alert" className="mt-3 text-sm text-[#ff9b80]">{error}</p>}
+    </section>
+  );
+}
 
 /** Lo que significa cada estado para el cliente, en sus palabras. */
 const PARA_CLIENTE: Record<string, { titulo: string; texto: string }> = {
@@ -25,10 +70,12 @@ const NOMBRE_PASO: Record<string, string> = {
 const SeguimientoPage = () => {
   const [caso, setCaso] = useState<Caso | null>(null);
   const [error, setError] = useState("");
+  const [t, setT] = useState("");
 
   useEffect(() => {
     // El enlace llega como ?t=… (se lee aquí porque la página se pregenera sin la URL).
     const t = new URLSearchParams(window.location.search).get("t") ?? "";
+    setT(t);
     api<{ caso: Caso }>("seguimiento", undefined, `&t=${encodeURIComponent(t)}`).then((r) => setCaso(r.caso)).catch((e) => setError(e.message));
   }, []);
 
@@ -66,6 +113,8 @@ const SeguimientoPage = () => {
               <Progreso estado={caso.estado} />
               <p className="mt-6 text-base leading-relaxed text-white/80">{info.texto}</p>
             </section>
+
+            {(e === "entregado" || e === "devuelto") && <Encuesta t={t} caso={caso} />}
 
             {caso.historial.length > 0 && (
               <section className="mt-4 rounded-3xl bg-white/[0.035] p-6 ring-1 ring-white/[0.07] md:p-8">

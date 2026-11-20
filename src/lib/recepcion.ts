@@ -30,14 +30,21 @@ export type Orden = Omit<Registro, "acepta" | "web" | "liquido" | "abierto" | "c
   seguir?: string | null;
   historial?: Paso[];
   fotos_entrada?: number[];
+  /** Solo admin: adelanto y saldo que pagó el cliente. */
+  pagos?: Pago[];
+  /** Encuesta tras la entrega: 1 bien, -1 pudo ser mejor. Solo admin. */
+  nota?: number | null;
 };
 export type Paso = { estado: string; quien?: string; fecha: string };
+export type Pago = { id: number; monto: number; fecha: string };
 /** Lo que trae la lista del tablero: lo justo para el menú, el buscador y las filas (sin la falla ni datos privados). */
 export type Resumen = Pick<Orden, "id" | "numero" | "creado" | "origen" | "nombre" | "whatsapp" | "tipo" | "marca" | "modelo" | "serie" | "servicio" | "liquido" | "abierto" | "estado" | "recibido" | "cambio" | "llega" | "modo" | "seguir"> & {
   /** 1 si ya se cotizó el reemplazo de placa. */
   cotizada: 0 | 1;
   /** Solo admin. */
   presupuesto?: number | null;
+  /** Solo admin: suma de los pagos. */
+  pagado?: number;
 };
 export type Rol = "admin" | "mostrador";
 
@@ -169,6 +176,13 @@ const PLAZOS: Record<string, number> = { recibido: 1, diagnostico: 4, reparado: 
 export const atrasado = (o: Pick<Orden, "estado" | "cambio" | "recibido" | "creado">, ahora = Date.now()) =>
   estadoDe(o.estado) in PLAZOS && diasEnEstado(o, ahora) > PLAZOS[estadoDe(o.estado)];
 
+/** Una semana o más listo (reparado o no) y el cliente no viene: toca recordárselo. */
+export const sinRecoger = (o: Pick<Orden, "estado" | "cambio" | "recibido" | "creado">, ahora = Date.now()) =>
+  ["reparado", "no_reparado"].includes(estadoDe(o.estado)) && diasEnEstado(o, ahora) >= 7;
+
+/** Lo que falta cobrar: presupuesto menos lo pagado (nunca negativo). */
+export const saldo = (presupuesto: number | null | undefined, pagado: number) => Math.max(0, Math.round(((presupuesto ?? 0) - pagado) * 100) / 100);
+
 /**
  * Mismo criterio que destinoEstado() de recepcion.php: "Entregado" pasa a entregado o devuelto según el resultado,
  * y un equipo no reparado no se entrega sin cotizar el reemplazo de placa.
@@ -284,9 +298,14 @@ export function mensajesCliente(o: DatosMensaje & { seguir?: string | null }, pr
     { id: "avance", titulo: "Avance", texto: `${hola} Te cuento cómo va: ` },
     { id: "listo", titulo: "Listo", texto: `${hola} ¡Ya está listo para recoger! Talambo 135, San Miguel. Avísame a qué hora vienes.${enlace}` },
     { id: "placa", titulo: "Cotización de placa", texto: `${hola} Revisé la placa a nivel de componentes y no tiene reparación. La solución es reemplazar la placa: cuesta S/ ${placa ?? "___"}. ¿Quieres que lo coordinemos? Si prefieres no hacerlo, puedes recoger tu equipo en Talambo 135, San Miguel.` },
-    { id: "entregado", titulo: "Entregado", texto: `${hola} Gracias por confiar en QuickFix. Cualquier duda con tu equipo, escríbeme por aquí.` },
+    { id: "recordatorio", titulo: "Recordatorio", texto: `${hola} Te recuerdo que tu equipo te espera en el taller, Talambo 135, San Miguel. ¿Qué día puedes pasar a recogerlo?` },
+    { id: "entregado", titulo: "Entregado", texto: `${hola} Gracias por confiar en QuickFix. Cualquier duda con tu equipo, escríbeme por aquí.${o.seguir ? `\n\n¿Cómo te fue? Cuéntanos con 1 clic: ${urlSeguimiento(o.seguir)}` : ""}` },
   ];
 }
+
+/** El mensaje que toca ahora: el del estado, o el recordatorio si lleva una semana sin recoger. */
+export const mensajeSugerido = (o: Pick<Orden, "estado" | "cambio" | "recibido" | "creado">, ahora = Date.now()) =>
+  sinRecoger(o, ahora) ? "recordatorio" : MENSAJE_DE[estadoDe(o.estado)];
 
 /** El mensaje que corresponde a cada estado (botón "Avisar al cliente"). */
 export const MENSAJE_DE: Record<string, string> = {

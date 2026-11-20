@@ -10,9 +10,9 @@ const InformeTecnico = lazy(() => import("@/components/InformeTecnico").then((m)
 const EditarCaso = lazy(() => import("@/components/EditarCaso").then((m) => ({ default: m.EditarCaso })));
 import { Progreso } from "@/components/Progreso";
 import {
-  API, COLOR_ESTADO, ESTADOS, MENSAJE_DE, PASOS, aCsv, api, atrasado, chatCliente, destinoEstado, diaLima, diasEnEstado, equipo, estadoDe, etiquetas,
-  faltaCotizar, fecha, mensajesCliente, nombreContacto, reducirFoto, saludo, telefono, urlSeguimiento, vcard,
-  type Orden, type Paso, type Resumen, type Rol,
+  API, COLOR_ESTADO, ESTADOS, PASOS, aCsv, api, atrasado, chatCliente, destinoEstado, diaLima, diasEnEstado, equipo, estadoDe, etiquetas,
+  faltaCotizar, fecha, mensajeSugerido, mensajesCliente, nombreContacto, reducirFoto, saldo, saludo, sinRecoger, telefono, urlSeguimiento, vcard,
+  type Orden, type Pago, type Paso, type Resumen, type Rol,
 } from "@/lib/recepcion";
 
 // Mismo lenguaje visual que la web: negro #050505, tarjetas apenas más claras, naranja para lo principal.
@@ -144,7 +144,8 @@ function Tarjeta({ o, rol, imprimirAlAbrir = false, onRecibir, onBorrar, onEdita
         {rol === "admin" && <><Dato k="DNI" v={o.dni} /><Dato k="Correo" v={o.correo} /><Dato k="Distrito" v={o.distrito} /><Dato k="Clave del equipo" v={o.pin} /><Dato k="Nos conoció por" v={o.como} />
           <Dato k="Reparar sin consultar" v={o.autoriza ? `Hasta S/ ${o.autoriza}` : "No, consultar antes"} />
           <Dato k="Presupuesto" v={o.presupuesto != null ? `S/ ${o.presupuesto}` : null} />
-          <Dato k="Reemplazo de placa" v={o.placa != null ? `S/ ${o.placa}` : null} /></>}
+          <Dato k="Reemplazo de placa" v={o.placa != null ? `S/ ${o.placa}` : null} />
+          <Dato k="Calificación del cliente" v={o.nota === 1 ? "👍 Le fue bien" : o.nota === -1 ? "👎 Pudo ser mejor" : null} /></>}
       </dl>
       {o.foto === 1 && (
         <a href={`${API}?accion=foto&id=${o.id}`} target="_blank" rel="noopener noreferrer" className="mt-4 inline-block overflow-hidden rounded-xl ring-1 ring-white/10 transition hover:ring-white/30">
@@ -316,7 +317,7 @@ function PanelEstado({ o, onCambio, onEstado }: { o: Orden; onCambio: () => void
   };
   const presupuesto = monto.trim() ? Number(monto) : (o.presupuesto ?? null);
   const mensajes = mensajesCliente(o, presupuesto, o.placa);
-  const sugerido = mensajes.find((m) => m.id === MENSAJE_DE[e]);
+  const sugerido = mensajes.find((m) => m.id === mensajeSugerido(o));
   const otros = mensajes.filter((m) => m !== sugerido);
 
   return (
@@ -372,6 +373,8 @@ function PanelEstado({ o, onCambio, onEstado }: { o: Orden; onCambio: () => void
         </div>
       )}
 
+      <Pagos o={o} onCambio={onCambio} />
+
       {o.whatsapp && (
         <div>
           <h2 className={TITULO}>Avisar al cliente</h2>
@@ -422,6 +425,61 @@ function PanelEstado({ o, onCambio, onEstado }: { o: Orden; onCambio: () => void
 
       {error && <p role="alert" className="rounded-2xl bg-red-500/10 px-4 py-3 text-sm text-[#ff9b80] ring-1 ring-red-500/30">{error}</p>}
     </section>
+  );
+}
+
+/** Solo admin: adelanto y saldo. "Por cobrar" del resumen sale de aquí. */
+function Pagos({ o, onCambio }: { o: Orden; onCambio: () => void }) {
+  const [pagos, setPagos] = useState<Pago[]>(o.pagos ?? []);
+  const [monto, setMonto] = useState("");
+  const [guardando, setGuardando] = useState(false);
+  const [error, setError] = useState("");
+  const pagado = pagos.reduce((s, p) => s + p.monto, 0);
+  const falta = saldo(o.presupuesto, pagado);
+  const enviar = async (accion: string, datos: Record<string, number>) => {
+    setGuardando(true);
+    try { setPagos((await api<{ pagos: Pago[] }>(accion, { id: o.id, ...datos })).pagos); setMonto(""); setError(""); onCambio(); }
+    catch (err) { setError((err as Error).message); }
+    setGuardando(false);
+  };
+  return (
+    <div>
+      <h2 className={TITULO}>Pagos</h2>
+      {o.presupuesto != null && (
+        <p className="mt-1 text-sm text-white/60">
+          Pagado S/ {pagado.toLocaleString("es-PE")} de S/ {o.presupuesto.toLocaleString("es-PE")} ·{" "}
+          {falta > 0 ? <span className="font-semibold text-primary">falta S/ {falta.toLocaleString("es-PE")}</span> : <span className="font-semibold text-[#4ade80]">pagado completo</span>}
+        </p>
+      )}
+      {pagos.length > 0 && (
+        <ul className="mt-3 space-y-1.5">
+          {pagos.map((p, i) => (
+            <li key={p.id} className="flex items-center gap-3 rounded-xl bg-black/30 py-1.5 pl-4 pr-1.5 text-sm">
+              <span className="font-medium tabular-nums text-white">S/ {p.monto.toLocaleString("es-PE")}</span>
+              <span className="text-white/50">{i === 0 && pagos.length > 1 ? "Adelanto · " : ""}{fecha(p.fecha)}</span>
+              <button onClick={() => { if (confirm(`¿Borrar el pago de S/ ${p.monto}?`)) enviar("borrar_pago", { pago: p.id }); }} disabled={guardando}
+                aria-label={`Borrar pago de S/ ${p.monto}`} className={`${PRESS} ml-auto rounded-full p-2 text-white/50 hover:bg-red-500/15 hover:text-[#ff9b80]`}>
+                <X className="h-4 w-4" aria-hidden="true" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <form className="mt-3 flex gap-2" onSubmit={(ev) => { ev.preventDefault(); if (Number(monto) > 0) enviar("pago", { monto: Number(monto) }); }}>
+        <span className="relative flex-1">
+          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/50">S/</span>
+          <input inputMode="decimal" value={monto} onChange={(ev) => setMonto(ev.target.value.replace(/[^\d.]/g, ""))} aria-label="Monto pagado en soles"
+            placeholder={pagos.length ? "Otro pago" : "Adelanto"} className={`${CAMPO} pl-11 pr-4`} />
+        </span>
+        <button disabled={guardando || !(Number(monto) > 0)} className={`${BTN} bg-white px-5 text-black hover:bg-white/90 disabled:opacity-50`}>Registrar</button>
+      </form>
+      {falta > 0 && (
+        <button onClick={() => enviar("pago", { monto: falta })} disabled={guardando} className={`${SUAVE} mt-2 w-full`}>
+          <Check className="h-5 w-5" aria-hidden="true" /> {pagos.length ? "Pagó el saldo" : "Pagó todo"} · S/ {falta.toLocaleString("es-PE")}
+        </button>
+      )}
+      {error && <p role="alert" className="mt-2 text-sm text-[#ff9b80]">{error}</p>}
+    </div>
   );
 }
 
@@ -565,7 +623,7 @@ function Fila({ o, rol, ahora, onAbrir, onRecibir, onEstado }: {
   const dias = diasEnEstado(o, ahora);
   const avisos = [o.liquido === 1 && "Se mojó", o.abierto === 1 && "Ya lo abrieron"].filter(Boolean) as string[];
   const llega = o.llega && (o.llega === diaLima() ? "hoy" : new Date(`${o.llega}T12:00`).toLocaleDateString("es-PE", { weekday: "short", day: "numeric", month: "short" }));
-  const mensaje = mensajesCliente(o).find((m) => m.id === MENSAJE_DE[e]);
+  const mensaje = mensajesCliente(o).find((m) => m.id === mensajeSugerido(o, ahora));
   return (
     <article className={`group/fila relative overflow-hidden rounded-2xl p-4 pt-5 ring-1 transition-[background-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-2xl hover:shadow-black/50 focus-within:ring-white/25 md:p-5 md:pt-6 ${pendiente ? "bg-primary/[0.08] ring-primary/35 hover:bg-primary/[0.12]" : "bg-white/[0.035] ring-white/[0.07] hover:bg-white/[0.06] hover:ring-white/15"}`}>
       <span aria-hidden="true" className="absolute inset-x-0 top-0 h-1.5" style={{ background: COLOR_ESTADO[e] }} />
@@ -574,7 +632,7 @@ function Fila({ o, rol, ahora, onAbrir, onRecibir, onEstado }: {
         <a href={`/taller/?qf=${o.id}`} data-fila onClick={(ev) => { ev.preventDefault(); onAbrir(); }}
           className="rounded font-mono text-xl font-bold text-primary after:absolute after:inset-0 after:content-[''] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">{o.numero}</a>
         <Chip estado={o.estado} />
-        {faltaCotizar(o) ? <Alerta>Falta cotizar placa</Alerta> : atrasado(o, ahora) && <Alerta>Atrasado</Alerta>}
+        {faltaCotizar(o) ? <Alerta>Falta cotizar placa</Alerta> : sinRecoger(o, ahora) ? <Alerta>Sin recoger</Alerta> : atrasado(o, ahora) && <Alerta>Atrasado</Alerta>}
         <span className="ml-auto whitespace-nowrap text-sm text-white/50">
           {pendiente ? (o.modo === "recojo" ? "Recojo" : "Lo trae") + (llega ? ` · ${llega}` : "") : `${dias === 0 ? "Hoy" : dias === 1 ? "1 día" : `${dias} días`} en este estado`}
         </span>
@@ -620,7 +678,7 @@ function Fila({ o, rol, ahora, onAbrir, onRecibir, onEstado }: {
 /** Franja naranja de arriba (como los bloques destacados de la web): el día de un vistazo. */
 function ResumenDia({ ordenes, rol }: { ordenes: Resumen[]; rol: Rol }) {
   const hoy = diaLima();
-  const porCobrar = ordenes.filter((o) => estadoDe(o.estado) === "reparado").reduce((s, o) => s + (o.presupuesto ?? 0), 0);
+  const porCobrar = ordenes.filter((o) => estadoDe(o.estado) === "reparado").reduce((s, o) => s + saldo(o.presupuesto, o.pagado ?? 0), 0);
   const datos = [
     { n: String(ordenes.filter((o) => diaDe(o.recibido) === hoy).length), t: "Entraron hoy" },
     { n: String(ordenes.filter((o) => grupoDe(o.estado) === "entregado" && diaDe(o.cambio) === hoy).length), t: "Entregados hoy" },
