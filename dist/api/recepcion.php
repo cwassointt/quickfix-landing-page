@@ -339,6 +339,7 @@ function redactarInforme(array $o, array $notas, array $cobros, string $clave, s
         'otro_tecnico_lo_abrio' => $o['abierto'] === null ? 'no sabe' : (bool) $o['abierto'],
         'le_cayo_liquido' => $o['liquido'] === null ? 'no sabe' : (bool) $o['liquido'],
         'reparar_sin_consultar' => (int) ($o['autoriza'] ?? 0) > 0,
+        'reemplazo_placa' => $o['placa'] === null ? null : (float) $o['placa'],
     ];
     $json = postJson('https://api.deepseek.com/chat/completions', ['Authorization: Bearer ' . $clave], [
         'model' => 'deepseek-v4-pro',
@@ -575,8 +576,8 @@ try {
             if (!$o) fallo('No existe esa orden.', 404);
             $n = is_array($d['notas'] ?? null) ? $d['notas'] : [];
             $notas = [];
-            foreach (['hallazgos' => 4000, 'trabajo' => 4000, 'resultado' => 60, 'contexto' => 3000] as $k => $max) $notas[$k] = mb_substr(trim((string) ($n[$k] ?? '')), 0, $max);
-            if ($notas['hallazgos'] === '') fallo('Escribe primero tus notas del caso.');
+            foreach (['hallazgos' => 6000, 'resultado' => 60, 'garantia' => 40] as $k => $max) $notas[$k] = mb_substr(trim((string) ($n[$k] ?? '')), 0, $max);
+            if ($notas['hallazgos'] === '') fallo('Escribe primero tu diagnóstico.');
             $notas['respuestas'] = [];
             foreach (array_slice(is_array($n['respuestas'] ?? null) ? $n['respuestas'] : [], 0, 6) as $r) {
                 if (!is_array($r)) continue;

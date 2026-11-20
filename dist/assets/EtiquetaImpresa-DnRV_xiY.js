@@ -1,4 +1,4 @@
-import{c as st,j as x,M as lt,X as ft}from"./index-BFr0FGUi.js";import{r as H,a as ct}from"./vendor-D-Q10PB_.js";import{B as at}from"./recepcion-CUbEZqaG.js";import{P as ut}from"./TallerPage-J1XO1OJ1.js";import"./router-LSVNxHBI.js";import"./Progreso-DC0rEYcP.js";import"./camera-2jVc0xzd.js";/**
+import{c as st,j as x,M as lt,X as ft}from"./index-B_L-ETew.js";import{r as H,a as ct}from"./vendor-D-Q10PB_.js";import{B as at}from"./recepcion-Bd9Ax5-w.js";import{P as ut}from"./TallerPage-B2uEr96D.js";import"./router-LSVNxHBI.js";import"./Progreso-D1JsRhke.js";import"./camera-DUbF2yLj.js";/**
  * @license lucide-react v0.462.0 - ISC
  *
  * This source code is licensed under the ISC license.

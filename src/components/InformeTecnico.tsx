@@ -1,8 +1,17 @@
-import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { AlertTriangle, Check, FileDown, Loader2, Plus, Sparkles, X } from "lucide-react";
-import { api, equipo, telefono, type Orden } from "@/lib/recepcion";
-import { RESULTADOS, conBase, fechaInforme, informeNuevo, limpiarTexto, soles, total, type Cobro, type Fila, type Informe, type Respuesta, type Texto } from "@/lib/informe";
+import { AlertTriangle, Check, FileDown, Loader2, Mic, Plus, Sparkles, Square, X } from "lucide-react";
+import { COLOR_ESTADO, ESTADOS, api, equipo, estadoDe, telefono, type Orden } from "@/lib/recepcion";
+import {
+  FRASES, GARANTIAS, RESULTADOS, conBase, fechaInforme, garantiaInicial, informeNuevo, limpiarTexto, soles, total, venceGarantia,
+  type Cobro, type Fila, type Informe, type Notas, type Respuesta, type Texto,
+} from "@/lib/informe";
+
+// Dictado del navegador (Chrome en Android y PC); donde no existe, no se muestra el botón.
+type Reconocedor = { lang: string; continuous: boolean; interimResults: boolean; start(): void; stop(): void; onend: (() => void) | null;
+  onresult: ((e: { resultIndex: number; results: ArrayLike<ArrayLike<{ transcript: string }> & { isFinal: boolean }> }) => void) | null };
+type ConDictado = { SpeechRecognition?: new () => Reconocedor; webkitSpeechRecognition?: new () => Reconocedor };
+const Dictado = typeof window === "undefined" ? undefined : (window as unknown as ConDictado).SpeechRecognition ?? (window as unknown as ConDictado).webkitSpeechRecognition;
 
 const PRESS = "transition-[transform,background-color,color] duration-150 ease-out active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-[#050505]";
 const CAMPO = "w-full rounded-xl bg-white/[0.06] px-4 text-base text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-primary [&>option]:bg-[#111]";
@@ -99,6 +108,8 @@ function Documento({ o, inf, set, onEstado, editable }: { o: Orden; inf: Informe
   const saldo = inf.adelanto != null ? Math.round((suma - inf.adelanto) * 100) / 100 : null;
   const id = o.serie ? ["S/N", o.serie] : o.dni ? ["DNI", o.dni] : ["S/N", "—"];
   const reparable = t.estado === "REPARABLE";
+  const garantia = inf.notas.garantia ?? garantiaInicial(o.servicio);
+  const vence = reparable ? venceGarantia(inf.fecha || new Date().toISOString(), garantia) : null;
   const cifra: CSSProperties = { fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap", textAlign: "right" };
   const etiqueta: CSSProperties = { fontSize: "11px", fontWeight: 500, color: GRIS };
   const dato = (k: string, v: string) => (
@@ -120,7 +131,8 @@ function Documento({ o, inf, set, onEstado, editable }: { o: Orden; inf: Informe
         <Logo size="22px" />
         <div style={{ display: "flex", alignItems: "center", gap: "8px", marginLeft: "auto" }}>
           <span style={{ fontSize: "11px", fontWeight: 500, color: "#525252", border: "1px solid #e5e5e5", borderRadius: "999px", padding: "5px 12px" }}>Informe técnico</span>
-          <span style={pildora(NARANJA)}>{o.numero}</span>
+          {/* El N° es lo que el cliente cita al escribir: grande y a la vista. */}
+          <span style={{ ...pildora(NARANJA), fontSize: "24px", fontWeight: 800, letterSpacing: "0.5px", padding: "8px 20px", fontVariantNumeric: "tabular-nums" }}>{o.numero}</span>
         </div>
       </header>
 
@@ -138,6 +150,7 @@ function Documento({ o, inf, set, onEstado, editable }: { o: Orden; inf: Informe
         </div>
         <div style={{ marginTop: "14px", paddingTop: "14px", borderTop: "1px solid #e5e5e5", display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: "10px 24px" }}>
           <span style={{ display: "flex", alignItems: "center", gap: "10px" }}><span style={etiqueta}>Estado del equipo</span>{estadoPildora}</span>
+          {vence && <span style={{ display: "flex", alignItems: "baseline", gap: "10px" }}><span style={etiqueta}>Garantía</span><b style={{ fontSize: "13px" }}>{garantia} · vence el {fechaInforme(vence.toISOString())}</b></span>}
           <span style={{ display: "flex", alignItems: "baseline", gap: "10px" }}><span style={etiqueta}>Inversión total</span><b style={{ ...cifra, fontSize: "18px", fontWeight: 800, letterSpacing: "-0.4px" }}>{soles(suma)}</b></span>
         </div>
       </section>
@@ -207,7 +220,7 @@ function Area({ label, ayuda, v, set, filas = 4 }: { label: string; ayuda: strin
 }
 
 /** Solo admin: notas del técnico → borrador con IA → revisión en el documento → PDF. */
-export function InformeTecnico({ o }: { o: Orden }) {
+export function InformeTecnico({ o, onEstado }: { o: Orden; onEstado?: (estado: string) => void }) {
   const [inf, setInf] = useState<Informe | null>(null);
   const [estado, setEstado] = useState<"" | "preguntando" | "redactando" | "guardando" | "guardado">("");
   const [error, setError] = useState("");
@@ -215,18 +228,34 @@ export function InformeTecnico({ o }: { o: Orden }) {
   const [filasVer, setFilasVer] = useState(0);
   // null: la IA todavía no preguntó; con preguntas, el técnico responde antes de redactar.
   const [preguntas, setPreguntas] = useState<Respuesta[] | null>(null);
+  // Autoguardado: 1,5 s después del último cambio se guarda solo (si se cierra la pestaña, no se pierde el diagnóstico).
+  const sucio = useRef(false);
+  const [guardadoAuto, setGuardadoAuto] = useState("");
+  const [dictando, setDictando] = useState(false);
+  const reconocedor = useRef<Reconocedor | null>(null);
+  useEffect(() => () => reconocedor.current?.stop(), []);
+  useEffect(() => {
+    if (!inf || !sucio.current) return;
+    const t = setTimeout(() => {
+      sucio.current = false;
+      api("informe", { id: o.id, informe: inf }).then(() => setGuardadoAuto("Guardado")).catch(() => setGuardadoAuto("No se pudo guardar: revisa la conexión"));
+    }, 1500);
+    return () => clearTimeout(t);
+  }, [inf, o.id]);
 
   useEffect(() => {
     const inicial = ["no_reparado", "devuelto"].includes(o.estado) ? RESULTADOS[1] : RESULTADOS[0];
+    const nuevo = () => { const i = informeNuevo(inicial); return { ...i, notas: { ...i.notas, garantia: garantiaInicial(o.servicio) } }; };
     api<{ informe: Informe | null }>("informe", undefined, `&id=${o.id}`)
       .then((r) => {
-        if (!r.informe) return setInf(informeNuevo(inicial));
+        if (!r.informe) return setInf(nuevo());
         const n = r.informe.notas;
-        // Los informes de antes tenían "qué se hizo" aparte: se junta con las notas.
-        const notas = n.trabajo?.trim() ? { ...n, hallazgos: `${n.hallazgos.trim()}\n${n.trabajo.trim()}`, trabajo: "" } : n;
+        // Los informes de antes tenían "qué se hizo" y "contexto" aparte: se juntan con el diagnóstico.
+        const hallazgos = [n.hallazgos, n.trabajo, n.contexto].map((x) => x?.trim()).filter(Boolean).join("\n");
+        const notas = { ...n, hallazgos, trabajo: "", contexto: "", garantia: n.garantia ?? garantiaInicial(o.servicio) };
         setInf({ ...r.informe, notas, cobros: conBase(r.informe.cobros, n.resultado) });
       })
-      .catch((e) => { setError((e as Error).message); setInf(informeNuevo(inicial)); });
+      .catch((e) => { setError((e as Error).message); setInf(nuevo()); });
     // Solo al abrir el caso: si se volviera a leer con cada cambio de estado, se perdería lo que el técnico está escribiendo.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [o.id]);
@@ -247,16 +276,42 @@ export function InformeTecnico({ o }: { o: Orden }) {
 
   if (!inf) return <Loader2 className="mx-auto mt-6 h-6 w-6 animate-spin text-white/50" aria-label="Cargando informe" />;
 
-  const set = (c: Partial<Informe>) => { setInf({ ...inf, ...c }); setEstado(""); };
+  const set = (c: Partial<Informe>) => { setInf({ ...inf, ...c }); setEstado(""); sucio.current = true; setGuardadoAuto("Guardando…"); };
   const notas = (c: Partial<Informe["notas"]>) => set({ notas: { ...inf.notas, ...c } });
   const cobro = (i: number, c: Partial<Cobro>) => set({ cobros: inf.cobros.map((x, j) => (j === i ? { ...x, ...c } : x)) });
   // El estado manda el primer cobro (diagnóstico 99 o reparación 299); se cambia igual desde el formulario o desde el documento.
-  const cambiarResultado = (r: string) => {
+  const cambiarResultado = (r: string, extra: Partial<Notas> = {}) => {
     const cobros = conBase(inf.cobros, r);
     const cambio = cobros !== inf.cobros;
     const texto = inf.texto && { ...inf.texto, estado: r, conceptos: cobros.map((c, i) => (i === 0 && cambio ? c.concepto : inf.texto!.conceptos[i] ?? c.concepto)) };
-    set({ notas: { ...inf.notas, resultado: r }, cobros, texto });
+    set({ notas: { ...inf.notas, ...extra, resultado: r }, cobros, texto });
     if (cambio) setFilasVer(filasVer + 1);
+    // El informe y el caso dicen lo mismo: se ofrece pasar el caso al estado del resultado.
+    const destino = r === "REPARABLE" ? "reparado" : "no_reparado";
+    const e = estadoDe(o.estado);
+    if (onEstado && r !== inf.notas.resultado && !["registrado", "entregado", "devuelto", destino].includes(e)
+      && confirm(`¿Marcar también el caso como "${ESTADOS[destino]}"?`)) onEstado(destino);
+  };
+  const usarFrase = (fr: (typeof FRASES)[number]) => {
+    const h = inf.notas.hallazgos.trim();
+    const hallazgos = h ? `${h}\n${fr.texto}` : fr.texto;
+    if (fr.resultado && fr.resultado !== inf.notas.resultado) cambiarResultado(fr.resultado, { hallazgos });
+    else notas({ hallazgos });
+  };
+  const dictar = () => {
+    if (dictando || !Dictado) { reconocedor.current?.stop(); return; }
+    const rec = new Dictado();
+    rec.lang = "es-PE"; rec.continuous = true; rec.interimResults = false;
+    rec.onresult = (ev) => {
+      const dicho = Array.from(ev.results).slice(ev.resultIndex).filter((x) => x.isFinal).map((x) => x[0].transcript).join(" ").trim();
+      if (!dicho) return;
+      sucio.current = true;
+      setInf((p) => p && { ...p, notas: { ...p.notas, hallazgos: [p.notas.hallazgos.trimEnd(), dicho].filter(Boolean).join(" ") } });
+    };
+    rec.onend = () => setDictando(false);
+    reconocedor.current = rec;
+    rec.start();
+    setDictando(true);
   };
 
   const guardar = async (datos: Informe) => {
@@ -302,20 +357,75 @@ export function InformeTecnico({ o }: { o: Orden }) {
       <style>{CSS}</style>
       {imprimiendo && <style>{CSS_IMPRESION}</style>}
       <h2 className="text-lg font-bold text-white">Informe técnico</h2>
-      <p className="mt-1 text-sm text-white/55">Escribe todo junto, como se lo contarías a otro técnico. La IA lo ordena con el formato del laboratorio, te pregunta lo que le falte y tú revisas el informe antes del PDF.</p>
+      <p className="mt-1 text-sm text-white/55">Marca el resultado y escribe tu diagnóstico como se lo contarías a otro técnico. La IA lo ordena con el formato del laboratorio, te pregunta lo que le falte y tú revisas el informe antes del PDF.</p>
 
       <div className="mt-5 space-y-4">
-        <Area label="Notas del caso" ayuda="Ej.: corto en el riel de 5V del standby, IC de carga caliente con inyección de tensión; cambié el IC con aire caliente, reprogramé la BIOS con el programador SPI y quedó encendiendo; 2 h de estrés sin cortes…" v={inf.notas.hallazgos} set={(v) => notas({ hallazgos: v })} filas={7} />
-        <label className="block text-sm text-white/60">
-          Resultado
-          <select value={inf.notas.resultado} onChange={(e) => cambiarResultado(e.target.value)} className={`${CAMPO} mt-1.5 h-12`}>
-            {RESULTADOS.map((r) => <option key={r} value={r}>{r.charAt(0) + r.slice(1).toLowerCase()}</option>)}
-          </select>
-        </label>
-        <Area label="Contexto adicional (opcional)" ayuda="Ej.: la falla apareció después de la entrega porque el cliente reinstaló el sistema; se le prometió que encendería; se devuelve con cargador y placa donante…" v={inf.notas.contexto} set={(v) => notas({ contexto: v })} filas={3} />
+        {/* Primero el resultado: de él dependen el primer cobro y el tono del informe. */}
+        <fieldset>
+          <legend className="text-sm text-white/60">1. Resultado</legend>
+          <div className="mt-1.5 grid grid-cols-2 gap-2">
+            {RESULTADOS.map((r) => {
+              const activo = inf.notas.resultado === r;
+              const ok = r === "REPARABLE";
+              return (
+                <button key={r} type="button" aria-pressed={activo} onClick={() => cambiarResultado(r)}
+                  className={`${PRESS} flex h-12 items-center justify-center gap-2 rounded-xl text-base ring-1 ${activo ? "font-semibold text-black ring-transparent" : "text-white ring-white/[0.08] hover:bg-white/[0.06] hover:ring-white/25"}`}
+                  style={activo ? { background: COLOR_ESTADO[ok ? "reparado" : "no_reparado"] } : undefined}>
+                  {ok ? <Check className="h-5 w-5" aria-hidden="true" /> : <X className="h-5 w-5" aria-hidden="true" />} {ok ? "Reparable" : "No reparable"}
+                </button>
+              );
+            })}
+          </div>
+          <p className="mt-1.5 text-xs text-white/40">Pone el primer cobro: {inf.notas.resultado === "REPARABLE" ? "reparación electrónica" : "diagnóstico electrónico"}.</p>
+          {inf.notas.resultado === "REPARABLE" ? (
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <span className="text-sm text-white/60">Garantía</span>
+              {GARANTIAS.map((g) => {
+                const activa = (inf.notas.garantia ?? garantiaInicial(o.servicio)) === g;
+                return (
+                  <button key={g} type="button" aria-pressed={activa} onClick={() => notas({ garantia: g })}
+                    className={`${PRESS} rounded-full px-3.5 py-1.5 text-sm ring-1 ${activa ? "bg-white font-medium text-black ring-white" : "text-white/80 ring-white/10 hover:bg-white/[0.06]"}`}>
+                    {g.charAt(0).toUpperCase() + g.slice(1)}
+                  </button>
+                );
+              })}
+            </div>
+          ) : o.placa != null ? (
+            <p className="mt-3 rounded-xl bg-white/[0.04] px-4 py-2.5 text-sm text-white/70">El informe incluye la cotización del reemplazo de placa: <b className="text-white">S/ {o.placa}</b>.</p>
+          ) : (
+            <p className="mt-3 rounded-xl bg-[#ef4444]/10 px-4 py-2.5 text-sm text-[#fca5a5] ring-1 ring-[#ef4444]/40">Cotiza el reemplazo de placa en el panel Estado: así sale el monto en el informe.</p>
+          )}
+        </fieldset>
+
+        <div>
+          <Area label="2. Tu diagnóstico final"
+            ayuda={inf.notas.resultado === "REPARABLE"
+              ? "Ej.: corto en el riel de 5V del standby, IC de carga caliente con inyección de tensión; cambié el IC con aire caliente, reprogramé la BIOS con el programador SPI y quedó encendiendo; 2 h de estrés sin cortes…"
+              : "Ej.: corto en el riel VCORE, el CPU no responde con inyección de tensión; cambié el PWM sin cambios; la falla está dentro del procesador, no tiene reparación a nivel de componente…"}
+            v={inf.notas.hallazgos} set={(v) => notas({ hallazgos: v })} filas={8} />
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            {Dictado && (
+              <button type="button" onClick={dictar} aria-pressed={dictando}
+                className={`${PRESS} inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm ${dictando ? "animate-pulse bg-[#ef4444] font-medium text-white" : "bg-white/[0.08] text-white hover:bg-white/[0.14]"}`}>
+                {dictando ? <><Square className="h-4 w-4" aria-hidden="true" /> Detener</> : <><Mic className="h-4 w-4" aria-hidden="true" /> Dictar</>}
+              </button>
+            )}
+            {FRASES.map((fr) => (
+              <button key={fr.nombre} type="button" onClick={() => usarFrase(fr)} title={fr.texto}
+                className={`${PRESS} inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-sm text-white/75 ring-1 ring-white/10 hover:bg-white/[0.06] hover:text-white`}>
+                <Plus className="h-3.5 w-3.5" aria-hidden="true" /> {fr.nombre}
+              </button>
+            ))}
+          </div>
+          <p className="mt-1.5 text-xs text-white/40">
+            Lo que encontraste, lo que hiciste, las pruebas y cómo quedó. Si hay antecedentes (otro técnico, falla después de una entrega), van aquí mismo.
+            {guardadoAuto && <span className="ml-1 text-white/60">· {guardadoAuto}</span>}
+          </p>
+          {o.falla && <p className="mt-2 line-clamp-3 rounded-xl bg-black/30 px-4 py-2.5 text-sm text-white/50"><span className="text-white/70">El cliente reportó:</span> {o.falla}</p>}
+        </div>
 
         <fieldset>
-          <legend className="text-sm text-white/60">Cobros (el total lo calcula la página)</legend>
+          <legend className="text-sm text-white/60">3. Cobros (el total lo calcula la página)</legend>
           <div className="mt-2 space-y-3">
             {inf.cobros.map((c, i) => (
               // El monto es un campo no controlado (para poder escribir "99." sin que se borre el punto); al quitar una fila, todas se vuelven a montar.

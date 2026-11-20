@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { conBase, fechaInforme, limpiarTexto, soles, total } from "@/lib/informe";
+import { FRASES, conBase, fechaInforme, garantiaInicial, limpiarTexto, soles, total, venceGarantia } from "@/lib/informe";
 
 const cobros = [
   { concepto: "diagnóstico", monto: 0, nota: "Incluido en la reparación; precio regular S/. 99.00" },
@@ -45,5 +45,18 @@ describe("informe técnico", () => {
     expect(conBase(mantenimiento, "REPARABLE")).toBe(mantenimiento);
     expect(conBase(mantenimiento, "NO REPARABLE")).toBe(mantenimiento);
     expect(conBase([], "NO REPARABLE")).toEqual([diag[0]]);
+  });
+});
+
+describe("garantía y frases", () => {
+  it("calcula el vencimiento desde la fecha del informe", () => {
+    expect(fechaInforme(venceGarantia("2026-11-20T10:00:00-05:00", "90 días")!.toISOString())).toBe("Febrero 18, 2027");
+    expect(fechaInforme(venceGarantia("2026-11-20", "6 meses")!.toISOString())).toBe("Mayo 20, 2027");
+    expect(venceGarantia("2026-11-20", "sin garantía")).toBeNull();
+    expect(garantiaInicial("Mantenimiento")).toBe("6 meses");
+    expect(garantiaInicial("Reparación")).toBe("90 días");
+  });
+  it("la frase del microprocesador marca no reparable", () => {
+    expect(FRASES.find((f) => /microprocesador/i.test(f.nombre))?.resultado).toBe("NO REPARABLE");
   });
 });
