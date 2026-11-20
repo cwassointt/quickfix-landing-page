@@ -18,7 +18,9 @@ const CAMPOS = [
     'pin' => [false, 40], 'accesorios' => [false, 120], 'servicio' => [false, 40], 'falla' => [true, 1000], 'direccion' => [false, 200],
 ];
 // Columnas agregadas después de la primera versión: se crean solas en bases que ya existían.
-const COLUMNAS_NUEVAS = ['llega' => 'TEXT', 'modo' => 'TEXT', 'direccion' => 'TEXT', 'autoriza' => 'INTEGER', 'foto' => 'INTEGER'];
+const COLUMNAS_NUEVAS = ['llega' => 'TEXT', 'modo' => 'TEXT', 'direccion' => 'TEXT', 'autoriza' => 'INTEGER', 'foto' => 'INTEGER', 'cambio' => 'TEXT'];
+// Lo que necesita el tablero de cada caso (menú, buscador, filas). Sin la falla ni datos personales extra: la lista va completa, sin límite.
+const COLUMNAS_LISTA = 'id, creado, origen, nombre, whatsapp, tipo, marca, modelo, serie, servicio, liquido, abierto, estado, recibido, cambio, llega, modo';
 
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
@@ -401,8 +403,8 @@ try {
 
         case 'GET lista':
             $r = exigir('admin', 'mostrador');
-            $where = ($_GET['filtro'] ?? '') === 'pendientes' ? "WHERE estado = 'registrado'" : '';
-            $filas = db()->query('SELECT ' . columnas($r) . " FROM ordenes $where ORDER BY id DESC LIMIT 200")->fetchAll();
+            // shortcut: sin límite de filas; con columnas cortas, 5000 casos pesan ~1 MB. Si llega a eso, ocultar entregados de hace meses.
+            $filas = db()->query('SELECT ' . COLUMNAS_LISTA . ' FROM ordenes ORDER BY id DESC')->fetchAll();
             foreach ($filas as &$f) $f['numero'] = numero((int) $f['id']);
             responder(['rol' => $r, 'ordenes' => $filas]);
 
@@ -423,7 +425,8 @@ try {
             $id = (int) ($d['id'] ?? 0);
             if (isset($d['estado'])) {
                 if (!in_array($d['estado'], ESTADOS, true)) fallo('Estado inválido.');
-                db()->prepare('UPDATE ordenes SET estado = ? WHERE id = ?')->execute([$d['estado'], $id]);
+                // cambio: desde cuándo está en este estado (para los días en el taller y los atrasados).
+                db()->prepare('UPDATE ordenes SET estado = ?, cambio = ? WHERE id = ? AND estado != ?')->execute([$d['estado'], date('c'), $id, $d['estado']]);
             }
             if (array_key_exists('presupuesto', $d)) {
                 $monto = $d['presupuesto'] === null || $d['presupuesto'] === '' ? null : round(max(0, min(99999, (float) $d['presupuesto'])), 2);
@@ -568,8 +571,8 @@ try {
         case 'POST recibir':
             $r = exigir('admin', 'mostrador');
             $d = cuerpo();
-            $q = db()->prepare("UPDATE ordenes SET estado = 'recibido', recibido = ?, recibido_por = ? WHERE id = ? AND estado = 'registrado'");
-            $q->execute([date('c'), $r, (int) ($d['id'] ?? 0)]);
+            $q = db()->prepare("UPDATE ordenes SET estado = 'recibido', recibido = ?, cambio = ?, recibido_por = ? WHERE id = ? AND estado = 'registrado'");
+            $q->execute([date('c'), date('c'), $r, (int) ($d['id'] ?? 0)]);
             responder(['ok' => $q->rowCount() === 1]);
 
         case 'GET foto':

@@ -22,7 +22,11 @@ export type Orden = Omit<Registro, "acepta" | "web" | "liquido" | "abierto" | "c
   /** Solo llega con sesión de admin. */
   presupuesto?: number | null;
   estado: string; recibido: string | null; recibido_por: string | null;
+  /** Cuándo pasó a su estado actual (null en casos de antes de guardarlo). */
+  cambio?: string | null;
 };
+/** Lo que trae la lista del tablero: lo justo para el menú, el buscador y las filas (sin la falla ni datos privados). */
+export type Resumen = Pick<Orden, "id" | "numero" | "creado" | "origen" | "nombre" | "whatsapp" | "tipo" | "marca" | "modelo" | "serie" | "servicio" | "liquido" | "abierto" | "estado" | "recibido" | "cambio" | "llega" | "modo">;
 export type Rol = "admin" | "mostrador";
 
 export const OPCIONES = {
@@ -135,6 +139,18 @@ export function progreso(estado: string) {
   const etapa = { registrado: 0, recibido: 1, diagnostico: 2, reparado: 3, no_reparado: 3, entregado: 4, devuelto: 4 }[e] ?? 1;
   return { etapa, mal: e === "no_reparado" || e === "devuelto" };
 }
+
+/** Días completos que lleva en su estado actual; sin fecha de cambio, desde que se recibió o se registró. */
+export function diasEnEstado(o: Pick<Orden, "cambio" | "recibido" | "creado">, ahora = Date.now()) {
+  const desde = Date.parse(o.cambio || o.recibido || o.creado);
+  return Number.isFinite(desde) ? Math.max(0, Math.floor((ahora - desde) / 86_400_000)) : 0;
+}
+
+// shortcut: plazos fijos en días; si un tipo de trabajo necesita otros, llevarlos a la config del servidor.
+const PLAZOS: Record<string, number> = { recibido: 1, diagnostico: 4, reparado: 3, no_reparado: 3 };
+/** Atrasado: lleva en su estado más días que el plazo (recibido sin revisar, diagnóstico largo, listo y sin recoger). */
+export const atrasado = (o: Pick<Orden, "estado" | "cambio" | "recibido" | "creado">, ahora = Date.now()) =>
+  estadoDe(o.estado) in PLAZOS && diasEnEstado(o, ahora) > PLAZOS[estadoDe(o.estado)];
 
 export const API = "/api/recepcion.php";
 

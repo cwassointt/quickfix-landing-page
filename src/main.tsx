@@ -12,7 +12,10 @@ const app = (
 );
 
 // Con HTML pregenerado (producción) se hidrata; en desarrollo el root llega vacío.
-if (root.firstElementChild) hydrateRoot(root, app);
+// Recepción y Taller se pregeneran sin contenido (se cargan aparte) y React avisa que las dibuja en el navegador (#419): es lo esperado.
+if (root.firstElementChild) hydrateRoot(root, app, {
+  onRecoverableError: (e) => { if (!/#419|Suspense boundary/.test(String((e as Error)?.message ?? e))) console.error(e); },
+});
 else createRoot(root).render(app);
 
 // Analytics cuando la página ya cargó, para no competir con el contenido.
