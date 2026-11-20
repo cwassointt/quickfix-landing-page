@@ -1,5 +1,5 @@
-import { Suspense, lazy, useCallback, useEffect, useState } from "react";
-import { ArrowLeft, Check, Copy, Download, ListOrdered, Loader2, LogOut, MessageCircle, Pencil, Phone, Plus, Printer, RefreshCw, Search, Trash2, UserPlus, X } from "lucide-react";
+import { Suspense, lazy, useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
+import { ArrowLeft, Check, Copy, Download, ListOrdered, Loader2, LogOut, MessageCircle, PanelLeft, Pencil, Phone, Plus, Printer, RefreshCw, Search, Trash2, UserPlus, X } from "lucide-react";
 
 // Solo se descarga al imprimir: así el generador de QR no pesa en el resto de la web.
 const ImprimirEtiquetas = lazy(() => import("@/components/EtiquetaImpresa").then((m) => ({ default: m.ImprimirEtiquetas })));
@@ -115,7 +115,7 @@ function Tarjeta({ o, rol, onRecibir, onBorrar, onEditado }: { o: Orden; rol: Ro
   const [editar, setEditar] = useState(false);
   const cerrarEditar = useCallback(() => setEditar(false), []);
   return (
-    <article id={`caso-${o.id}`} className={`relative scroll-mt-6 overflow-hidden rounded-3xl p-5 pt-6 ring-1 transition-[background-color,box-shadow] duration-200 md:p-6 md:pt-7 ${pendiente ? "bg-primary/[0.12] ring-primary/40 hover:bg-primary/[0.16]" : "bg-white/[0.04] ring-white/[0.06] hover:bg-white/[0.06] hover:ring-white/15"}`}>
+    <article id={`caso-${o.id}`} className={`relative scroll-mt-6 overflow-hidden rounded-3xl p-5 pt-6 ring-1 transition-[background-color,box-shadow] duration-200 md:p-6 md:pt-7 ${pendiente ? "bg-[#251c21] ring-primary/40 hover:bg-[#2f1f20]" : "bg-[#111c2f] ring-white/[0.06] hover:bg-[#161f31] hover:ring-white/15"}`}>
       {/* Barra superior con el color del estado: se reconoce de un vistazo en qué va el caso. */}
       <span aria-hidden="true" className="absolute inset-x-0 top-0 h-1.5" style={{ background: COLOR_ESTADO[estadoDe(o.estado)] }} />
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
@@ -196,26 +196,28 @@ function Tarjeta({ o, rol, onRecibir, onBorrar, onEditado }: { o: Orden; rol: Ro
 }
 
 /** Solo admin: estado, presupuesto y mensajes de WhatsApp ya escritos para el seguimiento. */
-function Seguimiento({ o, onCambio }: { o: Orden; onCambio: () => void }) {
+function Seguimiento({ o, onCambio, onEstado }: { o: Orden; onCambio: () => void; onEstado: (estado: string) => void }) {
   const [monto, setMonto] = useState(o.presupuesto != null ? String(o.presupuesto) : "");
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
   const guardar = async (cambios: { estado?: string; presupuesto?: string }) => {
+    // El estado se ve cambiado al instante en todo el tablero; si el servidor falla, se vuelve a leer lo guardado.
+    if (cambios.estado) onEstado(cambios.estado);
     setGuardando(true);
     try { await api("actualizar", { id: o.id, ...cambios }); setError(""); onCambio(); }
-    catch (err) { setError((err as Error).message); }
+    catch (err) { setError((err as Error).message); onCambio(); }
     setGuardando(false);
   };
   const presupuesto = monto.trim() ? Number(monto) : (o.presupuesto ?? null);
   return (
-    <section className="mt-4 space-y-6 rounded-3xl bg-white/[0.04] p-5 md:p-6">
+    <section className="mt-4 space-y-6 rounded-3xl bg-[#111c2f] p-5 md:p-6">
       <div>
         <h2 className="text-lg font-bold text-white">Estado</h2>
         <div className="mt-3 flex flex-wrap gap-2">
           {Object.entries(ESTADOS).map(([id, nombre]) => {
             const activo = estadoDe(o.estado) === id;
             return (
-              <button key={id} disabled={guardando} aria-pressed={activo} onClick={() => guardar({ estado: id })}
+              <button key={id} aria-pressed={activo} onClick={() => guardar({ estado: id })}
                 className={`${PRESS} inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-base disabled:opacity-60 ${activo ? "font-medium text-black" : "bg-white/[0.06] text-white hover:bg-white/[0.12]"}`}
                 style={activo ? { background: COLOR_ESTADO[id] } : undefined}>
                 {!activo && <span aria-hidden="true" className="h-2.5 w-2.5 rounded-full" style={{ background: COLOR_ESTADO[id] }} />}
@@ -257,7 +259,7 @@ function Seguimiento({ o, onCambio }: { o: Orden; onCambio: () => void }) {
 }
 
 /** Lo que abre el QR de la etiqueta: un solo equipo, con el seguimiento si eres admin. */
-function Caso({ id, rol, onSalida, onCambio, onVolver }: { id: number; rol: Rol; onSalida: () => void; onCambio: () => void; onVolver: () => void }) {
+function Caso({ id, rol, onSalida, onCambio, onEstado, onVolver }: { id: number; rol: Rol; onSalida: () => void; onCambio: () => void; onEstado: (id: number, estado: string) => void; onVolver: () => void }) {
   const [o, setO] = useState<Orden | null>(null);
   const [error, setError] = useState("");
   const cargar = useCallback(async () => {
@@ -283,7 +285,8 @@ function Caso({ id, rol, onSalida, onCambio, onVolver }: { id: number; rol: Rol;
               try { await api("borrar", { id: o.id }); window.location.href = "/taller/"; }
               catch (err) { setError((err as Error).message); }
             }} onEditado={() => { cargar(); onCambio(); }} />
-          {rol === "admin" && <Seguimiento key={`${o.estado}-${o.presupuesto}`} o={o} onCambio={() => { cargar(); onCambio(); }} />}
+          {rol === "admin" && <Seguimiento key={String(o.presupuesto)} o={o} onCambio={() => { cargar(); onCambio(); }}
+            onEstado={(estado) => { setO({ ...o, estado }); onEstado(o.id, estado); }} />}
           {rol === "admin" && <Suspense fallback={null}><InformeTecnico o={o} /></Suspense>}
         </div>
       )}
@@ -295,19 +298,42 @@ function Caso({ id, rol, onSalida, onCambio, onVolver }: { id: number; rol: Rol;
 const GRUPOS = ["registrado", "recibido", "diagnostico", "reparado", "no_reparado", "entregado"];
 const grupoDe = (estado: string) => { const e = estadoDe(estado); return e === "devuelto" ? "entregado" : e; };
 const sinTildes = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+/** Busca por QF, cliente, equipo, serie o WhatsApp (sin tildes ni mayúsculas; el teléfono también sin espacios). */
+const coincide = (o: Orden, q: string) => {
+  const t = sinTildes(q.trim());
+  return !t || sinTildes(`${o.numero} ${o.nombre} ${equipo(o)} ${o.serie} ${o.whatsapp}`).includes(t) || (/\d{3}/.test(t) && (o.whatsapp ?? "").replace(/\D/g, "").includes(t.replace(/\D/g, "")));
+};
+
+/** Fondo de plano (blueprint): cuadrícula fina cada 20 px y una más marcada cada 100 px sobre azul oscuro. */
+const PLANO: CSSProperties = {
+  backgroundColor: "#071226",
+  backgroundImage: [
+    "linear-gradient(rgba(96,165,250,0.16) 1px, transparent 1px)", "linear-gradient(90deg, rgba(96,165,250,0.16) 1px, transparent 1px)",
+    "linear-gradient(rgba(96,165,250,0.06) 1px, transparent 1px)", "linear-gradient(90deg, rgba(96,165,250,0.06) 1px, transparent 1px)",
+  ].join(", "),
+  backgroundSize: "100px 100px, 100px 100px, 20px 20px, 20px 20px",
+  backgroundPosition: "-1px -1px",
+  backgroundAttachment: "fixed",
+};
 
 /** Menú de la izquierda: todos los casos con el color de su estado, para ubicarlos rápido. */
-function Menu({ ordenes, actual, onAbrir }: { ordenes: Orden[]; actual: number | null; onAbrir: (id: number) => void }) {
+function MenuCasos({ ordenes, actual, abierto, onAbrir, onCerrar }: { ordenes: Orden[]; actual: number | null; abierto: boolean; onAbrir: (id: number) => void; onCerrar: () => void }) {
   const [q, setQ] = useState("");
-  const busca = sinTildes(q.trim());
-  const lista = busca ? ordenes.filter((o) => sinTildes(`${o.numero} ${o.nombre} ${equipo(o)} ${o.serie}`).includes(busca)) : ordenes;
+  const busca = q.trim();
+  const lista = ordenes.filter((o) => coincide(o, q));
   return (
-    <aside className="sticky top-0 hidden h-[100svh] w-72 shrink-0 flex-col border-r border-white/[0.08] bg-[#0a0a0a] lg:flex">
+    <>
+    {/* En pantallas chicas el menú es un cajón que se abre con el botón "Casos". */}
+    {abierto && <div aria-hidden="true" onClick={onCerrar} className="fixed inset-0 z-30 bg-black/60 lg:hidden" />}
+    <aside className={`${abierto ? "fixed inset-y-0 left-0 z-40 flex shadow-2xl shadow-black" : "hidden"} h-[100svh] w-72 max-w-[85vw] shrink-0 flex-col border-r border-white/[0.08] bg-[#050d1c] lg:sticky lg:top-0 lg:z-auto lg:flex lg:shadow-none`}>
       <div className="p-4">
-        <p className="px-1 text-sm font-medium text-white/50">Casos · {ordenes.length}</p>
+        <div className="flex items-center justify-between">
+          <p className="px-1 text-sm font-medium text-white/50">Casos · {ordenes.length}</p>
+          <button onClick={onCerrar} aria-label="Cerrar menú" className="rounded-full p-1.5 text-white/60 transition-colors hover:bg-white/[0.08] hover:text-white lg:hidden"><X className="h-5 w-5" aria-hidden="true" /></button>
+        </div>
         <label className="relative mt-3 block">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" aria-hidden="true" />
-          <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Nombre, QF o modelo" aria-label="Buscar caso"
+          <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Nombre, QF, modelo o celular" aria-label="Buscar caso"
             className="h-10 w-full rounded-xl bg-white/[0.06] pl-9 pr-3 text-sm text-white transition-colors placeholder:text-white/35 hover:bg-white/[0.09] focus:outline-none focus:ring-2 focus:ring-primary" />
         </label>
       </div>
@@ -332,6 +358,7 @@ function Menu({ ordenes, actual, onAbrir }: { ordenes: Orden[]; actual: number |
         </ul>
       </nav>
     </aside>
+    </>
   );
 }
 
@@ -343,6 +370,20 @@ const TallerPage = () => {
   const [filtro, setFiltro] = useState("todos");
   const [error, setError] = useState("");
   const [cargando, setCargando] = useState(false);
+  const [menu, setMenu] = useState(false);
+  const [buscar, setBuscar] = useState("");
+  const buscador = useRef<HTMLInputElement>(null);
+  // "/" lleva al buscador desde cualquier parte del tablero (salvo que ya estés escribiendo en un campo).
+  useEffect(() => {
+    const atajo = (e: KeyboardEvent) => {
+      if (e.key !== "/" || /^(INPUT|TEXTAREA|SELECT)$/.test((e.target as HTMLElement).tagName) || (e.target as HTMLElement).isContentEditable) return;
+      if (!buscador.current) return;
+      e.preventDefault();
+      buscador.current.focus();
+    };
+    window.addEventListener("keydown", atajo);
+    return () => window.removeEventListener("keydown", atajo);
+  }, []);
 
   // Siempre trae todos: el menú los necesita y el filtro de estado se aplica aquí.
   const cargar = useCallback(async () => {
@@ -404,25 +445,31 @@ const TallerPage = () => {
     { id: "todos", nombre: "Todos", n: ordenes.length, color: "#ffffff" },
     ...GRUPOS.map((g) => ({ id: g, nombre: g === "entregado" ? "Entregados" : ESTADOS[g], n: ordenes.filter((o) => grupoDe(o.estado) === g).length, color: COLOR_ESTADO[g] })),
   ];
-  const visibles = filtro === "todos" ? ordenes : ordenes.filter((o) => grupoDe(o.estado) === filtro);
+  const visibles = ordenes.filter((o) => (filtro === "todos" || grupoDe(o.estado) === filtro) && coincide(o, buscar));
 
   return (
-    <div className="min-h-[100svh] bg-[#050505] lg:flex">
-      {rol && <Menu ordenes={ordenes} actual={caso} onAbrir={abrir} />}
+    <div className="min-h-[100svh] lg:flex" style={PLANO}>
+      {rol && <MenuCasos ordenes={ordenes} actual={caso} abierto={menu} onAbrir={(id) => { setMenu(false); abrir(id); }} onCerrar={() => setMenu(false)} />}
       <main className="mx-auto w-full max-w-5xl flex-1 px-5 pb-24 pt-8 md:px-8 md:pt-12">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <a href="/taller/" onClick={(e) => { if (rol) { e.preventDefault(); abrir(null); } }} className="text-2xl font-bold text-white transition-opacity hover:opacity-80">QUICK<span className="text-primary">FIX</span> <span className="font-normal text-white/50">· Taller</span></a>
           {rol && (
+            <span className="flex gap-2">
+            <button onClick={() => setMenu(true)} className={`${BTN} bg-white/[0.06] px-4 text-white hover:bg-white/[0.12] lg:hidden`}>
+              <PanelLeft className="h-5 w-5" aria-hidden="true" /> Casos
+            </button>
             <button onClick={async () => { await api("salir", {}); setRol(null); }} className={`${BTN} bg-white/[0.06] text-white/70 hover:bg-white/[0.12] hover:text-white`}>
               <LogOut className="h-5 w-5" aria-hidden="true" /> Salir
             </button>
+            </span>
           )}
         </div>
 
         {rol === undefined && <Loader2 className="mx-auto mt-16 h-8 w-8 animate-spin text-white/50" aria-label="Cargando" />}
         {rol === null && <Login onEntrar={setRol} />}
 
-        {rol && caso && <Caso key={caso} id={caso} rol={rol} onSalida={salida} onCambio={cargar} onVolver={() => abrir(null)} />}
+        {rol && caso && <Caso key={caso} id={caso} rol={rol} onSalida={salida} onCambio={cargar} onVolver={() => abrir(null)}
+          onEstado={(id, estado) => setOrdenes((os) => os.map((x) => (x.id === id ? { ...x, estado } : x)))} />}
 
         {rol && !caso && (
           <>
@@ -446,11 +493,20 @@ const TallerPage = () => {
               </a>
             </div>
 
+            <label className="relative mt-6 block">
+              <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-white/45" aria-hidden="true" />
+              <input ref={buscador} type="search" value={buscar} onChange={(e) => setBuscar(e.target.value)} onKeyDown={(e) => e.key === "Escape" && setBuscar("")}
+                placeholder="Buscar por nombre, QF, modelo, serie o celular" aria-label="Buscar casos"
+                className="h-14 w-full rounded-2xl bg-[#111c2f] pl-12 pr-14 text-base text-white ring-1 ring-white/[0.08] transition-[box-shadow,background-color] placeholder:text-white/40 hover:bg-[#161f31] hover:ring-white/20 focus:outline-none focus:ring-2 focus:ring-primary" />
+              <kbd aria-hidden="true" className="pointer-events-none absolute right-4 top-1/2 hidden -translate-y-1/2 rounded-md border border-white/15 px-2 py-0.5 font-mono text-xs text-white/45 sm:block">/</kbd>
+            </label>
+            {buscar.trim() && <p role="status" className="mt-2 px-1 text-sm text-white/55">{visibles.length} {visibles.length === 1 ? "caso encontrado" : "casos encontrados"}{filtro !== "todos" ? " en este estado" : ""}</p>}
+
             {/* Contadores por estado: cada uno filtra las tarjetas de abajo. */}
             <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4 xl:grid-cols-7">
               {contadores.map((c) => (
                 <button key={c.id} aria-pressed={filtro === c.id} onClick={() => setFiltro(c.id)}
-                  className={`${PRESS} relative overflow-hidden rounded-2xl p-4 pt-5 text-left ring-1 hover:-translate-y-0.5 ${filtro === c.id ? "bg-white/[0.1] ring-white/30" : "bg-white/[0.04] ring-white/[0.06] hover:bg-white/[0.08]"}`}>
+                  className={`${PRESS} relative overflow-hidden rounded-2xl p-4 pt-5 text-left ring-1 hover:-translate-y-0.5 ${filtro === c.id ? "bg-[#202a3c] ring-white/30" : "bg-[#111c2f] ring-white/[0.06] hover:bg-[#1b2537]"}`}>
                   <span aria-hidden="true" className="absolute inset-x-0 top-0 h-1" style={{ background: c.color }} />
                   <span className="block text-3xl font-bold tabular-nums text-white">{c.n}</span>
                   <span className="mt-1 block text-sm leading-tight text-white/60">{c.nombre}</span>
@@ -463,8 +519,8 @@ const TallerPage = () => {
 
             <div className="mt-6 grid gap-4 2xl:grid-cols-2">
               {visibles.length === 0 && !cargando && (
-                <p className="rounded-3xl bg-white/[0.04] p-8 text-center text-lg text-white/60 2xl:col-span-2">
-                  {filtro === "registrado" ? "No hay equipos por recibir. Cuando un cliente se registre, aparece aquí solo." : ordenes.length ? "No hay casos en este estado." : "Todavía no hay equipos."}
+                <p className="rounded-3xl bg-[#111c2f] p-8 text-center text-lg text-white/60 2xl:col-span-2">
+                  {filtro === "registrado" ? "No hay equipos por recibir. Cuando un cliente se registre, aparece aquí solo." : buscar.trim() ? "Ningún caso coincide con la búsqueda." : ordenes.length ? "No hay casos en este estado." : "Todavía no hay equipos."}
                 </p>
               )}
               {visibles.map((o) => (
