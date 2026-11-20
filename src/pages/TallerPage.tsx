@@ -521,7 +521,11 @@ function Caso({ id, rol, imprimir, onSalida, onCambio, onEstado, onVolver }: { i
           </div>
           <div className="min-w-0 space-y-4 lg:col-start-1 lg:row-start-2">
             <FotosEntrada o={o} rol={rol} />
-            {rol === "admin" && <Suspense fallback={null}><InformeTecnico o={o} /></Suspense>}
+            {rol === "admin" && <Suspense fallback={null}><InformeTecnico o={o} onEstado={async (estado) => {
+              try { await api("actualizar", { id: o.id, estado }); setO({ ...o, estado }); onEstado(o.id, estado); }
+              catch (err) { setError((err as Error).message); }
+              recargar();
+            }} /></Suspense>}
           </div>
         </div>
       )}

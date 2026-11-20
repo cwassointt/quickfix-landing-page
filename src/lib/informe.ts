@@ -4,7 +4,7 @@ export type Fila = { titulo: string; texto: string };
 export type Cobro = { concepto: string; monto: number; nota: string };
 export type Respuesta = { pregunta: string; respuesta: string };
 /** hallazgos: el diagnóstico final del técnico. trabajo y contexto solo existen en informes antiguos (se juntan al abrirlos). */
-export type Notas = { hallazgos: string; trabajo?: string; resultado: string; contexto?: string; respuestas?: Respuesta[] };
+export type Notas = { hallazgos: string; trabajo?: string; resultado: string; contexto?: string; garantia?: string; respuestas?: Respuesta[] };
 export type Texto = {
   conceptos: string[]; antecedentes: string; intro: string; diagnostico: Fila[]; protocolo: Fila[];
   estado: string; cierre: Fila[]; observaciones: Fila[]; para_validar: string[];
@@ -36,6 +36,32 @@ export const informeNuevo = (resultado = RESULTADOS[0]): Informe => ({
   cobros: [cobroBase(resultado)],
   adelanto: null, texto: null, fecha: "",
 });
+
+/** Plazos de garantía (términos de la web): 90 días en reparación de placa, 6 meses térmica en mantenimientos. */
+export const GARANTIAS = ["90 días", "6 meses", "sin garantía"];
+export const garantiaInicial = (servicio: string | null | undefined) => (/manten/i.test(servicio ?? "") ? "6 meses" : "90 días");
+/** Hasta cuándo vale la garantía, contada desde la fecha del informe. null si no tiene. */
+export function venceGarantia(desde: string, garantia: string): Date | null {
+  const d = new Date(`${desde.slice(0, 10)}T12:00:00`);
+  if (garantia === "90 días") d.setDate(d.getDate() + 90);
+  else if (garantia === "6 meses") d.setMonth(d.getMonth() + 6);
+  else return null;
+  return d;
+}
+
+/** Textos que el técnico repite: se agregan al diagnóstico y él los ajusta. Algunos fijan también el resultado. */
+export const FRASES: { nombre: string; texto: string; resultado?: string }[] = [
+  { nombre: "Falla en el microprocesador", resultado: "NO REPARABLE",
+    texto: "Sin encendido con consumo anormal; riel VCORE del CPU en corto a tierra. Se descartaron los MOSFET y condensadores del riel retirándolos uno a uno, y el corto se mantiene. Con inyección de tensión, la cámara térmica marca el calor en el encapsulado del microprocesador: falla interna del CPU, no reparable a nivel de componente. La solución es el reemplazo de la placa." },
+  { nombre: "Mantenimiento ROG",
+    texto: "Mantenimiento completo: desarmado total, limpieza de disipadores, ventiladores y rejillas; cambio de pasta térmica por metal líquido en el CPU y masilla térmica en VRAM y VRM. Prueba de estrés sin throttling y con temperaturas estables." },
+  { nombre: "IC de carga", resultado: "REPARABLE",
+    texto: "No carga la batería; IC de carga en corto a tierra (medición de impedancia) y caliente con inyección de tensión. Se reemplazó el IC con estación de aire caliente y precalentamiento. Carga normal y 1 h de prueba conectado sin cortes." },
+  { nombre: "BIOS corrupta", resultado: "REPARABLE",
+    texto: "Enciende sin imagen con consumo estable; se leyó la memoria BIOS SPI con programador y el volcado estaba corrupto. Se reprogramó con una BIOS limpia conservando serial y licencia. Arranca normal al sistema." },
+  { nombre: "Daño por líquido",
+    texto: "Ingreso de líquido: corrosión visible al microscopio en la zona de ___. Limpieza ultrasónica de la placa con alcohol isopropílico, reemplazo de componentes dañados (___) y medición de rieles." },
+];
 
 /** 1693 → "S/. 1,693.00" (el formato de los informes del laboratorio). */
 export const soles = (n: number) => `S/. ${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
