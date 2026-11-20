@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  aCsv, atrasado, avisoCliente, diasEnEstado, progreso, chatCliente, diaLima, equipo, etiquetas, mensajesCliente, nombreContacto, preguntas, vcard, resumirFalla, sugerirCorreo, sugerirDistrito, validar, validarWhatsapp, type Registro,
+  aCsv, atrasado, avisoCliente, destinoEstado, faltaCotizar, mensajeSugerido, saldo, sinRecoger, diasEnEstado, progreso, chatCliente, diaLima, equipo, etiquetas, mensajesCliente, nombreContacto, preguntas, vcard, resumirFalla, sugerirCorreo, sugerirDistrito, validar, validarWhatsapp, type Registro,
 } from "@/lib/recepcion";
 
 describe("recepción", () => {
@@ -58,7 +58,7 @@ describe("etiquetas", () => {
 
   it("los mensajes de seguimiento llevan el N° y el presupuesto", () => {
     const m = mensajesCliente(orden, 250);
-    expect(m.map((x) => x.id)).toEqual(["recibido", "presupuesto", "avance", "listo"]);
+    expect(m.map((x) => x.id)).toEqual(["recibido", "presupuesto", "avance", "listo", "placa", "recordatorio", "entregado"]);
     expect(m[1].texto).toContain("QF-0007");
     expect(m[1].texto).toContain("S/ 250");
     expect(mensajesCliente(orden)[1].texto).toContain("S/ ___");
@@ -152,5 +152,48 @@ describe("tablero", () => {
     expect(progreso("devuelto")).toEqual({ etapa: 4, mal: true });
     expect(progreso("listo")).toEqual({ etapa: 3, mal: false });
     expect(progreso("registrado")).toEqual({ etapa: 0, mal: false });
+  });
+});
+
+describe("estados", () => {
+  it("Entregado depende del resultado y exige cotizar la placa si no se reparó", () => {
+    expect(destinoEstado("reparado", "entregado", false)).toEqual({ estado: "entregado" });
+    expect(destinoEstado("listo", "entregado", false)).toEqual({ estado: "entregado" });
+    expect(destinoEstado("no_reparado", "entregado", true)).toEqual({ estado: "devuelto" });
+    expect(destinoEstado("no_reparado", "entregado", false)).toHaveProperty("error");
+    expect(destinoEstado("diagnostico", "entregado", true)).toHaveProperty("error");
+    expect(destinoEstado("entregado", "diagnostico", false)).toEqual({ estado: "diagnostico" });
+  });
+
+  it("marca los no reparados sin cotización de placa", () => {
+    expect(faltaCotizar({ estado: "no_reparado", cotizada: 0 })).toBe(true);
+    expect(faltaCotizar({ estado: "no_reparado", cotizada: 1 })).toBe(false);
+    expect(faltaCotizar({ estado: "devuelto", cotizada: 0 })).toBe(false);
+  });
+
+  it("el mensaje lleva el enlace de seguimiento y el monto de la placa", () => {
+    const m = mensajesCliente({ nombre: "Ana Torres", numero: "QF-0007", tipo: "Laptop", marca: "ASUS", modelo: "G614JV", seguir: "a".repeat(24) }, null, 850);
+    expect(m.find((x) => x.id === "recibido")!.texto).toContain("https://quickfix.pe/seguimiento/?t=" + "a".repeat(24));
+    expect(m.find((x) => x.id === "placa")!.texto).toContain("S/ 850");
+  });
+});
+
+describe("recordatorio y pagos", () => {
+  const dia = 86_400_000;
+  const base = { creado: "2026-01-01T10:00:00Z", recibido: null, cambio: "2026-01-01T10:00:00Z" };
+  const t0 = Date.parse(base.cambio);
+  it("pide recordar al cliente desde los 7 días listo o sin reparar", () => {
+    expect(sinRecoger({ ...base, estado: "reparado" }, t0 + 6 * dia)).toBe(false);
+    expect(sinRecoger({ ...base, estado: "reparado" }, t0 + 7 * dia)).toBe(true);
+    expect(sinRecoger({ ...base, estado: "no_reparado" }, t0 + 9 * dia)).toBe(true);
+    expect(sinRecoger({ ...base, estado: "entregado" }, t0 + 30 * dia)).toBe(false);
+    expect(mensajeSugerido({ ...base, estado: "reparado" }, t0 + 8 * dia)).toBe("recordatorio");
+    expect(mensajeSugerido({ ...base, estado: "reparado" }, t0 + dia)).toBe("listo");
+  });
+  it("el saldo es presupuesto menos lo pagado, sin bajar de cero", () => {
+    expect(saldo(300, 100)).toBe(200);
+    expect(saldo(0.3, 0.1)).toBe(0.2);
+    expect(saldo(100, 150)).toBe(0);
+    expect(saldo(null, 0)).toBe(0);
   });
 });

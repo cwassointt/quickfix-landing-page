@@ -9,10 +9,11 @@ import { legalDocs } from "./data/legal";
 import { servicePages } from "./data/pages";
 import { heads } from "./lib/seo";
 
-// Recepción y Taller solo los usan ustedes: se descargan al abrirlas, no en cada visita a la web.
+// Recepción, Taller y Seguimiento no son para Google: se descargan al abrirlas, no en cada visita a la web.
 // El HTML pregenerado de esas dos rutas trae solo el fondo; el navegador las dibuja al cargar su archivo.
 const RecepcionPage = lazy(() => import("./pages/RecepcionPage"));
 const TallerPage = lazy(() => import("./pages/TallerPage"));
+const SeguimientoPage = lazy(() => import("./pages/SeguimientoPage"));
 const Cargando = () => <div className="min-h-[100svh] bg-[#050505]" />;
 
 /** Rutas de la web. El router lo pone main.tsx (navegador) o entry-server.tsx (HTML pregenerado). */
@@ -37,6 +38,7 @@ const App = () => {
       <Route path="/componentes" element={<ComponentesPage />} />
       <Route path="/recepcion" element={<Suspense fallback={<Cargando />}><RecepcionPage /></Suspense>} />
       <Route path="/taller" element={<Suspense fallback={<Cargando />}><TallerPage /></Suspense>} />
+      <Route path="/seguimiento" element={<Suspense fallback={<Cargando />}><SeguimientoPage /></Suspense>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

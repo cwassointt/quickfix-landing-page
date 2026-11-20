@@ -39,6 +39,7 @@ for (const head of heads) {
 for (const head of [
   { path: "/recepcion/", title: "Registra tu equipo | QuickFix", description: "Registra el equipo que dejas en QuickFix y recibe tu número de orden.", jsonLd: [] },
   { path: "/taller/", title: "Taller | QuickFix", description: "Uso interno.", jsonLd: [] },
+  { path: "/seguimiento/", title: "Seguimiento de tu equipo | QuickFix", description: "Mira cómo va la reparación de tu equipo en QuickFix.", jsonLd: [] },
 ]) {
   const file = path.join(dist, head.path, "index.html");
   fs.mkdirSync(path.dirname(file), { recursive: true });

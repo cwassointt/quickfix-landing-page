@@ -30,9 +30,10 @@ export function conBase(cobros: Cobro[], resultado: string): Cobro[] {
   return primera === "" || primera === otro ? [cobroBase(resultado), ...cobros.slice(1)] : cobros;
 }
 
-export const informeNuevo = (): Informe => ({
-  notas: { hallazgos: "", trabajo: "", resultado: RESULTADOS[0], contexto: "" },
-  cobros: [cobroBase(RESULTADOS[0])],
+/** Informe vacío; si el caso ya se marcó como no reparado en el taller, arranca como "NO REPARABLE" (con su cobro de diagnóstico). */
+export const informeNuevo = (resultado = RESULTADOS[0]): Informe => ({
+  notas: { hallazgos: "", trabajo: "", resultado, contexto: "" },
+  cobros: [cobroBase(resultado)],
   adelanto: null, texto: null, fecha: "",
 });
 

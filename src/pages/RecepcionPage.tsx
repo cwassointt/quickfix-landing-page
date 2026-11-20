@@ -3,7 +3,7 @@ import { AlertCircle, ArrowLeft, Camera, Check, ImageUp, Loader2, ScanLine, Sear
 import Navbar from "@/components/Navbar";
 import AsistenteFalla, { type Resultado } from "@/components/AsistenteFalla";
 import { laptopLabel, searchLaptops, type Laptop } from "@/lib/laptopSearch";
-import { FICHAS, OPCIONES, api, avisoCliente, diaLima, sugerirCorreo, sugerirDistrito, validar, type Campo as CampoId, type Registro } from "@/lib/recepcion";
+import { FICHAS, OPCIONES, api, avisoCliente, diaLima, reducirFoto, sugerirCorreo, sugerirDistrito, validar, type Campo as CampoId, type Registro } from "@/lib/recepcion";
 
 const PRESS = "transition-[transform,background-color,color] duration-150 ease-out active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-[#050505]";
 const INPUT = "mt-2 h-12 w-full rounded-xl bg-white/[0.06] px-4 text-base text-white placeholder:text-white/35 focus:outline-none focus:ring-2 focus:ring-primary";
@@ -133,17 +133,6 @@ function ModeloLaptop({ valor, error, onEscribir, onElegir, onBlur }: {
       )}
     </Campo>
   );
-}
-
-/** Reduce la foto en el navegador (lado mayor 1600 px, JPEG) para que suba rápido con datos móviles. */
-async function reducirFoto(file: File): Promise<string> {
-  const img = await createImageBitmap(file);
-  const escala = Math.min(1, 1600 / Math.max(img.width, img.height));
-  const canvas = document.createElement("canvas");
-  canvas.width = Math.round(img.width * escala);
-  canvas.height = Math.round(img.height * escala);
-  canvas.getContext("2d")!.drawImage(img, 0, 0, canvas.width, canvas.height);
-  return canvas.toDataURL("image/jpeg", 0.8);
 }
 
 export type DatosEtiqueta = { tipo: string; marca: string; modelo: string; serie: string };

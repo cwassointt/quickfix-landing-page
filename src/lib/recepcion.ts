@@ -24,9 +24,28 @@ export type Orden = Omit<Registro, "acepta" | "web" | "liquido" | "abierto" | "c
   estado: string; recibido: string | null; recibido_por: string | null;
   /** Cuándo pasó a su estado actual (null en casos de antes de guardarlo). */
   cambio?: string | null;
+  /** Cotización del reemplazo de placa (obligatoria si no se reparó). Solo admin. */
+  placa?: number | null;
+  /** Clave del enlace público de seguimiento. */
+  seguir?: string | null;
+  historial?: Paso[];
+  fotos_entrada?: number[];
+  /** Solo admin: adelanto y saldo que pagó el cliente. */
+  pagos?: Pago[];
+  /** Encuesta tras la entrega: 1 bien, -1 pudo ser mejor. Solo admin. */
+  nota?: number | null;
 };
+export type Paso = { estado: string; quien?: string; fecha: string };
+export type Pago = { id: number; monto: number; fecha: string };
 /** Lo que trae la lista del tablero: lo justo para el menú, el buscador y las filas (sin la falla ni datos privados). */
-export type Resumen = Pick<Orden, "id" | "numero" | "creado" | "origen" | "nombre" | "whatsapp" | "tipo" | "marca" | "modelo" | "serie" | "servicio" | "liquido" | "abierto" | "estado" | "recibido" | "cambio" | "llega" | "modo">;
+export type Resumen = Pick<Orden, "id" | "numero" | "creado" | "origen" | "nombre" | "whatsapp" | "tipo" | "marca" | "modelo" | "serie" | "servicio" | "liquido" | "abierto" | "estado" | "recibido" | "cambio" | "llega" | "modo" | "seguir"> & {
+  /** 1 si ya se cotizó el reemplazo de placa. */
+  cotizada: 0 | 1;
+  /** Solo admin. */
+  presupuesto?: number | null;
+  /** Solo admin: suma de los pagos. */
+  pagado?: number;
+};
 export type Rol = "admin" | "mostrador";
 
 export const OPCIONES = {
@@ -117,11 +136,16 @@ export function validar(r: Registro): Errores {
   return e;
 }
 
-/** Estados del caso, en el orden de la barra de progreso: Recibido → En diagnóstico → Reparado o No reparado → Entregado. */
+/**
+ * Estados del caso, en el orden de la barra de progreso: Recibido → En diagnóstico → Reparado o No reparado → Entregado.
+ * "devuelto" no se elige: es "Entregado" de un equipo que no se reparó (lo decide el servidor según el resultado anterior).
+ */
 export const ESTADOS: Record<string, string> = {
   registrado: "Por recibir", recibido: "Recibido", diagnostico: "En diagnóstico", reparado: "Reparado", no_reparado: "No reparado",
   entregado: "Entregado", devuelto: "Entregado sin reparar",
 };
+/** Los que se pueden elegir, en orden. */
+export const PASOS = ["registrado", "recibido", "diagnostico", "reparado", "no_reparado", "entregado"];
 
 /** Color de cada estado: barra superior de la tarjeta, punto del menú y botones. */
 export const COLOR_ESTADO: Record<string, string> = {
@@ -151,6 +175,41 @@ const PLAZOS: Record<string, number> = { recibido: 1, diagnostico: 4, reparado: 
 /** Atrasado: lleva en su estado más días que el plazo (recibido sin revisar, diagnóstico largo, listo y sin recoger). */
 export const atrasado = (o: Pick<Orden, "estado" | "cambio" | "recibido" | "creado">, ahora = Date.now()) =>
   estadoDe(o.estado) in PLAZOS && diasEnEstado(o, ahora) > PLAZOS[estadoDe(o.estado)];
+
+/** Una semana o más listo (reparado o no) y el cliente no viene: toca recordárselo. */
+export const sinRecoger = (o: Pick<Orden, "estado" | "cambio" | "recibido" | "creado">, ahora = Date.now()) =>
+  ["reparado", "no_reparado"].includes(estadoDe(o.estado)) && diasEnEstado(o, ahora) >= 7;
+
+/** Lo que falta cobrar: presupuesto menos lo pagado (nunca negativo). */
+export const saldo = (presupuesto: number | null | undefined, pagado: number) => Math.max(0, Math.round(((presupuesto ?? 0) - pagado) * 100) / 100);
+
+/**
+ * Mismo criterio que destinoEstado() de recepcion.php: "Entregado" pasa a entregado o devuelto según el resultado,
+ * y un equipo no reparado no se entrega sin cotizar el reemplazo de placa.
+ */
+export function destinoEstado(actual: string, pedido: string, cotizada: boolean): { estado: string } | { error: string } {
+  if (pedido !== "entregado" && pedido !== "devuelto") return { estado: pedido };
+  if (actual === "no_reparado" || actual === "devuelto") return cotizada ? { estado: "devuelto" } : { error: "Antes de entregarlo, cotiza el reemplazo de la placa." };
+  if (["reparado", "listo", "entregado"].includes(actual)) return { estado: "entregado" };
+  return { error: "Primero marca si quedó reparado o no reparado." };
+}
+
+/** No reparado y sin la cotización del reemplazo de placa: hay que cotizarla sí o sí. */
+export const faltaCotizar = (o: Pick<Resumen, "estado" | "cotizada">) => estadoDe(o.estado) === "no_reparado" && !o.cotizada;
+
+/** Enlace que recibe el cliente para ver cómo va su equipo. */
+export const urlSeguimiento = (t: string) => `https://quickfix.pe/seguimiento/?t=${t}`;
+
+/** Reduce la foto en el navegador (lado mayor 1600 px, JPEG) para que suba rápido con datos móviles. */
+export async function reducirFoto(file: File): Promise<string> {
+  const img = await createImageBitmap(file);
+  const escala = Math.min(1, 1600 / Math.max(img.width, img.height));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(img.width * escala);
+  canvas.height = Math.round(img.height * escala);
+  canvas.getContext("2d")!.drawImage(img, 0, 0, canvas.width, canvas.height);
+  return canvas.toDataURL("image/jpeg", 0.8);
+}
 
 export const API = "/api/recepcion.php";
 
@@ -230,15 +289,28 @@ export function vcard(o: DatosMensaje & Pick<Orden, "id" | "whatsapp">) {
 }
 
 /** Mensajes de seguimiento ya redactados para el WhatsApp del cliente, según el momento del caso. */
-export function mensajesCliente(o: DatosMensaje, presupuesto?: number | null) {
+export function mensajesCliente(o: DatosMensaje & { seguir?: string | null }, presupuesto?: number | null, placa?: number | null) {
   const hola = saludo(o);
+  const enlace = o.seguir ? `\n\nSigue tu equipo aquí: ${urlSeguimiento(o.seguir)}` : "";
   return [
-    { id: "recibido", titulo: "Recibido", texto: `${hola} Ya lo recibí y empiezo con la revisión. Te aviso apenas tenga el diagnóstico.` },
+    { id: "recibido", titulo: "Recibido", texto: `${hola} Ya lo recibí y empiezo con la revisión. Te aviso apenas tenga el diagnóstico.${enlace}` },
     { id: "presupuesto", titulo: "Presupuesto", texto: `${hola} Ya tengo el diagnóstico. La reparación cuesta S/ ${presupuesto ?? "___"}. ¿Te parece si avanzo?` },
     { id: "avance", titulo: "Avance", texto: `${hola} Te cuento cómo va: ` },
-    { id: "listo", titulo: "Listo", texto: `${hola} ¡Ya está listo para recoger! Talambo 135, San Miguel. Avísame a qué hora vienes.` },
+    { id: "listo", titulo: "Listo", texto: `${hola} ¡Ya está listo para recoger! Talambo 135, San Miguel. Avísame a qué hora vienes.${enlace}` },
+    { id: "placa", titulo: "Cotización de placa", texto: `${hola} Revisé la placa a nivel de componentes y no tiene reparación. La solución es reemplazar la placa: cuesta S/ ${placa ?? "___"}. ¿Quieres que lo coordinemos? Si prefieres no hacerlo, puedes recoger tu equipo en Talambo 135, San Miguel.` },
+    { id: "recordatorio", titulo: "Recordatorio", texto: `${hola} Te recuerdo que tu equipo te espera en el taller, Talambo 135, San Miguel. ¿Qué día puedes pasar a recogerlo?` },
+    { id: "entregado", titulo: "Entregado", texto: `${hola} Gracias por confiar en QuickFix. Cualquier duda con tu equipo, escríbeme por aquí.${o.seguir ? `\n\n¿Cómo te fue? Cuéntanos con 1 clic: ${urlSeguimiento(o.seguir)}` : ""}` },
   ];
 }
+
+/** El mensaje que toca ahora: el del estado, o el recordatorio si lleva una semana sin recoger. */
+export const mensajeSugerido = (o: Pick<Orden, "estado" | "cambio" | "recibido" | "creado">, ahora = Date.now()) =>
+  sinRecoger(o, ahora) ? "recordatorio" : MENSAJE_DE[estadoDe(o.estado)];
+
+/** El mensaje que corresponde a cada estado (botón "Avisar al cliente"). */
+export const MENSAJE_DE: Record<string, string> = {
+  recibido: "recibido", diagnostico: "presupuesto", reparado: "listo", no_reparado: "placa", entregado: "entregado", devuelto: "entregado",
+};
 
 /** CSV con encabezados (sin BOM: OpenLabel+ lee UTF-8). Comillas solo donde hace falta. */
 export function aCsv(filas: Record<string, string>[]) {
